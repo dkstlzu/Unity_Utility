@@ -152,8 +152,7 @@ namespace Utility
         }
 
 
-
-        public delegate void Initiater(object[] parameters);
+        public delegate void Initiater(UnityEngine.Object parameters);
 
         /// <summary>
         /// ObjectPool에서 Creature를 가져옵니다. 그러나 OnEnable이 불리기 전에 Initiater를 통해 초기화작업을 수행합니다.
@@ -175,7 +174,7 @@ namespace Utility
                 obj = AvailableObjectQueue.Dequeue();
 
                 // Initiater implement here
-                // initiater(someParameters);
+                initiater(obj);
                 //
 
                 ActiveObjectList.Add(obj);
