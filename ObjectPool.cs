@@ -153,13 +153,15 @@ namespace Utility
 
 
 
+        public delegate void Initiater(object[] parameters);
+
         /// <summary>
         /// ObjectPool에서 Creature를 가져옵니다. 그러나 OnEnable이 불리기 전에 Initiater를 통해 초기화작업을 수행합니다.
         /// </summary>
         /// <param name="pos">위치</param>
         /// <param name="rot">회전</param>
         /// <returns>해당 Pool이 가지고 있는 Creature Script</returns>
-        public GameObject InstantiateAfterInit(Vector3 pos, Quaternion rot, NetInitiater initiater)
+        public GameObject InstantiateAfterInit(Vector3 pos, Quaternion rot, Initiater initiater)
         {
             GameObject obj;
 
@@ -171,7 +173,11 @@ namespace Utility
             }else
             {
                 obj = AvailableObjectQueue.Dequeue();
-                initiater(obj.GetComponent<Docsa.ProjectileNet>());
+
+                // Initiater implement here
+                // initiater(someParameters);
+                //
+
                 ActiveObjectList.Add(obj);
                 obj.transform.SetPositionAndRotation(pos, rot);
                 obj.SetActive(true);
