@@ -6,7 +6,7 @@ namespace Utility
     {
         public SoundEventArgs Args;
 
-        public void Invoke()
+        public virtual void Invoke()
         {
             SoundEvent.soundEvent.Invoke(Args);
         }
