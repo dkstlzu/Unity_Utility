@@ -14,10 +14,12 @@ namespace Utility
         {
             Normal,
             Unique,
+            UniqueID,
         }
 
         public DontDestroyMethod HowTo;
         public Component TargetComponent;
+        public string HashID;
         void Awake()
         {
             switch (HowTo)
@@ -28,20 +30,25 @@ namespace Utility
                 case DontDestroyMethod.Unique :
                 AddUnique(TargetComponent);
                 break;
+                case DontDestroyMethod.UniqueID :
+                if (HashID == "") HashID = transform.name;
+                AddUniqueID(TargetComponent, HashID);
+                break;
             }
         }
 
         public static List<Component> ComponentList = new List<Component>();
         public static HashSet<Type> ComponentTypeSet = new HashSet<Type>();
+        public static HashSet<string> HashIDSet = new HashSet<string>();
 
         public static int Count
         {
-            get{return ComponentList.Count + ComponentTypeSet.Count;}
+            get{return ComponentList.Count + ComponentTypeSet.Count + HashIDSet.Count;}
         }
 
         public static bool isEmpty
         {
-            get{return ComponentList.Count + ComponentTypeSet.Count == 0;}
+            get{return ComponentList.Count + ComponentTypeSet.Count + HashIDSet.Count == 0;}
         }
 
         public static void Add(Component component)
@@ -59,7 +66,17 @@ namespace Utility
             {
                 Destroy(component.gameObject);
             }
+        }
 
+        public static void AddUniqueID(Component component, string hashID)
+        {
+            if (HashIDSet.Add(hashID))
+            {
+                DontDestroyOnLoad(component);
+            } else
+            {
+                Destroy(component.gameObject);
+            }
         }
 
         public static void Remove(Component component)
