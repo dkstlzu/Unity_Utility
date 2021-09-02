@@ -25,14 +25,14 @@ namespace Utility
             switch (HowTo)
             {
                 case DontDestroyMethod.Normal :
-                Add(TargetComponent);
+                Add(TargetComponent, gameObject);
                 break;
                 case DontDestroyMethod.Unique :
-                AddUnique(TargetComponent);
+                AddUnique(TargetComponent, gameObject);
                 break;
                 case DontDestroyMethod.UniqueID :
                 if (HashID == "") HashID = transform.name;
-                AddUniqueID(TargetComponent, HashID);
+                AddUniqueID(TargetComponent, HashID, gameObject);
                 break;
             }
         }
@@ -51,28 +51,46 @@ namespace Utility
             get{return ComponentList.Count + ComponentTypeSet.Count + HashIDSet.Count == 0;}
         }
 
-        public static void Add(Component component)
+        public static void Add(Component component, GameObject rootObj = null)
         {
             ComponentList.Add(component);
-            DontDestroyOnLoad(component);
+            if (rootObj == null)
+            {
+                DontDestroyOnLoad(component);
+            } else
+            {
+                DontDestroyOnLoad(rootObj);
+            }
         }
 
-        public static void AddUnique(Component component)
+        public static void AddUnique(Component component, GameObject rootObj = null)
         {
             if (ComponentTypeSet.Add(component.GetType()))
             {
-                DontDestroyOnLoad(component);
+                if (rootObj == null)
+                {
+                    DontDestroyOnLoad(component);
+                } else
+                {
+                    DontDestroyOnLoad(rootObj);
+                }
             } else
             {
                 Destroy(component.gameObject);
             }
         }
 
-        public static void AddUniqueID(Component component, string hashID)
+        public static void AddUniqueID(Component component, string hashID, GameObject rootObj = null)
         {
             if (HashIDSet.Add(hashID))
             {
-                DontDestroyOnLoad(component);
+                if (rootObj == null)
+                {
+                    DontDestroyOnLoad(component);
+                } else
+                {
+                    DontDestroyOnLoad(rootObj);
+                }
             } else
             {
                 Destroy(component.gameObject);
