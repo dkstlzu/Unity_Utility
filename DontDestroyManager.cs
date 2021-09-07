@@ -17,12 +17,14 @@ namespace Utility
             UniqueID,
         }
 
-        public DontDestroyMethod HowTo;
+        public DontDestroyMethod Uniqueness;
+        [Tooltip("Replace old one with new one if duplicate")]
+        public bool ReplaceAsNew = false;
         public Component TargetComponent;
         public string HashID;
         void Awake()
         {
-            switch (HowTo)
+            switch (Uniqueness)
             {
                 case DontDestroyMethod.Normal :
                 Add(TargetComponent, gameObject);
