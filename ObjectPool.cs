@@ -23,6 +23,7 @@ namespace Utility
         Weapon,
         StarRain,
         Net,
+        VolcanicAsh,
     }
 
     /// <summary>
