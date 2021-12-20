@@ -24,6 +24,7 @@ namespace Utility
         StarRain,
         Net,
         VolcanicAsh,
+        Chim,
     }
 
     /// <summary>
