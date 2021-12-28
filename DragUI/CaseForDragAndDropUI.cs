@@ -14,9 +14,9 @@ namespace Utility.UI
 
         public void OnDrop(PointerEventData eventData)
         {
-            if (DragAndDropUI.instance.DragingUI != null)
+            if (DragAndDropableUI.DragingUI != null)
             {
-                DragAndDropUI.instance.DragingUI.Rect.anchoredPosition = _rect.anchoredPosition;
+                DragAndDropableUI.DragingUI.Rect.anchoredPosition = _rect.anchoredPosition;
             }
         }
     }

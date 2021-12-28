@@ -78,7 +78,7 @@ namespace Utility
 
             EnumHelper.ClapIndexOfEnum<SoundNaming>(_namingStart, _namingEnd, out indexOfEnumStart, out indexOfEnumEnd);
 
-            print($"{_namingStart} {_namingEnd} {indexOfEnumStart} {indexOfEnumEnd}");
+            print($"Loading SharedSounds from naming {_namingStart} to {_namingEnd} whose enum from {indexOfEnumStart} to {indexOfEnumEnd}");
 
             SoundNaming[] namings = Enum.GetValues(typeof(SoundNaming)) as SoundNaming[];
 

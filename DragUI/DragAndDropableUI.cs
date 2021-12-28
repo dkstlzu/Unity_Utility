@@ -6,9 +6,11 @@ namespace Utility.UI
     [RequireComponent(typeof(CanvasGroup))]
     public class DragAndDropableUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler, IBeginDragHandler, IEndDragHandler
     {
-        public CanvasGroup CanvasGroup;
-        public RectTransform Rect;
-        public bool SuccessfullyDroped = false;
+        public static DragAndDropableUI DragingUI;
+        public static DragAndDropableUI LastDraggedUI;
+        [System.NonSerialized] public RectTransform Rect;
+        [System.NonSerialized] public bool SuccessfullyDroped = false;
+        CanvasGroup CanvasGroup;
 
         [SerializeField] Vector2 _defaultPosition;
 
@@ -30,7 +32,7 @@ namespace Utility.UI
         
         public virtual void OnBeginDrag(PointerEventData eventData)
         {
-            DragAndDropUI.instance.DragingUI = this;
+            DragingUI = this;
             CanvasGroup.alpha = 0.6f;
             CanvasGroup.blocksRaycasts = false;
             _defaultPosition = Rect.anchoredPosition;
@@ -38,15 +40,13 @@ namespace Utility.UI
 
         public virtual void OnEndDrag(PointerEventData eventData)
         {
-            print("OnDragEnd");
-            DragAndDropUI.instance.DragingUI = null;
-            DragAndDropUI.instance.LastDragUI = this;
+            DragingUI = null;
+            LastDraggedUI = this;
             CanvasGroup.alpha = 1f;
             CanvasGroup.blocksRaycasts = true;
 
             if (!SuccessfullyDroped)
             {
-                print("Reset Position");
                 Rect.anchoredPosition = _defaultPosition;
             }
             SuccessfullyDroped = false;
@@ -54,7 +54,7 @@ namespace Utility.UI
 
         public virtual void OnDrag(PointerEventData eventData)
         {
-            Rect.anchoredPosition += eventData.delta / DragAndDropUI.instance.TargetCanvas.scaleFactor;
+            Rect.anchoredPosition += eventData.delta/GetComponent<Canvas>().scaleFactor;
         }
     }
 }
