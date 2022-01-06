@@ -10,8 +10,12 @@ using Utility.Naming;
 namespace Utility
 {
     [Serializable]
-    public class SoundManager<NamingType> : Singleton<SoundManager<NamingType>> where NamingType : Enum
+    public class SoundManager : Singleton<SoundManager>
     {
+        [Serializable] public class DictionaryOfEnumAudioClip : SerializableDictionary<Enum, AudioClip> {}
+        [Serializable] public class DictionaryOfEnumAudioSource : SerializableDictionary<Enum, AudioSource> {}
+        public string EnumTypeName;
+        public Type enumType;
         public enum SoundPlayMode
         {
             OnWorld, OnTransform, At,
@@ -20,7 +24,7 @@ namespace Utility
         [Serializable] public class SoundEventArgs
         {
             public SoundPlayMode SoundPlayMode;
-            public NamingType NamingType;
+            public Enum NamingType;
             public Transform Transform;
             public Vector3 RelativePosition;
             public bool AutoReturn;
@@ -31,7 +35,7 @@ namespace Utility
             public static SoundEvent soundEvent = new SoundEvent();
         }
 
-        [Serializable] protected class PathAndSceneTuple : StringTuple
+        [Serializable] public class PathAndSceneTuple : StringTuple
         {
             public string Path
             {
@@ -46,9 +50,9 @@ namespace Utility
             }
         }
         
-        protected Dictionary<NamingType, AudioClip> sharedAudioClipDict = new Dictionary<NamingType, AudioClip>();
-        protected Dictionary<NamingType, AudioClip> currentAudioClipDict = new Dictionary<NamingType, AudioClip>();
-        protected Dictionary<NamingType, AudioSource> playingAudioSourceDict = new Dictionary<NamingType, AudioSource>();
+        [SerializeField] protected DictionaryOfEnumAudioClip sharedAudioClipDict = new DictionaryOfEnumAudioClip();
+        [SerializeField] protected DictionaryOfEnumAudioClip currentAudioClipDict = new DictionaryOfEnumAudioClip();
+        [SerializeField] protected DictionaryOfEnumAudioSource playingAudioSourceDict = new DictionaryOfEnumAudioSource();
 
 
         public int NamingInterval = 100;
@@ -74,11 +78,10 @@ namespace Utility
 
         void Awake()
         {
-            // Initializing Collections
-            sharedAudioClipDict = new Dictionary<NamingType, AudioClip>();
-            currentAudioClipDict = new Dictionary<NamingType, AudioClip>();
-            playingAudioSourceDict = new Dictionary<NamingType, AudioSource>();
+            // Initializing enumType
+            enumType = Type.GetType(EnumTypeName);
 
+            // Initializing Collections
             for (int i = 0; i < WorldAudioSourceCount; i++)
             {
                 audioSourcesQueue.Enqueue(gameObject.AddComponent<AudioSource>());
@@ -108,25 +111,32 @@ namespace Utility
             string sharedResourcePath;
             if (resourcePathsForEachScene.Count == 0)
             {
-                print("SoundManager ResourcePathsForEachScene is emply. Check your Component.");
+                print("SoundManager ResourcePathsForEachScene is empty. Check your Component.");
                 return;
             }
             else
                 sharedResourcePath = resourcePathPrefix + resourcePathsForEachScene[SharingNamingRegion].Path;
 
-            int indexOfEnumStart;
-            int indexOfEnumEnd;
+            int indexOfEnumStart = 0;
+            int indexOfEnumEnd = 0;
 
-            EnumHelper.ClapIndexOfEnum<NamingType>(_namingStart, _namingEnd, out indexOfEnumStart, out indexOfEnumEnd);
+            var genericEnumMethod = typeof(EnumHelper).GetMethod("ClapIndexOfEnum").MakeGenericMethod(enumType);
+            object[] enumMethodParms = new object[]{_namingStart, _namingEnd, indexOfEnumStart, indexOfEnumEnd};
+            genericEnumMethod.Invoke(null, enumMethodParms);
+            indexOfEnumStart = (int)enumMethodParms[2];
+            indexOfEnumEnd = (int)enumMethodParms[3];
+            // EnumHelper.ClapIndexOfEnum<>(_namingStart, _namingEnd, out indexOfEnumStart, out indexOfEnumEnd);
 
             print($"Loading SharedSounds from naming {_namingStart} to {_namingEnd} whose enum from {indexOfEnumStart} to {indexOfEnumEnd}");
 
-            NamingType[] namings = Enum.GetValues(typeof(NamingType)) as NamingType[];
+            Array namings = enumType.GetEnumValues();
 
+            dynamic enumVal;
             for (int i = indexOfEnumStart; i <= indexOfEnumEnd; i++)
             {
-                AudioClip clip = Resources.Load<AudioClip>(sharedResourcePath + namings[i].ToString());
-                sharedAudioClipDict.Add(namings[i], clip);
+                enumVal = namings.GetValue(i);
+                AudioClip clip = Resources.Load<AudioClip>(sharedResourcePath + enumVal.ToString());
+                sharedAudioClipDict.Add(enumVal, clip);
             }
         }
 
@@ -142,9 +152,9 @@ namespace Utility
             int indexOfEnumStart;
             int indexOfEnumEnd;
 
-            EnumHelper.ClapIndexOfEnum<NamingType>(_namingStart, _namingEnd, out indexOfEnumStart, out indexOfEnumEnd);
+            EnumHelper.ClapIndexOfEnum<Enum>(_namingStart, _namingEnd, out indexOfEnumStart, out indexOfEnumEnd);
 
-            NamingType[] namings = Enum.GetValues(typeof(NamingType)) as NamingType[];
+            Enum[] namings = Enum.GetValues(typeof(Enum)) as Enum[];
 
             for (int i = indexOfEnumStart; i<=indexOfEnumEnd; i++)
             {
@@ -190,7 +200,7 @@ namespace Utility
         /// <param name="obj">The Transform on where play clip</param>
         /// <param name="relativePos"></param>
         /// <param name="Return"></param>
-        private void Play(NamingType soundName, Transform obj, Vector3 relativePos = new Vector3(), bool autoReturn = false)
+        private void Play(Enum soundName, Transform obj, Vector3 relativePos = new Vector3(), bool autoReturn = false)
         {
             AudioSource source;
             GameObject audioObj;
@@ -230,7 +240,7 @@ namespace Utility
             }
         }
 
-        public void PlayOnWorld(NamingType soundName)
+        public void PlayOnWorld(Enum soundName)
         {
             AudioSource audioSource = audioSourcesQueue.Dequeue();
 
@@ -245,12 +255,12 @@ namespace Utility
             audioSourcesQueue.Enqueue(audioSource);
         }
         
-        public void PlayOnTransform(NamingType soundName, Transform obj, Vector3 relativePos = new Vector3(), bool autoReturn = false)
+        public void PlayOnTransform(Enum soundName, Transform obj, Vector3 relativePos = new Vector3(), bool autoReturn = false)
         {
             Play(soundName, obj.transform, relativePos, autoReturn: autoReturn);
         }
 
-        public void PlayAt(NamingType soundName, Vector3 absolutePos)
+        public void PlayAt(Enum soundName, Vector3 absolutePos)
         {
             AudioClip clip = GetClip(soundName);
 
@@ -263,7 +273,7 @@ namespace Utility
             AudioSource.PlayClipAtPoint(clip, absolutePos);
         }
 
-        public void PlayAt(NamingType soundName, Transform obj, Vector3 relativePos = new Vector3())
+        public void PlayAt(Enum soundName, Transform obj, Vector3 relativePos = new Vector3())
         {
             AudioClip clip = GetClip(soundName);
 
@@ -276,14 +286,14 @@ namespace Utility
             AudioSource.PlayClipAtPoint(clip, obj.position + relativePos);
         }
 
-        public void Pause(NamingType soundName)
+        public void Pause(Enum soundName)
         {
             AudioSource source;
             if (playingAudioSourceDict.TryGetValue(soundName, out source))
                 source.Pause();
         }
 
-        public void UnPause(NamingType soundName)
+        public void UnPause(Enum soundName)
         {
             AudioSource source;
             if (playingAudioSourceDict.TryGetValue(soundName, out source))
@@ -292,7 +302,7 @@ namespace Utility
 
         public void PauseAll()
         {
-            foreach (KeyValuePair<NamingType, AudioSource> source in playingAudioSourceDict)
+            foreach (KeyValuePair<Enum, AudioSource> source in playingAudioSourceDict)
             {
                 source.Value.Pause();
             }
@@ -300,20 +310,20 @@ namespace Utility
 
         public void UnPauseAll()
         {
-            foreach (KeyValuePair<NamingType, AudioSource> source in playingAudioSourceDict)
+            foreach (KeyValuePair<Enum, AudioSource> source in playingAudioSourceDict)
             {
                 source.Value.UnPause();
             }
         }
 
-        public void Mute(NamingType soundName)
+        public void Mute(Enum soundName)
         {
             AudioSource source;
             if (playingAudioSourceDict.TryGetValue(soundName, out source))
                 source.mute = true;
         }
 
-        public void UnMute(NamingType soundName)
+        public void UnMute(Enum soundName)
         {
             AudioSource source;
             if (playingAudioSourceDict.TryGetValue(soundName, out source))
@@ -322,7 +332,7 @@ namespace Utility
 
         public void MuteAll()
         {
-            foreach (KeyValuePair<NamingType, AudioSource> source in playingAudioSourceDict)
+            foreach (KeyValuePair<Enum, AudioSource> source in playingAudioSourceDict)
             {
                 source.Value.mute = true;
             }
@@ -330,13 +340,13 @@ namespace Utility
 
         public void UnMuteAll()
         {
-            foreach (KeyValuePair<NamingType, AudioSource> source in playingAudioSourceDict)
+            foreach (KeyValuePair<Enum, AudioSource> source in playingAudioSourceDict)
             {
                 source.Value.mute = false;
             }
         }
 
-        private IEnumerator ReturnSound(AudioSource source, NamingType soundName, Transform obj)
+        private IEnumerator ReturnSound(AudioSource source, Enum soundName, Transform obj)
         {
             yield return new WaitWhile(() => source.isPlaying);
 
@@ -344,7 +354,7 @@ namespace Utility
             Destroy(source.gameObject);
         }
 
-        private AudioClip GetClip(NamingType soundName)
+        private AudioClip GetClip(Enum soundName)
         {
             AudioClip clip;
             if (currentAudioClipDict.TryGetValue(soundName, out clip)) {}

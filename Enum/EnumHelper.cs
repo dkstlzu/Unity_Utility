@@ -6,7 +6,7 @@ namespace Utility
 {
     public static class EnumHelper
     {
-        public static void ClapIndexOfEnum<EnumType>(int from, int to, out int startIndex, out int endIndex)
+        public static void ClapIndexOfEnum<EnumType>(int from, int to, out int startIndex, out int endIndex) where EnumType : Enum
         {
             UnityEngine.MonoBehaviour.print("EnumHelper Claping Index of " + typeof(EnumType));
             int enumStart = from;
