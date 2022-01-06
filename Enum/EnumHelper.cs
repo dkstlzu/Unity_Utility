@@ -8,6 +8,7 @@ namespace Utility
     {
         public static void ClapIndexOfEnum<EnumType>(int from, int to, out int startIndex, out int endIndex)
         {
+            UnityEngine.MonoBehaviour.print("EnumHelper Claping Index of " + typeof(EnumType));
             int enumStart = from;
             int enumEnd = to;
             startIndex = -1;
@@ -28,7 +29,7 @@ namespace Utility
                     startCheck = true;
                 }
 
-                if (i > enumEnd && !endCheck)
+                if (i >= enumEnd && !endCheck)
                 {
                     endIndex = index-1;
                     endCheck = true;

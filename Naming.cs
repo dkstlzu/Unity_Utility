@@ -3,6 +3,7 @@ using System;
 namespace Utility.Naming
 {
     /*
+    Naming의 예시입니다.
     각 네이밍 0~19번은 게임의 핵심적인 요소
     100~199번은 Room 0(UI Room)에서 사용되는 네이밍
     200~299번은 room 1에서 사용되는 네이밍
