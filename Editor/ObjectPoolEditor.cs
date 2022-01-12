@@ -12,20 +12,27 @@ namespace Utility
     public class ObjectPoolEditor : Editor
     {
         dynamic enumPopUp;
+        [MenuItem("ObjectPool/Print Properties")]
+        static void PrintProperties()
+        {
+            UnityConsole.ClearConsole();
+            SerializedProperty property = new SerializedObject(Selection.activeGameObject.GetComponent<ObjectPool>()).GetIterator();
+
+            string PropString = "";
+
+            while(property.Next(true))
+            {
+                PropString += property.propertyPath + "\n";
+            }
+
+            MonoBehaviour.print("Properties of this ObjectPool");
+            MonoBehaviour.print(PropString);
+        }
+        
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
             ObjectPool PL = target as ObjectPool;
-
-            if (GUILayout.Button("TEST"))
-            {
-                SerializedProperty property = serializedObject.GetIterator();
-                UnityConsole.ClearConsole();
-                while(property.Next(true))
-                {
-                    MonoBehaviour.print(property.propertyPath);
-                }
-            }
 
             PL.ShowStaticEnumsInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(PL.ShowStaticEnumsInEditor, "Static Included Enums");
             EditorGUILayout.EndFoldoutHeaderGroup();

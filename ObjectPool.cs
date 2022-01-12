@@ -38,6 +38,10 @@ namespace Utility
         public UnityEngine.GameObject SourceObject = null;
         public string SoruceFilePath = string.Empty;
         public int PoolSize = 10;
+        public int Count
+        {
+            get {return ActiveObjectList.Count + AvailableObjectList.Count;}
+        }
         public bool AutoReturn = false;
         public float AutoReturnTime = 5;
         //
