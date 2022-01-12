@@ -41,5 +41,14 @@ namespace Utility
                 endIndex = index;
             }
         }
+
+        public static Type GetEnumType(string enumName)
+        {
+            Type type = Type.GetType(enumName + ", Assembly-CSharp-firstpass", true, true);
+            if (type == null) Type.GetType(enumName + ", Assembly-CSharp", true, true);
+
+            if (type == null) UnityEngine.Debug.LogWarning("Wrong EnumName in EnumHelper.GetEnumType(). Check Assembly");
+            return type;
+        }
     }
 }

@@ -10,9 +10,19 @@ namespace Utility
     [Serializable]
     public class SoundManager : Singleton<SoundManager>
     {
-        public string EnumName = string.Empty;
+        // For Editor Script
+        public string EnumName;
+        public string EnumString;
         public bool EnumNameCorrect;
-        public Type EnumType = null;
+        public bool ShowSettingsInEditor;
+        public bool ShowPathSceneInEditor;
+        public bool ShowDatasIneditor;
+        public bool ShowPreloadedClipsInEditor;
+        public bool ShowSharedClipsInEditor;
+        public bool ShowCurrentClipsInEditor;
+        public bool ShowPlayingSourcesInEditor;
+        //
+
         public enum SoundPlayMode
         {
             OnWorld, OnTransform, At,
@@ -27,6 +37,20 @@ namespace Utility
             public bool AutoReturn;
         }
 
+        public Enum EnumValue
+        {
+            get
+            {
+                Type type = EnumHelper.GetEnumType(EnumName);
+                // Debug.LogFormat("EnumName : {0}, EnumString : {1}, EnumType : {2}", EnumName, EnumString, type.ToString());
+                return Enum.Parse(type, EnumString) as Enum;
+            }
+            set
+            {
+                EnumString = value.ToString();
+            }
+        }
+
         public List<AudioClip> PreloadedAudioClipList = new List<AudioClip>();
         public Dictionary<Enum, AudioClip> SharedAudioClipDict = new Dictionary<Enum, AudioClip>();
         public Dictionary<Enum, AudioClip> CurrentAudioClipDict = new Dictionary<Enum, AudioClip>();
@@ -39,7 +63,7 @@ namespace Utility
 
         public string ResourcePathPrefix = "Sounds/";
         public bool UsePathSceneSync;
-        public List<StringTuple> ResourcePathsForEachScene = new List<StringTuple>();
+        public List<(string Path, string Scene)> ResourcePathsForEachScene = new List<(string Path, string Scene)>();
 
         public int WorldAudioSourceCount = 5;
         private Queue<AudioSource> audioSourcesQueue = new Queue<AudioSource>();
@@ -74,8 +98,6 @@ namespace Utility
             _backGroundAudioSource.playOnAwake = true;
             _backGroundAudioSource.loop = true;
             _backGroundAudioSource.Play();
-
-            EnumType = Type.GetType(EnumName);
         }
 
         void Start()
@@ -90,8 +112,8 @@ namespace Utility
             AudioClip[] clips = Resources.LoadAll<AudioClip>(finalPath);
             foreach(AudioClip clip in clips)
             {
-                print(clip.name);
-                Enum enumValue = Enum.Parse(EnumType, clip.name) as Enum;
+                Enum enumValue = null;
+                enumValue = Enum.Parse(EnumValue.GetType(), clip.name) as Enum;
                 SharedAudioClipDict.Add(enumValue, clip);
             }
         }
@@ -104,7 +126,7 @@ namespace Utility
 
             EnumHelper.ClapIndexOfEnum<Enum>(_namingStart, _namingEnd, out indexOfEnumStart, out indexOfEnumEnd);
 
-            Enum[] namings = Enum.GetValues(EnumType) as Enum[];
+            Enum[] namings = Enum.GetValues(EnumValue.GetType()) as Enum[];
 
             for (int i = indexOfEnumStart; i<=indexOfEnumEnd; i++)
             {
@@ -118,7 +140,7 @@ namespace Utility
             string finalPath = Path.Combine(ResourcePathPrefix, path);
 
             AudioClip clip = Resources.Load<AudioClip>(finalPath);
-            Enum enumValue = Enum.Parse(EnumType, clip.name) as Enum;
+            Enum enumValue = Enum.Parse(EnumValue.GetType(), clip.name) as Enum;
             CurrentAudioClipDict.Add(enumValue, clip);
         }
 
@@ -129,7 +151,7 @@ namespace Utility
             AudioClip[] clips = Resources.LoadAll<AudioClip>(finalPath);
             foreach(AudioClip clip in clips)
             {
-                Enum enumValue = Enum.Parse(EnumType, clip.name) as Enum;
+                Enum enumValue = Enum.Parse(EnumValue.GetType(), clip.name) as Enum;
                 CurrentAudioClipDict.Add(enumValue, clip);
             }
         }
@@ -335,10 +357,10 @@ namespace Utility
         {
             for (int i = 0; i < ResourcePathsForEachScene.Count; i++)
             {
-                if (ResourcePathsForEachScene[i].String2 == scene.name)
+                if (ResourcePathsForEachScene[i].Scene == scene.name)
                 {
                     ClearCurrentSounds();
-                    LoadSoundsInFolder(ResourcePathsForEachScene[i].String1);
+                    LoadSoundsInFolder(ResourcePathsForEachScene[i].Path);
                     return;
                 }
             }

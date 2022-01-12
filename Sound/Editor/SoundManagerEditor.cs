@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,17 +9,6 @@ namespace Utility
     [CustomEditor(typeof(SoundManager))]
     public class SoundManagerEditor : Editor
     {
-        bool showSettings;
-        bool pathSceneFold;
-
-        bool datasFold;
-        bool preFold;
-        bool sharedFold;
-        bool currentFold;
-        bool playingFold;
-
-        List<dynamic> preloadedEnumList = new List<dynamic>();
-
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -31,16 +20,12 @@ namespace Utility
                 SM.EnumName = EditorGUILayout.TextField("Enum Name", SM.EnumName);
                 if (GUILayout.Button("Submit", GUILayout.Width(50)))
                 {
-                    // MonoBehaviour.print(SM.EnumName);
-                    // MonoBehaviour.print(SM.EnumType);
-                    // MonoBehaviour.print(typeof(DocsaSoundNaming));
-                    Type type = Type.GetType(SM.EnumName + ", Assembly-CSharp");
-                    if (type == null) type = Type.GetType(SM.EnumName + ", Assembly-CSharp-firstpass");
+                    Type type = EnumHelper.GetEnumType(SM.EnumName);
                     
                     if (type != null)
                     {
-                        SM.EnumType = type;
                         SM.EnumNameCorrect = true;
+                        SM.EnumValue = Activator.CreateInstance(type) as Enum;
                     }
                 }
                 EditorGUILayout.EndHorizontal();
@@ -49,9 +34,9 @@ namespace Utility
                 if (!EditorApplication.isPlaying)
                 {
                     if (GUILayout.Button("Reset EnumName")) CustomReset();
-                    if (GUILayout.Button("Settings")) showSettings = !showSettings;
+                    if (GUILayout.Button("Settings")) SM.ShowSettingsInEditor = !SM.ShowSettingsInEditor;
                     
-                    if (showSettings)
+                    if (SM.ShowSettingsInEditor)
                     {
                         SM.NamingInterval = EditorGUILayout.IntField("Enum Region Interval", SM.NamingInterval);
                         SM.WorldAudioSourceCount = EditorGUILayout.IntField("World Audio Source Number", SM.WorldAudioSourceCount);
@@ -64,16 +49,16 @@ namespace Utility
                         if (SM.UsePathSceneSync)
                         {
                             EditorGUILayout.BeginHorizontal();
-                            pathSceneFold = EditorGUILayout.BeginFoldoutHeaderGroup(pathSceneFold, "Path-Scene");
+                            SM.ShowPathSceneInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(SM.ShowPathSceneInEditor, "Path-Scene");
                             EditorGUILayout.EndFoldoutHeaderGroup();
                             if (GUILayout.Button("Add", GUILayout.Width(100)))
                             {
-                                SM.ResourcePathsForEachScene.Add(new StringTuple());
-                                pathSceneFold = true;
+                                SM.ResourcePathsForEachScene.Add(("", ""));
+                                SM.ShowPathSceneInEditor = true;
                             }
                             EditorGUILayout.EndHorizontal();
 
-                            if (pathSceneFold)
+                            if (SM.ShowPathSceneInEditor)
                             {
                                 EditorGUILayout.BeginHorizontal();
                                 EditorGUILayout.Space(20);
@@ -84,10 +69,10 @@ namespace Utility
                                 for (int i = 0; i < SM.ResourcePathsForEachScene.Count; i++)
                                 {
                                     EditorGUILayout.BeginHorizontal();
-                                    EditorGUILayout.LabelField(i.ToString(), GUILayout.Width(20));
-                                    SM.ResourcePathsForEachScene[i].String1 = EditorGUILayout.TextField(SM.ResourcePathsForEachScene[i].String1, GUILayout.Width(150));
-                                    SM.ResourcePathsForEachScene[i].String2 = EditorGUILayout.TextField(SM.ResourcePathsForEachScene[i].String2, GUILayout.Width(150));
-                                    if (GUILayout.Button("x", GUILayout.Width(20)))
+                                    EditorGUILayout.LabelField(i.ToString(), GUILayout.Width(EditorGUIUtility.currentViewWidth/10));
+                                    SM.ResourcePathsForEachScene[i] = 
+                                        (EditorGUILayout.TextField(SM.ResourcePathsForEachScene[i].Path), EditorGUILayout.TextField(SM.ResourcePathsForEachScene[i].Scene));
+                                    if (GUILayout.Button("x", GUILayout.Width(EditorGUIUtility.currentViewWidth/10)))
                                     {
                                         SM.ResourcePathsForEachScene.RemoveAt(i);
                                     }
@@ -99,42 +84,42 @@ namespace Utility
                     EditorGUILayout.Space(20);
                 }
 
-                datasFold = EditorGUILayout.BeginFoldoutHeaderGroup(datasFold, "Datas");
+                SM.ShowDatasIneditor = EditorGUILayout.BeginFoldoutHeaderGroup(SM.ShowDatasIneditor, "Datas");
                 EditorGUILayout.EndFoldoutHeaderGroup();
 
-                if (datasFold)
+                if (SM.ShowDatasIneditor)
                 {
                     EditorGUILayout.BeginHorizontal(GUIStyle.none);
-                    preFold = EditorGUILayout.BeginFoldoutHeaderGroup(preFold, "Preloaded Clips");
+                    SM.ShowPreloadedClipsInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(SM.ShowPreloadedClipsInEditor, "Preloaded Clips");
                     EditorGUILayout.EndFoldoutHeaderGroup();
                     if (GUILayout.Button("Add", GUILayout.Width(100)))
                     {
                         SM.PreloadedAudioClipList.Add(null);
-                        preFold = true;
+                        SM.ShowPreloadedClipsInEditor = true;
                     }
                     EditorGUILayout.EndHorizontal();
-                    if (preFold)
+                    if (SM.ShowPreloadedClipsInEditor)
                     {
                         ShowPreloadedEnumClip();
                     }
 
-                    sharedFold = EditorGUILayout.BeginFoldoutHeaderGroup(sharedFold, "Shared Clips");
+                    SM.ShowSharedClipsInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(SM.ShowSharedClipsInEditor, "Shared Clips");
                     EditorGUILayout.EndFoldoutHeaderGroup();
-                    if (sharedFold)
+                    if (SM.ShowSharedClipsInEditor)
                     {
                         ShowSharedEnumClip();
                     }
 
-                    currentFold = EditorGUILayout.BeginFoldoutHeaderGroup(currentFold, "Current Clips");
+                    SM.ShowCurrentClipsInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(SM.ShowCurrentClipsInEditor, "Current Clips");
                     EditorGUILayout.EndFoldoutHeaderGroup();
-                    if (currentFold)
+                    if (SM.ShowCurrentClipsInEditor)
                     {
                         ShowCurrentEnumClip();
                     }
 
-                    playingFold = EditorGUILayout.BeginFoldoutHeaderGroup(playingFold, "Playing Sources");
+                    SM.ShowPlayingSourcesInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(SM.ShowPlayingSourcesInEditor, "Playing Sources");
                     EditorGUILayout.EndFoldoutHeaderGroup();
-                    if (playingFold)
+                    if (SM.ShowPlayingSourcesInEditor)
                     {
                         ShowPlayingEnumSource();
                     }
@@ -143,8 +128,8 @@ namespace Utility
                 // Enum.TryParse<MyEnum>(EditorGUI.EnumPopup(new Rect(30, 30, 80, 80), testEnum).ToString(), out testEnum);
                 // SM.resourcePathsForEachScene = EditorGUILayout.
 
-                serializedObject.ApplyModifiedProperties();
             }
+            serializedObject.ApplyModifiedProperties();
 
             void ShowPreloadedEnumClip()
             {

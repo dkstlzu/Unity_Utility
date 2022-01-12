@@ -5,121 +5,111 @@ using UnityEngine;
 
 namespace Utility
 {
-    [System.Serializable]
-    public class PoolSettings
-    {
-        public PoolType PoolName;
-        public string SourceFilePath = "";
-        public int MaxPoolSize = 10;
-        public bool AutoReturn = false;
-        public float AutoReturnTime = 5;
-
-    }
-
-    public enum PoolType
-    {
-        Docsa,
-        Hunter,
-        Weapon,
-        StarRain,
-        Net,
-        VolcanicAsh,
-        Chim,
-    }
-
     /// <summary>
     /// Pooling
     /// </summary>
     public class ObjectPool : MonoBehaviour
     {
-        public static Dictionary<PoolType, ObjectPool> SPoolDict = new Dictionary<PoolType, ObjectPool>();
-        [Header("Pool Object Settings")]
-        public PoolType PoolName;
-
-        public GameObject SourceObject;
-        public string SoruceFilePath;
-
-        [Header("Capacity Settings")]
-        public int MaxPoolSize = 5;
-        public bool AutoReturn;
-        public float AutoReturnTime;
-
-        public GameObject[] ActiveObjects
+        // For Editor Script
+        public string EnumName;
+        [SerializeField] private string EnumString;
+        public bool EnumNameCorrect;
+        public static Dictionary<Enum, int> IncludedEnumsDict = new Dictionary<Enum, int>();
+        public List<(string, int)> TupleList;
+        public bool ShowSettingsInEditor;
+        public bool ShowDatasInEditor;
+        public bool ShowStaticEnumsInEditor;
+        // Static PoolDict
+        private static Dictionary<Enum, ObjectPool> SPoolDict = new Dictionary<Enum, ObjectPool>();
+        // PoolSettings
+        public Enum PoolEnum
         {
-            get 
+            get
             {
-                GameObject[] objs = new GameObject[ActiveObjectList.Count];
-                ActiveObjectList.CopyTo(objs);
-                return objs;
+                Type type = EnumHelper.GetEnumType(EnumName);
+                // Debug.LogFormat("EnumName : {0}, EnumString : {1}, EnumType : {2}", EnumName, EnumString, type.ToString());
+                return Enum.Parse(type, EnumString) as Enum;
+            }
+            set
+            {
+                EnumString = value.ToString();
             }
         }
-        private Queue<GameObject> AvailableObjectQueue = new Queue<GameObject>();
-        private List<GameObject> ActiveObjectList = new List<GameObject>();
+        public UnityEngine.GameObject SourceObject = null;
+        public string SoruceFilePath = string.Empty;
+        public int PoolSize = 10;
+        public bool AutoReturn = false;
+        public float AutoReturnTime = 5;
+        //
 
-        public static ObjectPool GetOrCreate(PoolType poolName, GameObject OnCallerGameObject = null)
+        public GameObject[] ActiveObjects{get{return ActiveObjectList.ToArray();}}
+        public GameObject[] AvailableObjects{get{return AvailableObjectList.ToArray();}}
+        public bool isAllocated;
+
+        [SerializeField] private List<GameObject> ActiveObjectList = new List<GameObject>();
+        [SerializeField] private List<GameObject> AvailableObjectList = new List<GameObject>();
+
+        void Awake()
+        {
+            if (!isAllocated) Allocate();
+        }
+
+        public static ObjectPool GetOrCreate(Enum poolName, GameObject poolGameObject = null)
         {
             ObjectPool pool;
             if (!SPoolDict.TryGetValue(poolName, out pool))
             {
-                if (OnCallerGameObject == null)
+                if (poolGameObject == null)
                 {
                     pool = new GameObject(poolName + "ObjectPool").AddComponent<ObjectPool>();
                 } else
                 {
-                    pool = OnCallerGameObject.AddComponent<ObjectPool>();
+                    pool = poolGameObject.AddComponent<ObjectPool>();
                 }
                 SPoolDict.Add(poolName, pool);
             }
 
             return pool;
         }
-        // public static ObjectPool GetOrCreate(string poolName, GameObject OnCallerGameObject = null)
-        // {
-        //     ObjectPool pool;
-        //     if (!SPoolDict.TryGetValue(poolName, out pool))
-        //     {
-        //         if (OnCallerGameObject == null)
-        //         {
-        //             pool = new GameObject(poolName + "ObjectPool").AddComponent<ObjectPool>();
-        //         } else
-        //         {
-        //             pool = OnCallerGameObject.AddComponent<ObjectPool>();
-        //         }
-        //         SPoolDict.Add(poolName, pool);
-        //     }
 
-        //     return pool;
-        // }
-
-        public ObjectPool Init(PoolSettings poolSettings)
+        public static ObjectPool GetOrCreate(string poolNameString, GameObject poolGameObject = null)
         {
-            // Initialize PoolSettings
-            PoolName = poolSettings.PoolName;
-            SoruceFilePath = poolSettings.SourceFilePath;
-            MaxPoolSize = poolSettings.MaxPoolSize;
-            AutoReturn = poolSettings.AutoReturn;
-            AutoReturnTime = poolSettings.AutoReturnTime;
-
-            if(SourceObject == null)
+            Type type = null;
+            foreach(var v in IncludedEnumsDict)
             {
-                SourceObject = Resources.Load(SoruceFilePath, typeof(GameObject)) as GameObject;
+                if (Enum.IsDefined(v.Key.GetType(), poolNameString))
+                {
+                    type = v.Key.GetType();
+                }
             }
 
-            Allocate();
+            if (type == null)
+            {
+                Debug.LogWarning("ObjectPool.GetOrCreate(string poolNameString) : Wrong PoolNameString");
+                return null;
+            }
 
-            return this;
+            Enum poolName = (Enum)Enum.Parse(type, poolNameString);
+            return GetOrCreate(poolName);
         }
 
-        private void Allocate()
+        public void Allocate()
         {
-            for (int i =0 ; i<MaxPoolSize; i++)
+            if (SourceObject == null)
             {
-                GameObject pooledObject = Instantiate(SourceObject, transform);
+                Debug.LogError(gameObject.name + " ObjectPool SourceObject is null. Check again");
+                return;
+            }
+
+            for (int i =0 ; i<PoolSize; i++)
+            {
+                GameObject pooledObject = Instantiate(SourceObject as GameObject, transform);
 
                 pooledObject.name = pooledObject.name + i.ToString();
-                AvailableObjectQueue.Enqueue(pooledObject);
+                AvailableObjectList.Add(pooledObject);
                 pooledObject.SetActive(false);
             }
+            isAllocated = true;
         }
 
         /// <summary>
@@ -132,14 +122,15 @@ namespace Utility
         {
             GameObject obj;
 
-            int AvailableCount = AvailableObjectQueue.Count;
+            int AvailableCount = AvailableObjectList.Count;
 
             if (AvailableCount <= 0)
             {
                 return null;
             }else
             {
-                obj = AvailableObjectQueue.Dequeue();
+                obj = AvailableObjectList[0];
+                AvailableObjectList.RemoveAt(0);
                 ActiveObjectList.Add(obj);
                 obj.transform.SetPositionAndRotation(pos, rot);
                 obj.SetActive(true);
@@ -166,15 +157,15 @@ namespace Utility
         {
             GameObject obj;
 
-            int AvailableCount = AvailableObjectQueue.Count;
+            int AvailableCount = AvailableObjectList.Count;
 
             if (AvailableCount <= 0)
             {
                 return null;
             }else
             {
-                obj = AvailableObjectQueue.Dequeue();
-
+                obj = AvailableObjectList[0];
+                AvailableObjectList.RemoveAt(0);
                 // Initiater implement here
                 initiater(obj);
                 //
@@ -202,7 +193,7 @@ namespace Utility
             {
                 obj.SetActive(false);
                 ActiveObjectList.Remove(obj);
-                AvailableObjectQueue.Enqueue(obj);
+                AvailableObjectList.Add(obj);
             }
         }
 
@@ -233,16 +224,45 @@ namespace Utility
         {
             ReturnAll();
 
-            while(AvailableObjectQueue.Count > 0)
+            while(AvailableObjectList.Count > 0)
             {
-                GameObject obj = AvailableObjectQueue.Dequeue();
+                GameObject obj = AvailableObjectList[0];
+                AvailableObjectList.RemoveAt(0);
                 Destroy(obj.gameObject);
             }
-            AvailableObjectQueue = null;
+            AvailableObjectList = null;
             ActiveObjectList = null;
-            SPoolDict.Remove(PoolName);
+            SPoolDict.Remove(PoolEnum);
 
             Destroy(gameObject);
+        }
+
+        public void Clear()
+        {
+#if UNITY_EDITOR
+            for (int i = 0; i < AvailableObjectList.Count; i++)
+            {
+                DestroyImmediate(AvailableObjectList[i]);
+            }
+
+            for (int i = 0; i < ActiveObjectList.Count; i++)
+            {
+                DestroyImmediate(ActiveObjectList[i]);
+            }
+#elif UNITY_STANDALONE
+            for (int i = 0; i < AvailableObjectList.Count; i++)
+            {
+                DestroyImmediate(AvailableObjectList[i]);
+            }
+
+            for (int i = 0; i < ActiveObjectList.Count; i++)
+            {
+                Destroy(ActiveObjectList[i]);
+            }
+#endif
+
+            AvailableObjectList.Clear();
+            ActiveObjectList.Clear();
         }
 
         IEnumerator AutoReturnCoroutine(GameObject obj, float time=-1)
