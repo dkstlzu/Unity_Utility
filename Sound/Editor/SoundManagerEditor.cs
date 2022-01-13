@@ -33,7 +33,7 @@ namespace Utility
             {
                 if (!EditorApplication.isPlaying)
                 {
-                    if (GUILayout.Button("Reset EnumName")) CustomReset();
+                    if (GUILayout.Button(SM.EnumName + " : Reset EnumName")) CustomReset();
                     if (GUILayout.Button("Settings")) SM.ShowSettingsInEditor = !SM.ShowSettingsInEditor;
                     
                     if (SM.ShowSettingsInEditor)
