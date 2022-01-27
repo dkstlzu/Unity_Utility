@@ -14,13 +14,35 @@ namespace Utility
         public string EnumName;
         [SerializeField] private string EnumString;
         public bool EnumNameCorrect;
-        public static Dictionary<Enum, int> IncludedEnumsDict = new Dictionary<Enum, int>();
-        public List<(string, int)> TupleList;
+        public List<string> IncludedEnumStringList = new List<string>();
+        public List<int> IncludedEnumCountList = new List<int>();
         public bool ShowSettingsInEditor;
         public bool ShowDatasInEditor;
         public bool ShowStaticEnumsInEditor;
+
+        public static void AddEnumCount(Enum enumValue, ObjectPool pool)
+        {
+            if (SPoolTupleDict.ContainsKey(enumValue))
+            {
+                SPoolTupleDict[enumValue] = (SPoolTupleDict[enumValue].Item1, SPoolTupleDict[enumValue].Item2 + 1);
+            } else
+            {
+                SPoolTupleDict.Add(enumValue, (pool, 1));
+            }
+        }
+
+        public static void SubtractEnumCount(Enum enumValue)
+        {
+            if (SPoolTupleDict.ContainsKey(enumValue))
+            {
+                SPoolTupleDict[enumValue] = (SPoolTupleDict[enumValue].Item1, SPoolTupleDict[enumValue].Item2 - 1);
+            } else
+            {
+                Debug.LogWarning($"{enumValue} is not in static ObjectPool.SPoolTupleDict.");
+            }
+        }
         // Static PoolDict
-        private static Dictionary<Enum, ObjectPool> SPoolDict = new Dictionary<Enum, ObjectPool>();
+        public static Dictionary<Enum, (ObjectPool, int)> SPoolTupleDict = new Dictionary<Enum, (ObjectPool, int)>();
         // PoolSettings
         public Enum PoolEnum
         {
@@ -53,13 +75,30 @@ namespace Utility
         [SerializeField] private List<GameObject> ActiveObjectList = new List<GameObject>();
         [SerializeField] private List<GameObject> AvailableObjectList = new List<GameObject>();
 
-        void Awake()
+        void Start()
         {
-            if (!isAllocated) Allocate();
+            ObjectPool.AddEnumCount(PoolEnum, this);
         }
 
         public static ObjectPool GetOrCreate(Enum poolName, GameObject poolGameObject = null)
         {
+
+            (ObjectPool, int) tuple;
+            if (!SPoolTupleDict.TryGetValue(poolName, out tuple))
+            {
+                if (poolGameObject == null)
+                {
+                    tuple = (new GameObject(poolName + "ObjectPool").AddComponent<ObjectPool>(), 1);
+                } else
+                {
+                    tuple = (poolGameObject.AddComponent<ObjectPool>(), 1);
+                }
+                SPoolTupleDict.Add(poolName, tuple);
+            }
+
+            return tuple.Item1;
+            
+            /*
             ObjectPool pool;
             if (!SPoolDict.TryGetValue(poolName, out pool))
             {
@@ -72,14 +111,14 @@ namespace Utility
                 }
                 SPoolDict.Add(poolName, pool);
             }
-
             return pool;
+            */
         }
 
         public static ObjectPool GetOrCreate(string poolNameString, GameObject poolGameObject = null)
         {
             Type type = null;
-            foreach(var v in IncludedEnumsDict)
+            foreach(var v in SPoolTupleDict)
             {
                 if (Enum.IsDefined(v.Key.GetType(), poolNameString))
                 {
@@ -94,7 +133,7 @@ namespace Utility
             }
 
             Enum poolName = (Enum)Enum.Parse(type, poolNameString);
-            return GetOrCreate(poolName);
+            return GetOrCreate(poolName, poolGameObject);
         }
 
         public void Allocate()
@@ -125,6 +164,7 @@ namespace Utility
         public GameObject Instantiate(Vector3 pos, Quaternion rot)
         {
             GameObject obj;
+            print("Instantiate");
 
             int AvailableCount = AvailableObjectList.Count;
 
@@ -149,7 +189,7 @@ namespace Utility
         }
 
 
-        public delegate void Initiater(UnityEngine.Object parameters);
+        public delegate void Initiater(UnityEngine.GameObject targetObject);
 
         /// <summary>
         /// ObjectPool에서 Creature를 가져옵니다. 그러나 OnEnable이 불리기 전에 Initiater를 통해 초기화작업을 수행합니다.
@@ -160,6 +200,7 @@ namespace Utility
         public GameObject InstantiateAfterInit(Vector3 pos, Quaternion rot, Initiater initiater)
         {
             GameObject obj;
+            print("Instantiate after init");
 
             int AvailableCount = AvailableObjectList.Count;
 
@@ -170,10 +211,8 @@ namespace Utility
             {
                 obj = AvailableObjectList[0];
                 AvailableObjectList.RemoveAt(0);
-                // Initiater implement here
+                // Initiater
                 initiater(obj);
-                //
-
                 ActiveObjectList.Add(obj);
                 obj.transform.SetPositionAndRotation(pos, rot);
                 obj.SetActive(true);
@@ -195,6 +234,7 @@ namespace Utility
         {
             if (ActiveObjectList.Contains(obj))
             {
+                obj.transform.SetParent(transform);
                 obj.SetActive(false);
                 ActiveObjectList.Remove(obj);
                 AvailableObjectList.Add(obj);
@@ -221,6 +261,17 @@ namespace Utility
         }
 
         /// <summary>
+        /// Return all of ObjectPool
+        /// </summary>
+        public static void ReturnAllPools()
+        {
+            foreach (var pair in SPoolTupleDict)
+            {
+                pair.Value.Item1.ReturnAll();
+            }
+        }
+
+        /// <summary>
         /// Pool을 Dispose합니다.
         /// Game이 끝났을때 이용합니다.
         /// </summary>
@@ -236,13 +287,14 @@ namespace Utility
             }
             AvailableObjectList = null;
             ActiveObjectList = null;
-            SPoolDict.Remove(PoolEnum);
+            SubtractEnumCount(PoolEnum);
 
             Destroy(gameObject);
         }
 
         public void Clear()
         {
+            SubtractEnumCount(PoolEnum);
 #if UNITY_EDITOR
             for (int i = 0; i < AvailableObjectList.Count; i++)
             {
@@ -256,7 +308,7 @@ namespace Utility
 #elif UNITY_STANDALONE
             for (int i = 0; i < AvailableObjectList.Count; i++)
             {
-                DestroyImmediate(AvailableObjectList[i]);
+                Destroy(AvailableObjectList[i]);
             }
 
             for (int i = 0; i < ActiveObjectList.Count; i++)
@@ -267,6 +319,8 @@ namespace Utility
 
             AvailableObjectList.Clear();
             ActiveObjectList.Clear();
+
+            isAllocated = false;
         }
 
         IEnumerator AutoReturnCoroutine(GameObject obj, float time=-1)

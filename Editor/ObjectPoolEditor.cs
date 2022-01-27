@@ -34,22 +34,6 @@ namespace Utility
             serializedObject.Update();
             ObjectPool PL = target as ObjectPool;
 
-            PL.ShowStaticEnumsInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(PL.ShowStaticEnumsInEditor, "Static Included Enums");
-            EditorGUILayout.EndFoldoutHeaderGroup();
-
-            if (PL.ShowStaticEnumsInEditor)
-            {
-                int index = 1;
-                foreach(var v in ObjectPool.IncludedEnumsDict)
-                {
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField(index + ". " +v.Key);
-                    EditorGUILayout.LabelField("Count : " + v.Value.ToString(), GUILayout.Width(100));
-                    EditorGUILayout.EndHorizontal();
-                    index++;
-                }
-            }
-
             if (!PL.EnumNameCorrect)
             {
                 EditorGUILayout.BeginHorizontal();
@@ -62,21 +46,12 @@ namespace Utility
                     {
                         PL.EnumNameCorrect = true;
                         PL.PoolEnum = Activator.CreateInstance(type) as Enum;
-                        int countTemp;
-                        if (ObjectPool.IncludedEnumsDict.TryGetValue(PL.PoolEnum, out countTemp))
-                        {
-                            ObjectPool.IncludedEnumsDict[PL.PoolEnum] = countTemp+1;
-                        } else
-                        {
-                            ObjectPool.IncludedEnumsDict.Add(PL.PoolEnum, 1);
-                        }
                         PL.ShowSettingsInEditor = true;
                     }
                 }
                 EditorGUILayout.EndHorizontal();
             } else
             {
-                // MonoBehaviour.print(serializedObject.FindProperty());
                 if (!EditorApplication.isPlaying)
                 {
                     if (GUILayout.Button("Settings")) PL.ShowSettingsInEditor = !PL.ShowSettingsInEditor;
@@ -112,12 +87,38 @@ namespace Utility
                             }
                         } else if (GUILayout.Button("Destroy Objects", GUILayout.Width(EditorGUIUtility.currentViewWidth/2)))
                         {
-                            DestoryObjects();
+                            ClearObjectPool();
                         }
                         GUI.enabled = true;
                         EditorGUILayout.EndHorizontal();
 
                         EditorGUILayout.Space(20);
+                    }
+                } else
+                {
+                    PL.ShowStaticEnumsInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(PL.ShowStaticEnumsInEditor, new GUIContent("Static Included Enums", "Only show on playing"));
+                    EditorGUILayout.EndFoldoutHeaderGroup();
+
+                    if (PL.ShowStaticEnumsInEditor)
+                    {
+                        if (PL.IncludedEnumStringList.Count != ObjectPool.SPoolTupleDict.Count)
+                        {
+                            PL.IncludedEnumStringList.Clear();
+                            PL.IncludedEnumCountList.Clear();
+                            foreach(var v in ObjectPool.SPoolTupleDict)
+                            {
+                                PL.IncludedEnumStringList.Add(v.Key.GetType() + "." + v.Key.ToString());
+                                PL.IncludedEnumCountList.Add(v.Value.Item2);
+                            }
+                        }
+
+                        for (int i = 0; i < PL.IncludedEnumCountList.Count; i++)
+                        {
+                            EditorGUILayout.BeginHorizontal();
+                            EditorGUILayout.LabelField(i + ". " + PL.IncludedEnumStringList[i]);
+                            EditorGUILayout.LabelField("Count : " + PL.IncludedEnumCountList[i], GUILayout.Width(100));
+                            EditorGUILayout.EndHorizontal();
+                        }
                     }
                 }
 
@@ -138,23 +139,22 @@ namespace Utility
 
             void CustomReset()
             {
-                if (ObjectPool.IncludedEnumsDict.ContainsKey(PL.PoolEnum))
+                if (ObjectPool.SPoolTupleDict.ContainsKey(PL.PoolEnum))
                 {
-                    ObjectPool.IncludedEnumsDict[PL.PoolEnum] = ObjectPool.IncludedEnumsDict[PL.PoolEnum]-1;
-                    if (ObjectPool.IncludedEnumsDict[PL.PoolEnum] <= 0)
-                    {
-                        ObjectPool.IncludedEnumsDict.Remove(PL.PoolEnum);
-                    }
-                    DestoryObjects();
+                    if (ObjectPool.SPoolTupleDict[PL.PoolEnum].Item2 <= 1)
+                        ObjectPool.SPoolTupleDict.Remove(PL.PoolEnum);
+                    else
+                        ObjectPool.SPoolTupleDict[PL.PoolEnum] = (ObjectPool.SPoolTupleDict[PL.PoolEnum].Item1, ObjectPool.SPoolTupleDict[PL.PoolEnum].Item2 - 1);
+
+                    ClearObjectPool();
                 }
                 PL.gameObject.AddComponent<ObjectPool>();
                 DestroyImmediate(PL);
             }
 
-            void DestoryObjects()
+            void ClearObjectPool()
             {
                 PL.Clear();
-                PL.isAllocated = false;
             }
 
             void ShowAvilableObjects()

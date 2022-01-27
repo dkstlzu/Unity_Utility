@@ -16,7 +16,7 @@ namespace Utility
         public bool EnumNameCorrect;
         public bool ShowSettingsInEditor;
         public bool ShowPathSceneInEditor;
-        public bool ShowDatasIneditor;
+        public bool ShowDatasInEditor;
         public bool ShowPreloadedClipsInEditor;
         public bool ShowSharedClipsInEditor;
         public bool ShowCurrentClipsInEditor;
@@ -83,21 +83,24 @@ namespace Utility
 
         void Awake()
         {
-            // Initializing Collections
-            for (int i = 0; i < WorldAudioSourceCount; i++)
-            {
-                audioSourcesQueue.Enqueue(gameObject.AddComponent<AudioSource>());
-            }
-
-            // SceneLoad CallBack Insert
-            SceneManager.sceneLoaded += OnSceneLoad;
-
             // BackGroundMusic Start
             _backGroundAudioSource = gameObject.AddComponent<AudioSource>();
             _backGroundAudioSource.clip = BackGroundMusicClip;
             _backGroundAudioSource.playOnAwake = true;
             _backGroundAudioSource.loop = true;
             _backGroundAudioSource.Play();
+
+            // SceneLoad CallBack Insert
+            SceneManager.sceneLoaded += OnSceneLoad;
+
+            // Add audiosources
+            for (int i = 0; i < WorldAudioSourceCount; i++)
+            {
+                var v = gameObject.AddComponent<AudioSource>();
+                // fold added component
+                audioSourcesQueue.Enqueue(v);
+            }
+            UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(_backGroundAudioSource, false);
         }
 
         void Start()
