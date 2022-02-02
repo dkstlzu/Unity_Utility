@@ -4,9 +4,51 @@ using System;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEditor;
 
 namespace Utility
 {
+    [CreateAssetMenu(fileName = "SoundArgs", menuName = "ScriptableObjects/SoundArgs")]
+    [Serializable] public class SoundArgs : ScriptableObject
+    {
+        [SerializeField][HideInInspector] private string EnumName;
+        [SerializeField][HideInInspector] private string EnumValue;
+        [HideInInspector] public bool EnumNameCorrect;
+        public Enum SoundNaming
+        {
+            get
+            {
+                Enum val;
+                try
+                {
+                    Type enumType = EnumHelper.GetEnumType(EnumName);
+                    if (!Enum.IsDefined(enumType, EnumValue))
+                        EnumValue = ((Enum)Enum.GetValues(enumType).GetValue(0)).ToString();
+                    val = Enum.Parse(enumType, EnumValue) as Enum;
+                } catch
+                {
+                    // Debug.LogWarning($"ObjectPool({gameObject.name}) EnumName or EnumValue is wrong. Check again.");
+                    return null;
+                }
+                return val;
+            }
+        }
+        public SoundManager.SoundPlayMode SoundPlayMode;
+        public Transform Transform;
+        public Vector3 RelativePosition;
+        public bool AutoReturn;
+
+        public SoundArgs(string EnumValue)
+        {
+            EnumName = EnumValue;
+        }
+
+        public SoundArgs(Type EnumType)
+        {
+            EnumName = EnumType.AssemblyQualifiedName;
+        }
+    }
+
     [Serializable]
     public class SoundManager : Singleton<SoundManager>
     {
@@ -31,15 +73,6 @@ namespace Utility
         public enum SoundPlayMode
         {
             OnWorld, OnTransform, At,
-        }
-
-        [Serializable] public class SoundArgs
-        {
-            public Enum SoundNaming;
-            public SoundPlayMode SoundPlayMode;
-            public Transform Transform;
-            public Vector3 RelativePosition;
-            public bool AutoReturn;
         }
 
         [Serializable] public struct PathScene
