@@ -11,6 +11,7 @@ namespace Utility
     {
         SerializedProperty EnumNameCorrect;
         SerializedProperty EnumTypeName;
+        SerializedProperty EnumString;
         SerializedProperty ShowSettingsInEditor;
         SerializedProperty ShowPathSceneInEditor;
         SerializedProperty ShowDatasInEditor;
@@ -28,11 +29,12 @@ namespace Utility
         // Todo
         SerializedProperty ResourcePathsForEachScene;
         SerializedProperty PreloadedAudioClipList;
-        //
+        
         void OnEnable()
         {
             EnumNameCorrect = serializedObject.FindProperty("EnumNameCorrect");
             EnumTypeName = serializedObject.FindProperty("_enumTypeName");
+            EnumString = serializedObject.FindProperty("_enumString");
             ShowSettingsInEditor = serializedObject.FindProperty("ShowSettingsInEditor");
             ShowPathSceneInEditor = serializedObject.FindProperty("ShowPathSceneInEditor");
             ShowDatasInEditor = serializedObject.FindProperty("ShowDatasInEditor");
@@ -60,14 +62,14 @@ namespace Utility
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(EnumTypeName, new GUIContent("Enum Name"));
-                if (GUILayout.Button("Submit", GUILayout.Width(50)))
+                if (GUILayout.Button("Submit", GUILayout.Width(50)) || Event.current.keyCode == KeyCode.Return)
                 {
                     Type type = EnumHelper.GetEnumType(EnumTypeName.stringValue);
                     
                     if (type != null)
                     {
                         EnumNameCorrect.boolValue = true;
-                        SM.EnumValue = Activator.CreateInstance(type) as Enum;
+                        EnumString.stringValue = (Activator.CreateInstance(type) as Enum).ToString();
                     }
                 }
                 EditorGUILayout.EndHorizontal();
@@ -78,6 +80,7 @@ namespace Utility
                     if (GUILayout.Button(EnumTypeName.stringValue + " : Reset EnumTypeName")) 
                     {
                         CustomReset();
+                        serializedObject.ApplyModifiedProperties();
                         return;
                     }
                     if (GUILayout.Button("Settings")) ShowSettingsInEditor.boolValue = !ShowSettingsInEditor.boolValue;
@@ -259,8 +262,9 @@ namespace Utility
 
             void CustomReset()
             {
-                ((SoundManager)serializedObject.targetObject).gameObject.AddComponent<SoundManager>();
-                DestroyImmediate(SM);
+                EnumNameCorrect.boolValue = false;
+                EnumTypeName.stringValue = string.Empty;
+                EnumString.stringValue = string.Empty;
             }
         }
     }

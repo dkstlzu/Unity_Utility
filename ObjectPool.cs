@@ -16,19 +16,12 @@ namespace Utility
         public bool EnumNameCorrect;
         public List<string> IncludedEnumStringList = new List<string>();
         public List<int> IncludedEnumCountList = new List<int>();
-        // public bool ShowSettingsInEditor;
-        // public bool ShowDatasInEditor;
-        // public bool ShowStaticEnumsInEditor;
-        public dynamic what;
-        [System.Serializable]
-        public class TestClass {};
-        public TestClass testclass = new TestClass();
 
         public static void AddEnumCount(Enum enumValue, ObjectPool pool)
         {
             if (SPoolTupleDict.ContainsKey(enumValue))
             {
-                SPoolTupleDict[enumValue] = (SPoolTupleDict[enumValue].Item1, SPoolTupleDict[enumValue].Item2 + 1);
+                SPoolTupleDict[enumValue] = (SPoolTupleDict[enumValue].Pool, SPoolTupleDict[enumValue].Count + 1);
             } else
             {
                 SPoolTupleDict.Add(enumValue, (pool, 1));
@@ -39,14 +32,18 @@ namespace Utility
         {
             if (SPoolTupleDict.ContainsKey(enumValue))
             {
-                SPoolTupleDict[enumValue] = (SPoolTupleDict[enumValue].Item1, SPoolTupleDict[enumValue].Item2 - 1);
+                SPoolTupleDict[enumValue] = (SPoolTupleDict[enumValue].Pool, SPoolTupleDict[enumValue].Count - 1);
+                if (SPoolTupleDict[enumValue].Item2 <= 0)
+                {
+                    SPoolTupleDict.Remove(enumValue);
+                }
             } else
             {
                 Debug.LogWarning($"{enumValue} is not in static ObjectPool.SPoolTupleDict.");
             }
         }
         // Static PoolDict
-        public static Dictionary<Enum, (ObjectPool, int)> SPoolTupleDict = new Dictionary<Enum, (ObjectPool, int)>();
+        public static Dictionary<Enum, (ObjectPool Pool, int Count)> SPoolTupleDict = new Dictionary<Enum, (ObjectPool, int)>();
         // PoolSettings
         public Enum PoolEnum
         {
@@ -107,22 +104,6 @@ namespace Utility
             }
 
             return tuple.Item1;
-            
-            /*
-            ObjectPool pool;
-            if (!SPoolDict.TryGetValue(poolName, out pool))
-            {
-                if (poolGameObject == null)
-                {
-                    pool = new GameObject(poolName + "ObjectPool").AddComponent<ObjectPool>();
-                } else
-                {
-                    pool = poolGameObject.AddComponent<ObjectPool>();
-                }
-                SPoolDict.Add(poolName, pool);
-            }
-            return pool;
-            */
         }
 
         public static ObjectPool GetOrCreate(string poolNameString, GameObject poolGameObject = null)
@@ -276,7 +257,7 @@ namespace Utility
         {
             foreach (var pair in SPoolTupleDict)
             {
-                pair.Value.Item1.ReturnAll();
+                pair.Value.Pool.ReturnAll();
             }
         }
 
@@ -304,17 +285,6 @@ namespace Utility
         public void Clear()
         {
             SubtractEnumCount(PoolEnum);
-#if UNITY_EDITOR
-            for (int i = 0; i < AvailableObjectList.Count; i++)
-            {
-                DestroyImmediate(AvailableObjectList[i]);
-            }
-
-            for (int i = 0; i < ActiveObjectList.Count; i++)
-            {
-                DestroyImmediate(ActiveObjectList[i]);
-            }
-#elif UNITY_STANDALONE
             for (int i = 0; i < AvailableObjectList.Count; i++)
             {
                 Destroy(AvailableObjectList[i]);
@@ -324,7 +294,6 @@ namespace Utility
             {
                 Destroy(ActiveObjectList[i]);
             }
-#endif
 
             AvailableObjectList.Clear();
             ActiveObjectList.Clear();

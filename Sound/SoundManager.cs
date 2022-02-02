@@ -55,6 +55,7 @@ namespace Utility
         // For Editor Script
         [SerializeField] private bool EnumNameCorrect;
         [SerializeField] private string _enumTypeName;
+        [SerializeField] private string _enumString;
         [SerializeField] private bool ShowSettingsInEditor;
         [SerializeField] private bool ShowPathSceneInEditor;
         [SerializeField] private bool ShowDatasInEditor;
@@ -108,7 +109,6 @@ namespace Utility
         private Queue<AudioSource> _audioSourcesQueue = new Queue<AudioSource>();
 
         public string EnumTypeName {get{return _enumTypeName;}}
-        private string _enumString;
 
         public bool UsePathSceneSync;
         public List<PathScene> ResourcePathsForEachScene = new List<PathScene>();

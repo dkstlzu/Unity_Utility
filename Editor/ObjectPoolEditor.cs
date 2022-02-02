@@ -16,17 +16,23 @@ namespace Utility
         static void PrintProperties()
         {
             UnityConsole.ClearConsole();
-            SerializedProperty property = new SerializedObject(Selection.activeGameObject.GetComponent<ObjectPool>()).GetIterator();
+            Component[] components = Selection.activeGameObject.GetComponents(typeof(Component));
 
-            string PropString = "";
-
-            while(property.Next(true))
+            foreach(Component component in components)
             {
-                PropString += property.propertyPath + "\n";
-            }
+                if (component is Transform) continue;
+                SerializedProperty property = new SerializedObject(component).GetIterator();
 
-            MonoBehaviour.print("Properties of this ObjectPool");
-            MonoBehaviour.print(PropString);
+                string PropString = "";
+
+                while(property.Next(true))
+                {
+                    PropString += property.propertyPath + "\n";
+                }
+
+                MonoBehaviour.print($"Properties of {component.gameObject.name}.{component.name}");
+                MonoBehaviour.print(PropString);
+            }
         }
 
         SerializedProperty EnumName;
@@ -37,6 +43,9 @@ namespace Utility
         SerializedProperty PoolSize;
         SerializedProperty AutoReturn;
         SerializedProperty AutoReturnTime;
+        SerializedProperty isAllocated;
+        SerializedProperty AvailableObjectList;
+        SerializedProperty ActiveObjectList;
 
         bool ShowSettingsInEditor;
         bool ShowStaticEnumsInEditor;
@@ -50,6 +59,9 @@ namespace Utility
             SourceFilePath = serializedObject.FindProperty("SourceFilePath");
             PoolSize = serializedObject.FindProperty("PoolSize");
             AutoReturn = serializedObject.FindProperty("AutoReturn");
+            isAllocated = serializedObject.FindProperty("isAllocated");
+            AvailableObjectList = serializedObject.FindProperty("AvailableObjectList");
+            ActiveObjectList = serializedObject.FindProperty("ActiveObjectList");
         }
         
         public override void OnInspectorGUI()
@@ -80,7 +92,7 @@ namespace Utility
 
                     if (ShowSettingsInEditor)
                     {
-                        if (PL.PoolEnum != null)
+                        if (EnumNameCorrect.boolValue)
                         {
                             EnumValue.stringValue = EditorGUILayout.EnumPopup("PoolType", PL.PoolEnum).ToString();
                         } else
@@ -106,13 +118,13 @@ namespace Utility
                             CustomReset();
                         
                         GUI.enabled = SourceObject.objectReferenceValue || !SourceFilePath.stringValue.Equals(string.Empty);
-                        if (!PL.isAllocated)
+                        if (!isAllocated.boolValue)
                         {
                             if (GUILayout.Button("Allocate", GUILayout.Width(EditorGUIUtility.currentViewWidth/2)))
                             {
                                 if (!SourceObject.objectReferenceValue)
                                     SourceObject.objectReferenceValue = Resources.Load(SourceFilePath.stringValue) as GameObject;
-                                PL.Allocate();
+                                Allocate();
                             }
                         } else if (GUILayout.Button("Destroy Objects", GUILayout.Width(EditorGUIUtility.currentViewWidth/2)))
                         {
@@ -163,57 +175,83 @@ namespace Utility
 
             serializedObject.ApplyModifiedProperties();
 
+            void Allocate()
+            {
+                ClearObjectPool();
+                if (SourceObject.objectReferenceValue == null)
+                {
+                    Debug.LogError(PL.gameObject.name + " ObjectPool SourceObject is null. Check again");
+                    return;
+                }
+
+                for (int i =0 ; i < PoolSize.intValue; i++)
+                {
+                    GameObject pooledObject = Instantiate(SourceObject.objectReferenceValue as GameObject, PL.transform);
+
+                    pooledObject.name = pooledObject.name + i.ToString();
+                    AvailableObjectList.InsertArrayElementAtIndex(AvailableObjectList.arraySize);
+                    AvailableObjectList.GetArrayElementAtIndex(AvailableObjectList.arraySize-1).objectReferenceValue = pooledObject;
+                    pooledObject.SetActive(false);
+                }
+                isAllocated.boolValue = true;
+            }
+
             void CustomReset()
             {
-                var DictRef = ObjectPool.SPoolTupleDict;
-                if (DictRef.ContainsKey(PL.PoolEnum))
-                {
-                    if (DictRef[PL.PoolEnum].Item2 <= 1)
-                        DictRef.Remove(PL.PoolEnum);
-                    else
-                        DictRef[PL.PoolEnum] = (DictRef[PL.PoolEnum].Item1, DictRef[PL.PoolEnum].Item2 - 1);
-
-                    ClearObjectPool();
-                }
-                PL.gameObject.AddComponent<ObjectPool>();
-                DestroyImmediate(PL);
+                ClearObjectPool();
+                EnumNameCorrect.boolValue = false;
+                EnumName.stringValue = string.Empty;
+                EnumValue.stringValue = string.Empty;
             }
 
             void ClearObjectPool()
             {
-                PL.Clear();
+                for (int i = 0; i < AvailableObjectList.arraySize; i++)
+                {
+                    DestroyImmediate(AvailableObjectList.GetArrayElementAtIndex(i).objectReferenceValue);
+                }
+
+                for (int i = 0; i < ActiveObjectList.arraySize; i++)
+                {
+                    DestroyImmediate(ActiveObjectList.GetArrayElementAtIndex(i).objectReferenceValue);
+                }
+
+                AvailableObjectList.ClearArray();
+                ActiveObjectList.ClearArray();
+
+                isAllocated.boolValue = false;
             }
 
             void ShowAvilableObjects()
             {
-                if (PL.AvailableObjects.Length == 0)
+                if (AvailableObjectList.arraySize == 0)
                     EditorGUILayout.LabelField("No Available Objects Now");                
                 else
                     EditorGUILayout.LabelField("Available Objects");                
 
-                foreach (GameObject obj in PL.AvailableObjects)
+                for (int i = 0; i < AvailableObjectList.arraySize; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     GUILayout.Space(20);
-                    GUILayout.Box(obj.name, GUILayout.Width(150));
-                    EditorGUILayout.ObjectField(obj, typeof(GameObject), false);
+                    GUILayout.Box(AvailableObjectList.GetArrayElementAtIndex(i).objectReferenceValue.name, GUILayout.Width(150));
+                    EditorGUILayout.ObjectField(AvailableObjectList.GetArrayElementAtIndex(i).objectReferenceValue, typeof(GameObject), false);
                     EditorGUILayout.EndHorizontal();
                 }
             }
 
             void ShowActiveObjects()
             {
-                if (PL.ActiveObjects.Length == 0)
+                if (ActiveObjectList.arraySize == 0)
                     EditorGUILayout.LabelField("No Active Objects Now");
                 else
                     EditorGUILayout.LabelField("Active Objects");
                     
-                foreach (GameObject obj in PL.ActiveObjects)
+                for (int i = 0; i < ActiveObjectList.arraySize; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     GUILayout.Space(20);
-                    GUILayout.Box(obj.name, GUILayout.Width(150));
-                    EditorGUILayout.ObjectField(obj, typeof(GameObject), false);
+                    GUILayout.Box(ActiveObjectList.GetArrayElementAtIndex(i).objectReferenceValue.name, GUILayout.Width(150));
+                    EditorGUILayout.ObjectField(ActiveObjectList.GetArrayElementAtIndex(i).objectReferenceValue, typeof(GameObject), false);
                     EditorGUILayout.EndHorizontal();
                 }
             }
