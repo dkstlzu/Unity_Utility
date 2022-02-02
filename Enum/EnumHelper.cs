@@ -50,5 +50,24 @@ namespace Utility
             if (type == null) UnityEngine.Debug.LogWarning("Wrong EnumName in EnumHelper.GetEnumType(). Check Assembly");
             return type;
         }
+
+        public static int GetFirstValue(Type type)
+        {
+            int[] values = (int[])Enum.GetValues(type);
+            return values[0];
+        }
+
+        public static int GetIndexOf(Enum enumValue)
+        {
+            return Array.IndexOf(Enum.GetValues(enumValue.GetType()), enumValue);
+        }
+        public static int GetIndexOf(string enumValueString, Type type)
+        {
+            return Array.IndexOf(Enum.GetValues(type), Enum.Parse(type, enumValueString) as Enum);
+        }
+        public static int GetIndexOf<TEnum>(string enumValueString)
+        {
+            return Array.IndexOf(Enum.GetValues(typeof(TEnum)), Enum.Parse(typeof(TEnum), enumValueString) as Enum);
+        }
     }
 }

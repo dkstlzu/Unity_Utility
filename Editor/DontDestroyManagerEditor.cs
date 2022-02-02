@@ -9,23 +9,34 @@ namespace Utility
     [CustomEditor(typeof(DontDestroyManager))]
     public class DontDestroyManagerEditor : Editor
     {
+
+        SerializedProperty Uniqueness;
+        SerializedProperty TargetComponent;
+        SerializedProperty ReplaceAsNew;
+        SerializedProperty HashID;
+
+        void OnEnable()
+        {
+            Uniqueness = serializedObject.FindProperty("Uniqueness");
+            TargetComponent = serializedObject.FindProperty("TargetComponent");
+            ReplaceAsNew = serializedObject.FindProperty("ReplaceAsNew");
+            HashID = serializedObject.FindProperty("HashID");
+        }
+        
         public override void OnInspectorGUI()
         {
+            serializedObject.Update();
             DontDestroyManager DDM = target as DontDestroyManager;
 
-            DDM.Uniqueness = (DontDestroyManager.DontDestroyMethod)EditorGUILayout.EnumPopup("Method", DDM.Uniqueness);
-            DDM.TargetComponent = (Component)EditorGUILayout.ObjectField("Target Component",DDM.TargetComponent, typeof(Component), true);
+            EditorGUILayout.PropertyField(Uniqueness, new GUIContent("Method"));
+            EditorGUILayout.PropertyField(TargetComponent, new GUIContent("Target Component"));
+            EditorGUILayout.PropertyField(ReplaceAsNew, new GUIContent("Replace as new when duplicated"));
 
-            // EditorGUILayout.BeginHorizontal();
-            // EditorGUILayout.LabelField("Replace as new when duplicated");
-            // GUILayout.FlexibleSpace();
-            DDM.ReplaceAsNew = EditorGUILayout.ToggleLeft("Replace as new when duplicated", DDM.ReplaceAsNew);
-            // EditorGUILayout.EndHorizontal();
-
-            if (DDM.Uniqueness == DontDestroyManager.DontDestroyMethod.UniqueID)
+            if (Uniqueness.enumValueIndex == EnumHelper.GetIndexOf(DontDestroyManager.DontDestroyMethod.UniqueID))
             {
-                DDM.HashID = EditorGUILayout.TextField("Unique ID",DDM.HashID);
+                EditorGUILayout.PropertyField(HashID, new GUIContent("Unique ID"));
             }
+            serializedObject.ApplyModifiedProperties();
         }
     }
 }

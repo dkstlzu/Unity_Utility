@@ -11,14 +11,18 @@ namespace Utility
     public class ObjectPool : MonoBehaviour
     {
         // For Editor Script
-        public string EnumName;
-        [SerializeField] private string EnumString;
+        [SerializeField] private string EnumName;
+        [SerializeField] private string EnumValue;
         public bool EnumNameCorrect;
         public List<string> IncludedEnumStringList = new List<string>();
         public List<int> IncludedEnumCountList = new List<int>();
-        public bool ShowSettingsInEditor;
-        public bool ShowDatasInEditor;
-        public bool ShowStaticEnumsInEditor;
+        // public bool ShowSettingsInEditor;
+        // public bool ShowDatasInEditor;
+        // public bool ShowStaticEnumsInEditor;
+        public dynamic what;
+        [System.Serializable]
+        public class TestClass {};
+        public TestClass testclass = new TestClass();
 
         public static void AddEnumCount(Enum enumValue, ObjectPool pool)
         {
@@ -48,17 +52,23 @@ namespace Utility
         {
             get
             {
-                Type type = EnumHelper.GetEnumType(EnumName);
-                // Debug.LogFormat("EnumName : {0}, EnumString : {1}, EnumType : {2}", EnumName, EnumString, type.ToString());
-                return Enum.Parse(type, EnumString) as Enum;
-            }
-            set
-            {
-                EnumString = value.ToString();
+                Enum val;
+                try
+                {
+                    Type enumType = EnumHelper.GetEnumType(EnumName);
+                    if (!Enum.IsDefined(enumType, EnumValue))
+                        EnumValue = ((Enum)Enum.GetValues(enumType).GetValue(0)).ToString();
+                    val = Enum.Parse(enumType, EnumValue) as Enum;
+                } catch
+                {
+                    Debug.LogWarning($"ObjectPool({gameObject.name}) EnumName or EnumValue is wrong. Check again.");
+                    return null;
+                }
+                return val;
             }
         }
         public UnityEngine.GameObject SourceObject = null;
-        public string SoruceFilePath = string.Empty;
+        public string SourceFilePath = string.Empty;
         public int PoolSize = 10;
         public int Count
         {
@@ -82,7 +92,7 @@ namespace Utility
 
         public static ObjectPool GetOrCreate(Enum poolName, GameObject poolGameObject = null)
         {
-
+            
             (ObjectPool, int) tuple;
             if (!SPoolTupleDict.TryGetValue(poolName, out tuple))
             {
@@ -200,7 +210,6 @@ namespace Utility
         public GameObject InstantiateAfterInit(Vector3 pos, Quaternion rot, Initiater initiater)
         {
             GameObject obj;
-            print("Instantiate after init");
 
             int AvailableCount = AvailableObjectList.Count;
 

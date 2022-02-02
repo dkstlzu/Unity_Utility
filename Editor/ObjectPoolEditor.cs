@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEditor;
 
 namespace Utility
@@ -11,7 +12,6 @@ namespace Utility
     [CustomEditor(typeof(ObjectPool))]
     public class ObjectPoolEditor : Editor
     {
-        dynamic enumPopUp;
         [MenuItem("ObjectPool/Print Properties")]
         static void PrintProperties()
         {
@@ -28,25 +28,47 @@ namespace Utility
             MonoBehaviour.print("Properties of this ObjectPool");
             MonoBehaviour.print(PropString);
         }
+
+        SerializedProperty EnumName;
+        SerializedProperty EnumValue;
+        SerializedProperty EnumNameCorrect;
+        SerializedProperty SourceObject;
+        SerializedProperty SourceFilePath;
+        SerializedProperty PoolSize;
+        SerializedProperty AutoReturn;
+        SerializedProperty AutoReturnTime;
+
+        bool ShowSettingsInEditor;
+        bool ShowStaticEnumsInEditor;
+        bool ShowDatasInEditor;
+        void OnEnable()
+        {
+            EnumName = serializedObject.FindProperty("EnumName");
+            EnumValue = serializedObject.FindProperty("EnumValue");
+            EnumNameCorrect = serializedObject.FindProperty("EnumNameCorrect");
+            SourceObject = serializedObject.FindProperty("SourceObject");
+            SourceFilePath = serializedObject.FindProperty("SourceFilePath");
+            PoolSize = serializedObject.FindProperty("PoolSize");
+            AutoReturn = serializedObject.FindProperty("AutoReturn");
+        }
         
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
             ObjectPool PL = target as ObjectPool;
 
-            if (!PL.EnumNameCorrect)
+            if (!EnumNameCorrect.boolValue)
             {
                 EditorGUILayout.BeginHorizontal();
-                PL.EnumName = EditorGUILayout.TextField("Enum Name", PL.EnumName);
-                if (GUILayout.Button("Submit", GUILayout.Width(50)))
+                EditorGUILayout.PropertyField(EnumName, new GUIContent("Enum Name"));
+                if (GUILayout.Button("Submit", GUILayout.Width(50)) || Event.current.keyCode == KeyCode.Return)
                 {
-                    Type type = EnumHelper.GetEnumType(PL.EnumName);
+                    Type type = EnumHelper.GetEnumType(EnumName.stringValue);
                     
                     if (type != null)
                     {
-                        PL.EnumNameCorrect = true;
-                        PL.PoolEnum = Activator.CreateInstance(type) as Enum;
-                        PL.ShowSettingsInEditor = true;
+                        EnumNameCorrect.boolValue = true;
+                        ShowSettingsInEditor = true;
                     }
                 }
                 EditorGUILayout.EndHorizontal();
@@ -54,35 +76,42 @@ namespace Utility
             {
                 if (!EditorApplication.isPlaying)
                 {
-                    if (GUILayout.Button("Settings")) PL.ShowSettingsInEditor = !PL.ShowSettingsInEditor;
+                    if (GUILayout.Button("Settings")) ShowSettingsInEditor = !ShowSettingsInEditor;
 
-                    if (PL.ShowSettingsInEditor)
+                    if (ShowSettingsInEditor)
                     {
-                        enumPopUp = PL.PoolEnum;
-                        if (enumPopUp != null)
-                            enumPopUp = EditorGUILayout.EnumPopup("PoolType", enumPopUp);
-                        PL.PoolEnum = enumPopUp;
-                        // PL.PoolEnum = EditorGUILayout.EnumPopup("PoolType", PL.PoolEnum);
-                        if (!PL.SourceObject)
-                            PL.SoruceFilePath = EditorGUILayout.TextField("Source File Path", PL.SoruceFilePath);
-                        if (PL.SoruceFilePath.Equals(string.Empty))
-                            PL.SourceObject = EditorGUILayout.ObjectField("Source Prefab", PL.SourceObject, typeof(UnityEngine.GameObject), true) as UnityEngine.GameObject;
-                        PL.PoolSize = EditorGUILayout.IntField("PoolSize", PL.PoolSize);
-                        PL.AutoReturn = EditorGUILayout.Toggle("Use AutoReturn", PL.AutoReturn);
-                        if (PL.AutoReturn)
+                        if (PL.PoolEnum != null)
                         {
-                            PL.AutoReturnTime = (float)EditorGUILayout.Slider(new GUIContent("Auto Return Time", "Use Seconds"), PL.AutoReturnTime, 0, 60);
+                            EnumValue.stringValue = EditorGUILayout.EnumPopup("PoolType", PL.PoolEnum).ToString();
+                        } else
+                        {
+                            EditorGUILayout.LabelField("Can not get PoolEnum.");
+                        }
+
+                        if (!SourceObject.objectReferenceValue)
+                            EditorGUILayout.PropertyField(SourceFilePath, new GUIContent("Source File Path"));
+                        if (SourceFilePath.stringValue.Equals(string.Empty))
+                            EditorGUILayout.PropertyField(SourceObject, new GUIContent("Source Prefab"));
+
+                        EditorGUILayout.PropertyField(PoolSize, new GUIContent("PoolSize"));
+
+                        EditorGUILayout.PropertyField(AutoReturn, new GUIContent("AutoReturn"));
+                        if (AutoReturn.boolValue)
+                        {
+                            EditorGUILayout.Slider(AutoReturnTime, 0, 60, new GUIContent("Auto Return Time"));
                         }
 
                         EditorGUILayout.BeginHorizontal();
-                        if (GUILayout.Button("Reset this pool")) CustomReset();
-                        GUI.enabled = PL.SourceObject || !PL.SoruceFilePath.Equals(string.Empty);
+                        if (GUILayout.Button("Reset this pool")) 
+                            CustomReset();
+                        
+                        GUI.enabled = SourceObject.objectReferenceValue || !SourceFilePath.stringValue.Equals(string.Empty);
                         if (!PL.isAllocated)
                         {
                             if (GUILayout.Button("Allocate", GUILayout.Width(EditorGUIUtility.currentViewWidth/2)))
                             {
-                                if (!PL.SourceObject)
-                                    PL.SourceObject = Resources.Load(PL.SoruceFilePath) as GameObject;
+                                if (!SourceObject.objectReferenceValue)
+                                    SourceObject.objectReferenceValue = Resources.Load(SourceFilePath.stringValue) as GameObject;
                                 PL.Allocate();
                             }
                         } else if (GUILayout.Button("Destroy Objects", GUILayout.Width(EditorGUIUtility.currentViewWidth/2)))
@@ -96,10 +125,9 @@ namespace Utility
                     }
                 } else
                 {
-                    PL.ShowStaticEnumsInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(PL.ShowStaticEnumsInEditor, new GUIContent("Static Included Enums", "Only show on playing"));
-                    EditorGUILayout.EndFoldoutHeaderGroup();
+                    ShowStaticEnumsInEditor = EditorGUILayout.Foldout(ShowStaticEnumsInEditor, new GUIContent("Static Included Enums", "Only show on playing"));
 
-                    if (PL.ShowStaticEnumsInEditor)
+                    if (ShowStaticEnumsInEditor)
                     {
                         if (PL.IncludedEnumStringList.Count != ObjectPool.SPoolTupleDict.Count)
                         {
@@ -122,14 +150,12 @@ namespace Utility
                     }
                 }
 
-                PL.ShowDatasInEditor = EditorGUILayout.BeginFoldoutHeaderGroup(PL.ShowDatasInEditor, "Datas");
-                EditorGUILayout.EndFoldoutHeaderGroup();
+                ShowDatasInEditor = EditorGUILayout.Foldout(ShowDatasInEditor, "Datas");
 
-                if (PL.ShowDatasInEditor)
+                if (ShowDatasInEditor)
                 {
-                    EditorGUILayout.LabelField("Available Objects");
+
                     ShowAvilableObjects();
-                    EditorGUILayout.LabelField("Active Objects");
                     ShowActiveObjects();
                 }
             }
@@ -139,12 +165,13 @@ namespace Utility
 
             void CustomReset()
             {
-                if (ObjectPool.SPoolTupleDict.ContainsKey(PL.PoolEnum))
+                var DictRef = ObjectPool.SPoolTupleDict;
+                if (DictRef.ContainsKey(PL.PoolEnum))
                 {
-                    if (ObjectPool.SPoolTupleDict[PL.PoolEnum].Item2 <= 1)
-                        ObjectPool.SPoolTupleDict.Remove(PL.PoolEnum);
+                    if (DictRef[PL.PoolEnum].Item2 <= 1)
+                        DictRef.Remove(PL.PoolEnum);
                     else
-                        ObjectPool.SPoolTupleDict[PL.PoolEnum] = (ObjectPool.SPoolTupleDict[PL.PoolEnum].Item1, ObjectPool.SPoolTupleDict[PL.PoolEnum].Item2 - 1);
+                        DictRef[PL.PoolEnum] = (DictRef[PL.PoolEnum].Item1, DictRef[PL.PoolEnum].Item2 - 1);
 
                     ClearObjectPool();
                 }
@@ -159,6 +186,11 @@ namespace Utility
 
             void ShowAvilableObjects()
             {
+                if (PL.AvailableObjects.Length == 0)
+                    EditorGUILayout.LabelField("No Available Objects Now");                
+                else
+                    EditorGUILayout.LabelField("Available Objects");                
+
                 foreach (GameObject obj in PL.AvailableObjects)
                 {
                     EditorGUILayout.BeginHorizontal();
@@ -171,6 +203,11 @@ namespace Utility
 
             void ShowActiveObjects()
             {
+                if (PL.ActiveObjects.Length == 0)
+                    EditorGUILayout.LabelField("No Active Objects Now");
+                else
+                    EditorGUILayout.LabelField("Active Objects");
+                    
                 foreach (GameObject obj in PL.ActiveObjects)
                 {
                     EditorGUILayout.BeginHorizontal();

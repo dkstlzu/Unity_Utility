@@ -11,16 +11,21 @@ namespace Utility
     public class SoundManager : Singleton<SoundManager>
     {
         // For Editor Script
-        public string EnumName;
-        public string EnumString;
-        public bool EnumNameCorrect;
-        public bool ShowSettingsInEditor;
-        public bool ShowPathSceneInEditor;
-        public bool ShowDatasInEditor;
-        public bool ShowPreloadedClipsInEditor;
-        public bool ShowSharedClipsInEditor;
-        public bool ShowCurrentClipsInEditor;
-        public bool ShowPlayingSourcesInEditor;
+        [SerializeField] private bool EnumNameCorrect;
+        [SerializeField] private string _enumTypeName;
+        [SerializeField] private bool ShowSettingsInEditor;
+        [SerializeField] private bool ShowPathSceneInEditor;
+        [SerializeField] private bool ShowDatasInEditor;
+        [SerializeField] private bool ShowPreloadedClipsInEditor;
+        [SerializeField] private bool ShowSharedClipsInEditor;
+        [SerializeField] private bool ShowCurrentClipsInEditor;
+        [SerializeField] private bool ShowPlayingSourcesInEditor;
+        [SerializeField] private int NamingInterval = 100;
+        [SerializeField] private int SharingNamingRegion = 0;
+        [SerializeField] private string SharingSoundsPath = string.Empty;
+        [SerializeField] private string ResourcePathPrefix = "Sounds/";
+        [SerializeField] private int WorldAudioSourceCount = 5;
+        [SerializeField] private AudioClip BackGroundMusicClip;
         //
 
         public enum SoundPlayMode
@@ -37,17 +42,29 @@ namespace Utility
             public bool AutoReturn;
         }
 
+        [Serializable] public struct PathScene
+        {
+            public string Path;
+            public string Scene;
+
+            public PathScene (string path, string scene)
+            {
+                Path = path;
+                Scene = scene;
+            }
+        }
+
         public Enum EnumValue
         {
             get
             {
-                Type type = EnumHelper.GetEnumType(EnumName);
-                // Debug.LogFormat("EnumName : {0}, EnumString : {1}, EnumType : {2}", EnumName, EnumString, type.ToString());
-                return Enum.Parse(type, EnumString) as Enum;
+                Type type = EnumHelper.GetEnumType(EnumTypeName);
+                // Debug.LogFormat("EnumTypeName : {0}, _enumString : {1}, EnumType : {2}", EnumTypeName, _enumString, type.ToString());
+                return Enum.Parse(type, _enumString) as Enum;
             }
             set
             {
-                EnumString = value.ToString();
+                _enumString = value.ToString();
             }
         }
 
@@ -55,26 +72,19 @@ namespace Utility
         public Dictionary<Enum, AudioClip> SharedAudioClipDict = new Dictionary<Enum, AudioClip>();
         public Dictionary<Enum, AudioClip> CurrentAudioClipDict = new Dictionary<Enum, AudioClip>();
         public Dictionary<Enum, AudioSource> PlayingAudioSourceDict = new Dictionary<Enum, AudioSource>();
+        private Queue<AudioSource> _audioSourcesQueue = new Queue<AudioSource>();
 
+        public string EnumTypeName {get{return _enumTypeName;}}
+        private string _enumString;
 
-        public int NamingInterval = 100;
-        public int SharingNamingRegion = 0;
-        public string SharingSoundsPath = string.Empty;
-
-        public string ResourcePathPrefix = "Sounds/";
         public bool UsePathSceneSync;
-        public List<(string Path, string Scene)> ResourcePathsForEachScene = new List<(string Path, string Scene)>();
+        public List<PathScene> ResourcePathsForEachScene = new List<PathScene>();
+        public AudioSource BackGroundAudioSource;
 
-        public int WorldAudioSourceCount = 5;
-        private Queue<AudioSource> audioSourcesQueue = new Queue<AudioSource>();
-
-        public AudioClip BackGroundMusicClip;
-        private AudioSource _backGroundAudioSource;
-
-        private int CurrentRegion = 0;
+        private int _currentRegion = 0;
         private int _namingStart
         {
-            get {return CurrentRegion * NamingInterval;}
+            get {return _currentRegion * NamingInterval;}
         }
         private int _namingEnd
         {
@@ -84,11 +94,11 @@ namespace Utility
         void Awake()
         {
             // BackGroundMusic Start
-            _backGroundAudioSource = gameObject.AddComponent<AudioSource>();
-            _backGroundAudioSource.clip = BackGroundMusicClip;
-            _backGroundAudioSource.playOnAwake = true;
-            _backGroundAudioSource.loop = true;
-            _backGroundAudioSource.Play();
+            BackGroundAudioSource = gameObject.AddComponent<AudioSource>();
+            BackGroundAudioSource.clip = BackGroundMusicClip;
+            BackGroundAudioSource.playOnAwake = true;
+            BackGroundAudioSource.loop = true;
+            BackGroundAudioSource.Play();
 
             // SceneLoad CallBack Insert
             SceneManager.sceneLoaded += OnSceneLoad;
@@ -98,9 +108,9 @@ namespace Utility
             {
                 var v = gameObject.AddComponent<AudioSource>();
                 // fold added component
-                audioSourcesQueue.Enqueue(v);
+                _audioSourcesQueue.Enqueue(v);
             }
-            UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(_backGroundAudioSource, false);
+            UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(BackGroundAudioSource, false);
         }
 
         void Start()
@@ -116,14 +126,20 @@ namespace Utility
             foreach(AudioClip clip in clips)
             {
                 Enum enumValue = null;
-                enumValue = Enum.Parse(EnumValue.GetType(), clip.name) as Enum;
+                try
+                {
+                    enumValue = Enum.Parse(EnumValue.GetType(), clip.name) as Enum;
+                } catch
+                {
+                    Debug.LogWarning("Shared Sounds in folder and EnumName are not match");
+                }
                 SharedAudioClipDict.Add(enumValue, clip);
             }
         }
 
         public virtual void LoadSounds(int targetRegion)
         {
-            CurrentRegion = targetRegion;
+            _currentRegion = targetRegion;
 
             int indexOfEnumStart, indexOfEnumEnd;
 
@@ -240,9 +256,9 @@ namespace Utility
             }
         }
 
-        public void PlayOnWorld(Enum soundName)
+        private void PlayOnWorld(Enum soundName)
         {
-            AudioSource audioSource = audioSourcesQueue.Dequeue();
+            AudioSource audioSource = _audioSourcesQueue.Dequeue();
 
             if (audioSource == null)
             {
@@ -252,11 +268,11 @@ namespace Utility
             audioSource.clip = GetClip(soundName);
             audioSource.spatialBlend = 0;
             audioSource.Play();
-            audioSourcesQueue.Enqueue(audioSource);
+            _audioSourcesQueue.Enqueue(audioSource);
         }
         
 
-        public void PlayAt(Enum soundName, Vector3 absolutePos)
+        private void PlayAt(Enum soundName, Vector3 absolutePos)
         {
             AudioClip clip = GetClip(soundName);
 
@@ -269,9 +285,14 @@ namespace Utility
             AudioSource.PlayClipAtPoint(clip, absolutePos);
         }
 
-        public void PlayAt(Enum soundName, Transform obj, Vector3 relativePos = new Vector3())
+        private void PlayAt(Enum soundName, Transform obj, Vector3 relativePos = new Vector3())
         {
             PlayAt(soundName, obj.position + relativePos);
+        }
+
+        public void SetBackGroundMusic(AudioClip clip)
+        {
+            BackGroundAudioSource.clip = clip;
         }
 
         public void Pause(Enum soundName)
@@ -358,6 +379,8 @@ namespace Utility
 
         void OnSceneLoad(Scene scene, LoadSceneMode mode)
         {
+            if (!UsePathSceneSync) return;
+
             for (int i = 0; i < ResourcePathsForEachScene.Count; i++)
             {
                 if (ResourcePathsForEachScene[i].Scene == scene.name)

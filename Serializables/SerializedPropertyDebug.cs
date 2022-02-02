@@ -196,10 +196,11 @@ namespace Utility
         {
             string log = "Log of All path in serialized property.\n";
 
-            while(serializedProperty.Next(true))
+            do
             {
                 log += serializedProperty.propertyPath + "\n";
             }
+            while(serializedProperty.Next(true));
 
             Debug.Log(log);
         }
