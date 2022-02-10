@@ -59,6 +59,7 @@ namespace Utility
             SourceFilePath = serializedObject.FindProperty("SourceFilePath");
             PoolSize = serializedObject.FindProperty("PoolSize");
             AutoReturn = serializedObject.FindProperty("AutoReturn");
+            AutoReturnTime = serializedObject.FindProperty("AutoReturnTime");
             isAllocated = serializedObject.FindProperty("isAllocated");
             AvailableObjectList = serializedObject.FindProperty("AvailableObjectList");
             ActiveObjectList = serializedObject.FindProperty("ActiveObjectList");

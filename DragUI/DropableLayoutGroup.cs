@@ -10,7 +10,6 @@ namespace Utility.UI
     public class DropableLayoutGroup : MonoBehaviour, IDropHandler
     {
         public LayoutGroup LayoutGroup;
-        RectTransform _rect;
 
         void Awake()
         {
@@ -18,7 +17,6 @@ namespace Utility.UI
             {
                 LayoutGroup = GetComponent<LayoutGroup>();
             }
-            _rect = LayoutGroup.GetComponent<RectTransform>();
         }
 
         public void OnDrop(PointerEventData eventData)
@@ -30,12 +28,16 @@ namespace Utility.UI
                     return;
                 }
 
+                // BeforeDropCallBack(DragAndDropableUI.DragingUI, eventData);
                 DragAndDropableUI.DragingUI.transform.SetParent(LayoutGroup.transform);
                 DragAndDropableUI.DragingUI.SuccessfullyDroped = true;
-                OnDropCallBack();
+                OnDropCallBack(DragAndDropableUI.DragingUI, eventData);
+                AfterDropCallBack(DragAndDropableUI.DragingUI, eventData);
             }
         }
 
-        public Action OnDropCallBack;
+        // public Action<DragAndDropableUI, PointerEventData> BeforeDropCallBack;
+        public Action<DragAndDropableUI, PointerEventData> OnDropCallBack;
+        public Action<DragAndDropableUI, PointerEventData> AfterDropCallBack;
     }
 }

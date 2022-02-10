@@ -10,7 +10,13 @@ namespace Utility.UI
         public static DragAndDropableUI LastDraggedUI;
         [System.NonSerialized] public RectTransform Rect;
         [System.NonSerialized] public bool SuccessfullyDroped = false;
+        public Canvas Canvas;
+        public static Canvas DraggingCanvas;
+        public GameObject RenderingUIElements;
         CanvasGroup CanvasGroup;
+
+        GameObject DraggingGameObject;
+        RectTransform DraggingGameObjectRect;
 
         [SerializeField] Vector2 _defaultPosition;
 
@@ -22,12 +28,26 @@ namespace Utility.UI
 
         public virtual void OnPointerDown(PointerEventData eventData)
         {
+            if (DraggingCanvas == null)
+            {
+                DraggingCanvas = new GameObject("Dragging Canvas").AddComponent<Canvas>();
+                DraggingCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+            }
 
+
+            DraggingGameObject = Instantiate(gameObject, transform.position, transform.rotation);
+            if (RenderingUIElements) RenderingUIElements.SetActive(false);
+            Destroy(DraggingGameObject.GetComponent<DragAndDropableUI>());
+            Destroy(DraggingGameObject.GetComponent<CanvasGroup>());
+            DraggingGameObject.transform.SetParent(DraggingCanvas.transform);
+            DraggingGameObjectRect = DraggingGameObject.GetComponent<RectTransform>();
+            DraggingGameObjectRect.sizeDelta = new Vector2(Rect.rect.width, Rect.rect.height);
         }
 
         public virtual void OnPointerUp(PointerEventData eventData)
         {
-
+            if (RenderingUIElements) RenderingUIElements.SetActive(true);
+            Destroy(DraggingGameObject);
         }
         
         public virtual void OnBeginDrag(PointerEventData eventData)
@@ -54,7 +74,8 @@ namespace Utility.UI
 
         public virtual void OnDrag(PointerEventData eventData)
         {
-            Rect.anchoredPosition += eventData.delta/GetComponent<Canvas>().scaleFactor;
+            Rect.anchoredPosition += eventData.delta/Canvas.scaleFactor;
+            DraggingGameObjectRect.anchoredPosition += eventData.delta/Canvas.scaleFactor;
         }
     }
 }
