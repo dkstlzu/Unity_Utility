@@ -187,12 +187,12 @@ namespace Utility
 
                 for (int i =0 ; i < PoolSize.intValue; i++)
                 {
-                    GameObject pooledObject = Instantiate(SourceObject.objectReferenceValue as GameObject, PL.transform);
+                    UnityEngine.Object pooledObject = PrefabUtility.InstantiatePrefab(SourceObject.objectReferenceValue, PL.transform);
 
                     pooledObject.name = pooledObject.name + i.ToString();
                     AvailableObjectList.InsertArrayElementAtIndex(AvailableObjectList.arraySize);
                     AvailableObjectList.GetArrayElementAtIndex(AvailableObjectList.arraySize-1).objectReferenceValue = pooledObject;
-                    pooledObject.SetActive(false);
+                    ((GameObject)pooledObject).SetActive(false);
                 }
                 isAllocated.boolValue = true;
             }
