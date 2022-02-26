@@ -139,7 +139,7 @@ namespace Utility
                 bezierCurve.Curve.AddPoint(new BGCurvePoint(bezierCurve.Curve, toTransform.position, BGCurvePoint.ControlTypeEnum.Absent, Vector3.zero, Vector3.zero, true));
             }
 
-            Vector3 distanceVector = toTransform.InverseTransformPoint(fromTransform.position);
+            Vector3 distanceVector = fromTransform.position - toTransform.position;
             Vector3 dotPosition;
             int factor;
             if (Random.value > 0.5)
@@ -150,6 +150,7 @@ namespace Utility
                 factor = -1;
             }
             dotPosition = toTransform.position + distanceVector * 4/3 + factor * Vector3.Cross(distanceVector, Vector3.forward).normalized * distanceVector.magnitude/3;
+            // MonoBehaviour.print($"FromPosition {fromTransform.position}, ToPosition {toTransform.position}, DotPosition {dotPosition}");
             bezierCurve.Curve.AddPoint(new BGCurvePoint(bezierCurve.Curve, dotPosition, BGCurvePoint.ControlTypeEnum.BezierSymmetrical, true), 1);
 
             Vector3 middlePoint = (toTransform.position + fromTransform.position) / 2;

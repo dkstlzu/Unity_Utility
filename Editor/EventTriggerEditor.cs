@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
@@ -8,12 +6,12 @@ namespace Utility
     [CustomEditor(typeof(EventTrigger))]
     public class EventTriggerEditor : Editor
     {
-        SerializedProperty isReady;
-        SerializedProperty Collider;
-        SerializedProperty Collider2D;
-        SerializedProperty use2D;
+        protected SerializedProperty isReady;
+        protected SerializedProperty Collider;
+        protected SerializedProperty Collider2D;
+        protected SerializedProperty use2D;
 
-        void OnEnable()
+        protected virtual void OnEnable()
         {
             isReady = serializedObject.FindProperty("isReady");
             Collider = serializedObject.FindProperty("Collider");
