@@ -18,107 +18,127 @@ namespace Utility
         }
 
         public DontDestroyMethod Uniqueness;
-        [Tooltip("Replace old one with new one if duplicate")]
-        public bool ReplaceAsNew = false;
         public Component TargetComponent;
         public string HashID;
+        [Tooltip("Replace old one with new one if duplicate")]
+        public bool ReplaceAsNew = false;
         void Awake()
         {
-            switch (Uniqueness)
-            {
-                case DontDestroyMethod.Normal :
-                Add(TargetComponent, gameObject);
-                break;
-                case DontDestroyMethod.Unique :
-                AddUnique(TargetComponent, gameObject);
-                break;
-                case DontDestroyMethod.UniqueID :
-                if (HashID == "") HashID = transform.name;
-                AddUniqueID(TargetComponent, HashID, gameObject);
-                break;
-            }
+            Add(TargetComponent, Uniqueness, HashID, ReplaceAsNew);
         }
 
-        public static List<Component> ComponentList = new List<Component>();
-        public static HashSet<Type> ComponentTypeSet = new HashSet<Type>();
-        public static HashSet<string> HashIDSet = new HashSet<string>();
+        static Dictionary<object, Component> ComponentsDict = new Dictionary<object, Component>();
 
         public static int Count
         {
-            get{return ComponentList.Count + ComponentTypeSet.Count + HashIDSet.Count;}
+            get{return ComponentsDict.Count;}
         }
 
         public static bool isEmpty
         {
-            get{return ComponentList.Count + ComponentTypeSet.Count + HashIDSet.Count == 0;}
+            get{return ComponentsDict.Count == 0;}
         }
 
-        public static void Add(Component component, GameObject rootObj = null)
+        public static void Add(Component component, DontDestroyMethod method, string HashID, bool replaceAsNew = false, GameObject rootObj = null)
         {
-            ComponentList.Add(component);
+            switch (method)
+            {
+                case DontDestroyMethod.Normal:
+                AddNormal(component, replaceAsNew, rootObj);
+                break;
+                case DontDestroyMethod.Unique:
+                Unique:
+                AddUnique(component, replaceAsNew, rootObj);
+                break;
+                case DontDestroyMethod.UniqueID:
+                if (HashID == string.Empty) goto Unique;
+                AddUniqueID(component, HashID, replaceAsNew, rootObj);
+                break;
+            }
+        }
+
+        static void AddNormal(Component component, bool replaceAsNew = false, GameObject rootObj = null)
+        {
+            ComponentsDict.Add(component.GetHashCode(), component);
             if (rootObj == null)
             {
                 DontDestroyOnLoad(component);
-            } else
-            {
-                DontDestroyOnLoad(rootObj);
             }
         }
 
-        public static void AddUnique(Component component, GameObject rootObj = null)
+        static void AddUnique(Component component, bool replaceAsNew = false, GameObject rootObj = null)
         {
-            if (ComponentTypeSet.Add(component.GetType()))
+            if (Contain(component.GetType()))
             {
-                if (rootObj == null)
+                if (replaceAsNew)
                 {
+                    Destroy(ComponentsDict[component.GetType()]);
+                    ComponentsDict[component.GetType()] = component;
                     DontDestroyOnLoad(component);
                 } else
                 {
-                    DontDestroyOnLoad(rootObj);
+                    Destroy(component);
                 }
             } else
             {
-                Destroy(component.gameObject);
+                ComponentsDict[component.GetType()] = component;
+                DontDestroyOnLoad(component);
             }
         }
 
-        public static void AddUniqueID(Component component, string hashID, GameObject rootObj = null)
+        static void AddUniqueID(Component component, string hashID, bool replaceAsNew = false, GameObject rootObj = null)
         {
-            if (HashIDSet.Add(hashID))
+            if (Contain(hashID))
             {
-                if (rootObj == null)
+                if (replaceAsNew)
                 {
+                    Destroy(ComponentsDict[hashID]);
+                    ComponentsDict[hashID] = component;
                     DontDestroyOnLoad(component);
                 } else
                 {
-                    DontDestroyOnLoad(rootObj);
+                    Destroy(component);
                 }
             } else
             {
-                Destroy(component.gameObject);
+                ComponentsDict[hashID] = component;
+                DontDestroyOnLoad(component);
             }
         }
 
-        public static void Remove(Component component)
+        public static void Remove(int hasdCode)
         {
-            ComponentList.Remove(component);
-            Destroy(component);
+            ComponentsDict.Remove(hasdCode);
         }
 
-        public static void RemoveUnique(Component component)
+        public static void Remove(Type uniqueType)
         {
-            ComponentTypeSet.Remove(component.GetType());
-            Destroy(component);
+            ComponentsDict.Remove(uniqueType);
+        }
+
+        public static void Remove(string hashID)
+        {
+            ComponentsDict.Remove(hashID);
         }
 
         public static bool Contain(Component component)
         {
-            return ComponentList.Contains(component);
+            return ComponentsDict.ContainsValue(component);
         }
 
-        public static bool ContainUnique(Component component)
+        public static bool Contain(int hasdCode)
         {
-            return ComponentTypeSet.Contains(component.GetType());
+            return ComponentsDict.ContainsKey(hasdCode);
+        }
+
+        public static bool Contain(Type uniqueType)
+        {
+            return ComponentsDict.ContainsKey(uniqueType);
+        }
+
+        public static bool Contain(string hashID)
+        {
+            return ComponentsDict.ContainsKey(hashID);
         }
     }
 }
