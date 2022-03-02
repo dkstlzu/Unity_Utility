@@ -146,49 +146,17 @@ namespace Utility
             isAllocated = true;
         }
 
-        /// <summary>
-        /// ObjectPool에서 Creature를 가져옵니다.
-        /// </summary>
-        /// <param name="pos">위치</param>
-        /// <param name="rot">회전</param>
-        /// <returns>해당 Pool이 가지고 있는 Creature Script</returns>
-        public GameObject Instantiate(Vector3 pos, Quaternion rot)
-        {
-            GameObject obj;
-            print("Instantiate");
-
-            int AvailableCount = AvailableObjectList.Count;
-
-            if (AvailableCount <= 0)
-            {
-                return null;
-            }else
-            {
-                obj = AvailableObjectList[0];
-                AvailableObjectList.RemoveAt(0);
-                ActiveObjectList.Add(obj);
-                obj.transform.SetPositionAndRotation(pos, rot);
-                obj.SetActive(true);
-            }
-
-            if (AutoReturn)
-            {
-                StartCoroutine(AutoReturnCoroutine(obj));
-            }
-
-            return obj;
-        }
-
-
         public delegate void Initiater(UnityEngine.GameObject targetObject);
 
         /// <summary>
-        /// ObjectPool에서 Creature를 가져옵니다. 그러나 OnEnable이 불리기 전에 Initiater를 통해 초기화작업을 수행합니다.
+        /// ObjectPool에서 Creature를 가져옵니다.
+        /// OnEnable이 불리기 전에 PreInitiater를 통해 초기화작업을 수행합니다.
+        /// OnEnable이 불린후 PostInitiater를 통해 초기화작업을 수행합니다.
         /// </summary>
         /// <param name="pos">위치</param>
         /// <param name="rot">회전</param>
         /// <returns>해당 Pool이 가지고 있는 Creature Script</returns>
-        public GameObject InstantiateAfterInit(Vector3 pos, Quaternion rot, Initiater initiater)
+        public GameObject Instantiate(Vector3 pos, Quaternion rot, Initiater preInitiater = null, Initiater postInitiater = null)
         {
             GameObject obj;
 
@@ -201,11 +169,17 @@ namespace Utility
             {
                 obj = AvailableObjectList[0];
                 AvailableObjectList.RemoveAt(0);
+
                 // Initiater
-                initiater(obj);
+                if (preInitiater != null)
+                    preInitiater(obj);
+
                 ActiveObjectList.Add(obj);
                 obj.transform.SetPositionAndRotation(pos, rot);
                 obj.SetActive(true);
+
+                if (postInitiater != null)
+                    postInitiater(obj);
             }
 
             if (AutoReturn)
