@@ -1,3 +1,4 @@
+using UnityEditor.Events;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -28,7 +29,7 @@ namespace Utility
                 return;
             }
             
-            if (1 << collider.gameObject.layer == TargetLayerMask.value)
+            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
             {
                 OnTriggerEnterEvent.Invoke();
                 enteredOnce = true;
@@ -42,7 +43,7 @@ namespace Utility
                 return;
             }
             
-            if (1 << collider.gameObject.layer == TargetLayerMask.value)
+            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
             {
                 OnTriggerStayEvent.Invoke();
             }
@@ -55,7 +56,7 @@ namespace Utility
                 return;
             }
             
-            if (1 << collider.gameObject.layer == TargetLayerMask.value)
+            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
             {
                 OnTriggerExitEvent.Invoke();
                 exitedOnce = true;
@@ -69,7 +70,7 @@ namespace Utility
                 return;
             }
             
-            if (1 << collider.gameObject.layer == TargetLayerMask.value)
+            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
             {
                 OnTriggerEnterEvent.Invoke();
                 enteredOnce = true;
@@ -83,7 +84,7 @@ namespace Utility
                 return;
             }
             
-            if (1 << collider.gameObject.layer == TargetLayerMask.value)
+            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
             {
                 OnTriggerStayEvent.Invoke();
             }
@@ -96,7 +97,7 @@ namespace Utility
                 return;
             }
             
-            if (1 << collider.gameObject.layer == TargetLayerMask.value)
+            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
             {
                 OnTriggerExitEvent.Invoke();
                 exitedOnce = true;
@@ -107,6 +108,21 @@ namespace Utility
         {
             enteredOnce = false;
             exitedOnce = false;
+        }
+
+        public void AddEnterEvent(UnityAction action)
+        {
+            UnityEventTools.AddPersistentListener(OnTriggerEnterEvent, action);
+        }
+
+        public void AddStayEvent(UnityAction action)
+        {
+            UnityEventTools.AddPersistentListener(OnTriggerStayEvent, action);
+        }
+
+        public void AddExitEvent(UnityAction action)
+        {
+            UnityEventTools.AddPersistentListener(OnTriggerExitEvent, action);
         }
     }
 }
