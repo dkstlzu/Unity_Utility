@@ -165,6 +165,7 @@ namespace Utility
                 } catch
                 {
                     Debug.LogWarning("Shared Sounds in folder and EnumName are not match");
+                    continue;
                 }
                 SharedAudioClipDict.Add(enumValue, clip);
             }

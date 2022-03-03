@@ -168,30 +168,21 @@ namespace Utility
                         EditorGUILayout.EndFoldoutHeaderGroup();
                         if (ShowSharedClipsInEditor.boolValue)
                         {
-                            EditorGUILayout.BeginHorizontal();
-                            GUILayout.Space(10);
                             ShowSharedEnumClip();
-                            EditorGUILayout.EndHorizontal();
                         }
 
                         ShowCurrentClipsInEditor.boolValue = EditorGUILayout.BeginFoldoutHeaderGroup(ShowCurrentClipsInEditor.boolValue, "Current Clips");
                         EditorGUILayout.EndFoldoutHeaderGroup();
                         if (ShowCurrentClipsInEditor.boolValue)
                         {
-                            EditorGUILayout.BeginHorizontal();
-                            GUILayout.Space(10);
                             ShowCurrentEnumClip();
-                            EditorGUILayout.EndHorizontal();
                         }
 
                         ShowPlayingSourcesInEditor.boolValue = EditorGUILayout.BeginFoldoutHeaderGroup(ShowPlayingSourcesInEditor.boolValue, "Playing Sources");
                         EditorGUILayout.EndFoldoutHeaderGroup();
                         if (ShowPlayingSourcesInEditor.boolValue)
                         {
-                            EditorGUILayout.BeginHorizontal();
-                            GUILayout.Space(10);
                             ShowPlayingEnumSource();
-                            EditorGUILayout.EndHorizontal();
                         }
                     }
                 }
