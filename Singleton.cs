@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 namespace Utility
@@ -14,9 +13,10 @@ namespace Utility
             {
                 if (_instance == null)
                 {
-                    _instance = FindObjectOfType(typeof(T)) as T;
-
-                    if (_instance == null)
+                    try
+                    {
+                        _instance = FindObjectOfType(typeof(T)) as T;
+                    } catch (NullReferenceException e)
                     {
                         Debug.LogError("There's no active " + typeof(T) + " in this scene");
                     }
