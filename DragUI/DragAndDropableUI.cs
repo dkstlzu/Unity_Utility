@@ -10,7 +10,7 @@ namespace Utility.UI
         public static DragAndDropableUI LastDraggedUI;
         [System.NonSerialized] public RectTransform Rect;
         [System.NonSerialized] public bool SuccessfullyDroped = false;
-        public Canvas Canvas;
+        public float CanvasScaleFactor;
         public static Canvas DraggingCanvas;
         public GameObject RenderingUIElements;
         CanvasGroup CanvasGroup;
@@ -74,8 +74,8 @@ namespace Utility.UI
 
         public virtual void OnDrag(PointerEventData eventData)
         {
-            Rect.anchoredPosition += eventData.delta/Canvas.scaleFactor;
-            DraggingGameObjectRect.anchoredPosition += eventData.delta/Canvas.scaleFactor;
+            Rect.anchoredPosition += eventData.delta/CanvasScaleFactor;
+            DraggingGameObjectRect.anchoredPosition += eventData.delta/CanvasScaleFactor;
         }
     }
 }
