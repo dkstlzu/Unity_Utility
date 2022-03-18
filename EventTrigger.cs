@@ -1,4 +1,6 @@
+#if UNITY_EDITOR
 using UnityEditor.Events;
+#endif
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -110,6 +112,7 @@ namespace Utility
             exitedOnce = false;
         }
 
+#if UNITY_EDITOR
         public void AddEnterEvent(UnityAction action)
         {
             UnityEventTools.AddPersistentListener(OnTriggerEnterEvent, action);
@@ -124,5 +127,6 @@ namespace Utility
         {
             UnityEventTools.AddPersistentListener(OnTriggerExitEvent, action);
         }
+#endif
     }
 }

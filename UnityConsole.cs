@@ -3,6 +3,7 @@ using System.Reflection;
 
 namespace Utility
 {
+#if UNITY_EDITOR
     public class UnityConsole
     {
         public static void ClearConsole()
@@ -13,4 +14,5 @@ namespace Utility
             method.Invoke(new object(), null);
         }
     }
+#endif
 }
