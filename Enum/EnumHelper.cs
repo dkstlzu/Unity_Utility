@@ -6,40 +6,41 @@ namespace Utility
 {
     public static class EnumHelper
     {
-        public static void ClapIndexOfEnum<EnumType>(int from, int to, out int startIndex, out int endIndex) where EnumType : Enum
+        public static void ClapIndexOfEnum(Type enumType, int from, int to, out int startIndex, out int endIndex)
         {
-            UnityEngine.MonoBehaviour.print("EnumHelper Claping Index of " + typeof(EnumType));
-            int enumStart = from;
-            int enumEnd = to;
             startIndex = -1;
             endIndex = -1;
 
-            int[] intarr = (int[])Enum.GetValues(typeof(EnumType));
-            int index = -1;
-            bool startCheck=false, endCheck=false;
-            foreach (int i in intarr)
+            int[] intarr = (int[])Enum.GetValues(enumType);
+            bool startCheck = false, endCheck = false;
+
+            if (intarr[intarr.Length-1] < from) startCheck = true;
+            if (intarr[0] > to) endCheck = true;
+
+            if (startCheck && endCheck) return;
+
+            for (int i = 0; i < intarr.Length; i++)
             {
-                index++;
 
-                if (startCheck && endCheck) break;
+                if (startCheck && endCheck) return;
 
-                if (i >= enumStart && !startCheck)
+                if (intarr[i] >= from && intarr[i] <= to && !startCheck)
                 {
-                    startIndex = index;
+                    startIndex = i;
                     startCheck = true;
                 }
 
-                if (i >= enumEnd && !endCheck)
+                if (intarr[i] >= to && !endCheck)
                 {
-                    endIndex = index-1;
+                    endIndex = i-1;
                     endCheck = true;
                 }
             }
-
-            if (!endCheck)
-            {
-                endIndex = index;
-            }
+            if (endIndex < 0) endIndex = intarr.Length-1;
+        }
+        public static void ClapIndexOfEnum<EnumType>(int from, int to, out int startIndex, out int endIndex) where EnumType : Enum
+        {
+            ClapIndexOfEnum(typeof(EnumType), from, to, out startIndex, out endIndex);
         }
 
         public static Type GetEnumType(string enumName)
