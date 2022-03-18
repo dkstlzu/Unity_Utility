@@ -32,13 +32,14 @@ namespace Utility.UI
             {
                 DraggingCanvas = new GameObject("Dragging Canvas").AddComponent<Canvas>();
                 DraggingCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+                DraggingCanvas.sortingOrder = 15;
             }
 
 
             DraggingGameObject = Instantiate(gameObject, transform.position, transform.rotation);
             if (RenderingUIElements) RenderingUIElements.SetActive(false);
-            Destroy(DraggingGameObject.GetComponent<DragAndDropableUI>());
-            Destroy(DraggingGameObject.GetComponent<CanvasGroup>());
+            // Destroy(DraggingGameObject.GetComponent<DragAndDropableUI>());
+            // Destroy(DraggingGameObject.GetComponent<CanvasGroup>());
             DraggingGameObject.transform.SetParent(DraggingCanvas.transform);
             DraggingGameObjectRect = DraggingGameObject.GetComponent<RectTransform>();
             DraggingGameObjectRect.sizeDelta = new Vector2(Rect.rect.width, Rect.rect.height);
