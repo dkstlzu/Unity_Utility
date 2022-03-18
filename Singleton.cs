@@ -18,7 +18,8 @@ namespace Utility
                         _instance = FindObjectOfType(typeof(T)) as T;
                     } catch (NullReferenceException e)
                     {
-                        Debug.LogError("There's no active " + typeof(T) + " in this scene");
+                        
+                        Debug.LogError(e.ToString() + "\nThere's no active " + typeof(T) + " in this scene");
                     }
                 }
 
