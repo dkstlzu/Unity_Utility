@@ -5,9 +5,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+#if UNITY_EDITOR
+using UnityEditor.Build.Reporting;
+using UnityEditor.Build;
+#endif
+
 namespace Utility
 {
-    public class ResourceLoader : EnumSettableMonoBehaviour
+    public class ResourceLoader : EnumSettableMonoBehaviour 
+#if UNITY_EDITOR
+    , IPreprocessBuildWithReport 
+#endif
     {
         [SerializeField] private bool ShowSettingsInEditor;
         [SerializeField] private bool ShowPathSceneInEditor;
@@ -17,7 +25,7 @@ namespace Utility
         [SerializeField] private bool ShowCurrentResourcesInEditor;
         [SerializeField] private int NamingInterval = 100;
         [SerializeField] private int SharingNamingRegion = 0;
-        [SerializeField] private string SharingSoundsPath = string.Empty;
+        [SerializeField] private string SharingResourcesPath = string.Empty;
         [SerializeField] private string ResourcePathPrefix = string.Empty;
         [Serializable] public struct PathScene
         {
@@ -51,14 +59,40 @@ namespace Utility
         void Awake()
         {
             SceneManager.sceneLoaded += OnSceneLoad;
-        }
-
-        void Start()
-        {
             LoadShared();
         }
 
-        protected virtual UnityEngine.Object[] LoadShared()
+    void OnGUI()
+    {
+        if (GUI.Button(new Rect(10, 10, 100, 30), "Test1"))
+        {
+            Load(1);
+        }
+
+        if (GUI.Button(new Rect(120, 10, 100, 30), "Test2"))
+        {
+        }
+    }
+
+        private List<string> ResourceSubDirectories = new List<string>();
+#if UNITY_EDITOR
+        public int callbackOrder
+        {
+            get;
+        }
+        public void OnPreprocessBuild(BuildReport report)
+        {
+            string ResourcesPath = Application.dataPath + "/Resources";
+            string[] directories = Directory.GetDirectories(ResourcesPath, "*", SearchOption.AllDirectories);
+            foreach (var item in directories)
+            {
+                string itemPath = item.Substring(ResourcesPath.Length + 1);
+                ResourceSubDirectories.Add(itemPath);
+            }
+        }
+#endif
+
+        protected virtual void LoadShared()
         {
             int indexOfEnumStart, indexOfEnumEnd;
 
@@ -67,47 +101,43 @@ namespace Utility
             int clapedLength = indexOfEnumEnd - indexOfEnumStart + 1;
 
             Enum[] namings = new Enum[clapedLength];
-            Array enumTemp = Enum.GetValues(EnumValue.GetType());
-            Array.Copy(enumTemp, indexOfEnumStart, namings, 0, clapedLength);
+            Array.Copy(Enum.GetValues(EnumValue.GetType()), indexOfEnumStart, namings, 0, clapedLength);
 
-
-            UnityEngine.Object[] sources = new UnityEngine.Object[clapedLength];
-
-            for (int i = 0; i < enumTemp.Length; i++)
-            {
-                UnityEngine.Object source = ResourcesExtension.LoadSubDirectory<UnityEngine.Object>(ResourcePathPrefix, enumTemp.GetValue(i).ToString()) as UnityEngine.Object;
-                SharedResourcesDict.Add(enumTemp.GetValue(i) as Enum, source);
-                sources[i] = source;
+            foreach(Enum e in namings)
+            {   
+                UnityEngine.Object source = Resources.Load<UnityEngine.Object>(Path.Combine(ResourcePathPrefix, SharingResourcesPath, e.ToString()));
+                SharedResourcesDict.Add(e, source);
             }
-
-            return sources;
         }
 
-        public virtual UnityEngine.Object[] Load(int targetRegion)
+        public virtual void Load(int targetRegion)
         {
             _currentRegion = targetRegion;
 
             int indexOfEnumStart, indexOfEnumEnd;
 
             EnumHelper.ClapIndexOfEnum(EnumValue.GetType(), _namingStart, _namingEnd, out indexOfEnumStart, out indexOfEnumEnd);
+            if (indexOfEnumStart < 0) 
+            {
+                print("Empty Enum Region");
+                return;
+            }
 
             int clapedLength = indexOfEnumEnd - indexOfEnumStart + 1;
 
             Enum[] namings = new Enum[clapedLength];
-            Array enumTemp = Enum.GetValues(EnumValue.GetType());
-            Array.Copy(enumTemp, indexOfEnumStart, namings, 0, clapedLength);
+            Array.Copy(Enum.GetValues(EnumValue.GetType()), indexOfEnumStart, namings, 0, clapedLength);
 
 
-            UnityEngine.Object[] sources = new UnityEngine.Object[clapedLength];
-
-            for (int i = 0; i < enumTemp.Length; i++)
+            for (int i = 0; i < namings.Length; i++)
             {
-                UnityEngine.Object source = ResourcesExtension.LoadSubDirectory<UnityEngine.Object>(ResourcePathPrefix, enumTemp.GetValue(i).ToString()) as UnityEngine.Object;
-                CurrentResourcesDict.Add(enumTemp.GetValue(i) as Enum, source);
-                sources[i] = source;
+// #if UNITY_EDITOR
+                UnityEngine.Object source = ResourcesExtension.LoadSubDirectory<UnityEngine.Object>(ResourcePathPrefix, namings.GetValue(i).ToString());
+// #elif UNITY_STANDALONE
+//                 UnityEngine.Object source = ResourcesExtension.LoadSubDirectory<UnityEngine.Object>(ResourceSubDirectories, enumTemp.GetValue(i).ToString());
+// #endif
+                CurrentResourcesDict.Add(namings.GetValue(i) as Enum, source);
             }
-
-            return sources;
         }
 
         public virtual UnityEngine.Object Load(string path)
@@ -138,7 +168,7 @@ namespace Utility
             CurrentResourcesDict.Clear();
         }
 
-        private T Get<T>(Enum sourceName) where T : UnityEngine.Object
+        public T Get<T>(Enum sourceName) where T : UnityEngine.Object
         {
             UnityEngine.Object source;
             if (CurrentResourcesDict.TryGetValue(sourceName, out source)) {}
@@ -154,6 +184,20 @@ namespace Utility
                 return (T)source;
             else
                 return null;
+        }
+
+        public static T SGet<T>(Enum sourceName) where T : UnityEngine.Object
+        {
+            ResourceLoader[] loaders = GameObject.FindObjectsOfType<ResourceLoader>();
+
+            foreach (ResourceLoader loader in loaders)
+            {
+                if (loader.EnumValue.GetType() != sourceName.GetType()) continue;
+
+                return loader.Get<T>(sourceName);
+            }
+
+            return null;
         }
 
         void OnSceneLoad(Scene scene, LoadSceneMode mode)

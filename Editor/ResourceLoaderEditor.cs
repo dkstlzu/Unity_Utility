@@ -18,7 +18,7 @@ namespace Utility
 
         SerializedProperty NamingInterval;
         SerializedProperty SharingNamingRegion;
-        SerializedProperty SharingSoundsPath;
+        SerializedProperty SharingResourcesPath;
         SerializedProperty ResourcePathPrefix;
         SerializedProperty UsePathSceneSync;
 
@@ -39,7 +39,7 @@ namespace Utility
 
             NamingInterval = serializedObject.FindProperty("NamingInterval");
             SharingNamingRegion = serializedObject.FindProperty("SharingNamingRegion");
-            SharingSoundsPath = serializedObject.FindProperty("SharingSoundsPath");
+            SharingResourcesPath = serializedObject.FindProperty("SharingResourcesPath");
             ResourcePathPrefix = serializedObject.FindProperty("ResourcePathPrefix");
             UsePathSceneSync = serializedObject.FindProperty("UsePathSceneSync");
 
@@ -57,7 +57,7 @@ namespace Utility
             if (ShowSettingsInEditor.boolValue)
             {
                 EditorGUILayout.PropertyField(ResourcePathPrefix, new GUIContent("Path Prefix"));
-                EditorGUILayout.PropertyField(SharingSoundsPath, new GUIContent("Sharing Source Path"));
+                EditorGUILayout.PropertyField(SharingResourcesPath, new GUIContent("Sharing Source Path"));
                 EditorGUILayout.PropertyField(SharingNamingRegion, new GUIContent("Sharing Naming Region"));
                 EditorGUILayout.PropertyField(NamingInterval, new GUIContent("Enum Region Interval"));
 
