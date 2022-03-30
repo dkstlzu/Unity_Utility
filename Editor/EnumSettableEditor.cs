@@ -13,9 +13,7 @@ namespace Utility
         SerializedProperty EnumValue;
         SerializedProperty EnumNameCorrect;
 
-        bool UseEnumValuePopUp;
-
-        protected virtual EnumSettableMonoBehaviour GetTarget()
+        private EnumSettableMonoBehaviour GetTarget()
         {
             return target as EnumSettableMonoBehaviour;
         }
@@ -53,17 +51,6 @@ namespace Utility
                     if (GUILayout.Button($"{EnumName.stringValue} : Reset enum type")) 
                         EnumReset();
 
-                    UseEnumValuePopUp = EditorGUILayout.Toggle("UseEnumValuePopUp", UseEnumValuePopUp);
-                    if (UseEnumValuePopUp)
-                    {
-                        if (EnumNameCorrect.boolValue)
-                        {
-                            EnumValue.stringValue = EditorGUILayout.EnumPopup("Enum Value", ESM.EnumValue).ToString();
-                        } else
-                        {
-                            EditorGUILayout.LabelField("Can not get PoolEnum.");
-                        }
-                    } 
                     OnNotPlayingInspectorGUI();
                 } else
                 {
@@ -74,6 +61,18 @@ namespace Utility
             }
             serializedObject.ApplyModifiedProperties();
         }
+
+        protected void EnumPopup()
+        {
+            if (EnumNameCorrect.boolValue)
+            {
+                EnumValue.stringValue = EditorGUILayout.EnumPopup("Enum Value", GetTarget().EnumValue).ToString();
+            } else
+            {
+                EditorGUILayout.LabelField("Can not get PoolEnum.");
+            }
+        }
+        
         protected void EnumReset()
         {
             EnumNameCorrect.boolValue = false;
