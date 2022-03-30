@@ -5,17 +5,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-#if UNITY_EDITOR
-using UnityEditor.Build.Reporting;
-using UnityEditor.Build;
-#endif
-
 namespace Utility
 {
-    public class ResourceLoader : EnumSettableMonoBehaviour 
-#if UNITY_EDITOR
-    , IPreprocessBuildWithReport 
-#endif
+    public class ResourceLoader : EnumSettableMonoBehaviour
     {
         [SerializeField] private bool ShowSettingsInEditor;
         [SerializeField] private bool ShowPathSceneInEditor;
@@ -23,8 +15,8 @@ namespace Utility
         [SerializeField] private bool ShowPreloadedResourcesInEditor;
         [SerializeField] private bool ShowSharedResourcesInEditor;
         [SerializeField] private bool ShowCurrentResourcesInEditor;
+        [SerializeField] private bool ShowResourcesSubDirectoryCache;
         [SerializeField] private int NamingInterval = 100;
-        [SerializeField] private int SharingNamingRegion = 0;
         [SerializeField] private string SharingResourcesPath = string.Empty;
         [SerializeField] private string ResourcePathPrefix = string.Empty;
         [Serializable] public struct PathScene
@@ -56,41 +48,19 @@ namespace Utility
             get {return _namingStart + NamingInterval - 1;}
         }
 
+        public List<string> ResourceSubDirectories;
+
         void Awake()
         {
             SceneManager.sceneLoaded += OnSceneLoad;
             LoadShared();
-        }
 
-    void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 10, 100, 30), "Test1"))
-        {
-            Load(1);
-        }
-
-        if (GUI.Button(new Rect(120, 10, 100, 30), "Test2"))
-        {
-        }
-    }
-
-        private List<string> ResourceSubDirectories = new List<string>();
-#if UNITY_EDITOR
-        public int callbackOrder
-        {
-            get;
-        }
-        public void OnPreprocessBuild(BuildReport report)
-        {
-            string ResourcesPath = Application.dataPath + "/Resources";
-            string[] directories = Directory.GetDirectories(ResourcesPath, "*", SearchOption.AllDirectories);
-            foreach (var item in directories)
+            Debug.LogError(ResourceSubDirectories.Count);
+            foreach (var v in ResourceSubDirectories)
             {
-                string itemPath = item.Substring(ResourcesPath.Length + 1);
-                ResourceSubDirectories.Add(itemPath);
+                Debug.LogError(v);
             }
         }
-#endif
 
         protected virtual void LoadShared()
         {
@@ -131,11 +101,11 @@ namespace Utility
 
             for (int i = 0; i < namings.Length; i++)
             {
-// #if UNITY_EDITOR
+#if UNITY_EDITOR
                 UnityEngine.Object source = ResourcesExtension.LoadSubDirectory<UnityEngine.Object>(ResourcePathPrefix, namings.GetValue(i).ToString());
-// #elif UNITY_STANDALONE
-//                 UnityEngine.Object source = ResourcesExtension.LoadSubDirectory<UnityEngine.Object>(ResourceSubDirectories, enumTemp.GetValue(i).ToString());
-// #endif
+#elif UNITY_STANDALONE
+                UnityEngine.Object source = ResourcesExtension.LoadSubDirectory<UnityEngine.Object>(ResourceSubDirectories, namings.GetValue(i).ToString());
+#endif
                 CurrentResourcesDict.Add(namings.GetValue(i) as Enum, source);
             }
         }
@@ -213,6 +183,6 @@ namespace Utility
                     return;
                 }
             }
-        }        
+        }
     }
 }

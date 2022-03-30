@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,17 +16,21 @@ namespace Utility
         SerializedProperty ShowPreloadedResourcesInEditor;
         SerializedProperty ShowSharedResourcesInEditor;
         SerializedProperty ShowCurrentResourcesInEditor;
+        SerializedProperty ShowResourcesSubDirectoryCache;
 
         SerializedProperty NamingInterval;
-        SerializedProperty SharingNamingRegion;
         SerializedProperty SharingResourcesPath;
         SerializedProperty ResourcePathPrefix;
         SerializedProperty UsePathSceneSync;
 
         SerializedProperty ResourcePathsForEachScene;
         SerializedProperty PreloadedResourcesList;
+        SerializedProperty ResourceSubDirectories;
 
-        ResourceLoader RL;
+        private ResourceLoader GetTarget()
+        {
+            return target as ResourceLoader;
+        }
         
         protected override void OnEnable()
         {
@@ -36,17 +41,16 @@ namespace Utility
             ShowPreloadedResourcesInEditor = serializedObject.FindProperty("ShowPreloadedResourcesInEditor");
             ShowSharedResourcesInEditor = serializedObject.FindProperty("ShowSharedResourcesInEditor");
             ShowCurrentResourcesInEditor = serializedObject.FindProperty("ShowCurrentResourcesInEditor");
+            ShowResourcesSubDirectoryCache = serializedObject.FindProperty("ShowResourcesSubDirectoryCache");
 
             NamingInterval = serializedObject.FindProperty("NamingInterval");
-            SharingNamingRegion = serializedObject.FindProperty("SharingNamingRegion");
             SharingResourcesPath = serializedObject.FindProperty("SharingResourcesPath");
             ResourcePathPrefix = serializedObject.FindProperty("ResourcePathPrefix");
             UsePathSceneSync = serializedObject.FindProperty("UsePathSceneSync");
 
             ResourcePathsForEachScene = serializedObject.FindProperty("ResourcePathsForEachScene");
             PreloadedResourcesList = serializedObject.FindProperty("PreloadedResourcesList");
-
-            RL = target as ResourceLoader;
+            ResourceSubDirectories = serializedObject.FindProperty("ResourceSubDirectories");
         }
 
         protected override void OnNotPlayingInspectorGUI()
@@ -58,7 +62,6 @@ namespace Utility
             {
                 EditorGUILayout.PropertyField(ResourcePathPrefix, new GUIContent("Path Prefix"));
                 EditorGUILayout.PropertyField(SharingResourcesPath, new GUIContent("Sharing Source Path"));
-                EditorGUILayout.PropertyField(SharingNamingRegion, new GUIContent("Sharing Naming Region"));
                 EditorGUILayout.PropertyField(NamingInterval, new GUIContent("Enum Region Interval"));
 
                 EditorGUILayout.PropertyField(UsePathSceneSync, new GUIContent("Use Path Scene Auto Load"));
@@ -98,12 +101,46 @@ namespace Utility
                     }
                 }
             }
-            EditorGUILayout.Space(20);
+
+            EditorGUILayout.BeginHorizontal();
+            ShowResourcesSubDirectoryCache.boolValue = EditorGUILayout.BeginFoldoutHeaderGroup(ShowResourcesSubDirectoryCache.boolValue, "SubDirectory Cache");
+            EditorGUILayout.EndFoldoutHeaderGroup();
+            if (GUILayout.Button("Search", GUILayout.Width(100)))
+            {
+                ResourceSubDirectories.ClearArray();
+
+                string ResourcesPath = Application.dataPath + "/Resources";
+                string[] directories = Directory.GetDirectories(ResourcesPath, "*", SearchOption.AllDirectories);
+                foreach (var item in directories)
+                {
+                    string itemPath = item.Substring(ResourcesPath.Length + 1);
+                    MonoBehaviour.print($"{GetType()} : " + itemPath);
+                    ResourceSubDirectories.InsertArrayElementAtIndex(ResourceSubDirectories.arraySize);
+                    ResourceSubDirectories.GetArrayElementAtIndex(ResourceSubDirectories.arraySize - 1).stringValue = itemPath;
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+            if (ShowResourcesSubDirectoryCache.boolValue)
+            {
+                ShowSubDirectoryCache();
+            }
         }
 
         protected override void OnPlayingInspectorGUI()
         {
-            base.OnPlayingInspectorGUI();
+            ShowSharedResourcesInEditor.boolValue = EditorGUILayout.BeginFoldoutHeaderGroup(ShowSharedResourcesInEditor.boolValue, "Shared Sources");
+            EditorGUILayout.EndFoldoutHeaderGroup();
+            if (ShowSharedResourcesInEditor.boolValue)
+            {
+                ShowSharedClips();
+            }
+
+            ShowCurrentResourcesInEditor.boolValue = EditorGUILayout.BeginFoldoutHeaderGroup(ShowCurrentResourcesInEditor.boolValue, "Current Sources");
+            EditorGUILayout.EndFoldoutHeaderGroup();
+            if (ShowCurrentResourcesInEditor.boolValue)
+            {
+                ShowCurrentClips();
+            }
         }
 
         protected override void OnOverridingInspectorGUI()
@@ -125,6 +162,8 @@ namespace Utility
                 }
                 EditorGUILayout.EndHorizontal();
 
+                // ---------------------------------------------
+
                 if (ShowPreloadedResourcesInEditor.boolValue)
                 {
                     ShowPreloadedEnumSource();
@@ -132,23 +171,17 @@ namespace Utility
                     GUILayout.Space(10);
                     EditorGUILayout.EndHorizontal();
                 }
+            }
+        }
 
-                if (EditorApplication.isPlaying)
-                {
-                    ShowSharedResourcesInEditor.boolValue = EditorGUILayout.BeginFoldoutHeaderGroup(ShowSharedResourcesInEditor.boolValue, "Shared Sources");
-                    EditorGUILayout.EndFoldoutHeaderGroup();
-                    if (ShowSharedResourcesInEditor.boolValue)
-                    {
-                        ShowSharedEnumSource();
-                    }
-
-                    ShowCurrentResourcesInEditor.boolValue = EditorGUILayout.BeginFoldoutHeaderGroup(ShowCurrentResourcesInEditor.boolValue, "Current Sources");
-                    EditorGUILayout.EndFoldoutHeaderGroup();
-                    if (ShowCurrentResourcesInEditor.boolValue)
-                    {
-                        ShowCurrentEnumSource();
-                    }
-                }
+        void ShowSubDirectoryCache()
+        {
+            for (int i = 0; i < ResourceSubDirectories.arraySize; i++)
+            {
+                EditorGUILayout.BeginHorizontal();
+                ResourceSubDirectories.GetArrayElementAtIndex(i).stringValue = EditorGUILayout.TextField(ResourceSubDirectories.GetArrayElementAtIndex(i).stringValue);
+                if (GUILayout.Button("X", EditorStyles.miniButton, GUILayout.Width(20))) ResourceSubDirectories.DeleteArrayElementAtIndex(i);
+                EditorGUILayout.EndHorizontal();
             }
         }
 
@@ -163,36 +196,36 @@ namespace Utility
             }
         }
 
-        void ShowSharedEnumSource()
+        void ShowSharedClips()
         {
-            if (RL.SharedResourcesDict.Count == 0)
+            if (GetTarget().SharedResourcesDict.Count == 0)
             {
                 EditorGUILayout.LabelField("No Shared Sources");
             }
 
-            foreach (KeyValuePair<Enum, UnityEngine.Object> pair in RL.SharedResourcesDict)
+            foreach (KeyValuePair<Enum, UnityEngine.Object> pair in GetTarget().SharedResourcesDict)
             {
                 EditorGUILayout.BeginHorizontal();
                 GUILayout.Space(20);
                 GUILayout.Box(pair.Key.ToString(), GUILayout.Width(150));
-                EditorGUILayout.ObjectField(pair.Value, typeof(UnityEngine.Object), false);
+                EditorGUILayout.ObjectField(pair.Value, typeof(UnityEngine.AudioClip), false);
                 EditorGUILayout.EndHorizontal();
             }
         }
 
-        void ShowCurrentEnumSource()
+        void ShowCurrentClips()
         {
-            if (RL.CurrentResourcesDict.Count == 0)
+            if (GetTarget().CurrentResourcesDict.Count == 0)
             {
                 EditorGUILayout.LabelField("No Current Sources");
             }
 
-            foreach (KeyValuePair<Enum, UnityEngine.Object> pair in RL.CurrentResourcesDict)
+            foreach (KeyValuePair<Enum, UnityEngine.Object> pair in GetTarget().CurrentResourcesDict)
             {
                 EditorGUILayout.BeginHorizontal();
                 GUILayout.Space(20);
                 GUILayout.Box(pair.Key.ToString(), GUILayout.Width(150));
-                EditorGUILayout.ObjectField(pair.Value, typeof(UnityEngine.Object), false);
+                EditorGUILayout.ObjectField(pair.Value, typeof(UnityEngine.AudioClip), false);
                 EditorGUILayout.EndHorizontal();
             }
         }
