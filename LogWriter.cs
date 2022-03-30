@@ -7,34 +7,46 @@ namespace Utility
 {
     public class LogWriter
     {
-        public string Path ;
+        public string Path;
+        public string FileName;
         public string Extention;
-        public string FileName {get {return Path + "." + Extention;}}
-        static StreamWriter writer = null;
+        public string FullPath {get {return System.IO.Path.Combine(Application.streamingAssetsPath, Path) + FileName + "." + Extention;}}
+        protected StreamWriter writer = null;
+
+        public bool isValid
+        {
+            get {return writer != null;}
+        }
+
+        public string testStr;
 
         public LogWriter() {}
-        public LogWriter(string path, string extention)
+        public LogWriter(string path, string fileName, string extention)
         {
             Path = path;
+            FileName = fileName;
             Extention = extention;
+
+            Directory.CreateDirectory(System.IO.Path.Combine(Application.streamingAssetsPath, Path));
 
             try
             {
 
-                if (!File.Exists(FileName)) 
+                if (!File.Exists(FullPath)) 
                 {
-                    File.Create(FileName);
-                } 
-                writer = new StreamWriter(FileName, true);
+                    writer = new StreamWriter(File.Create(FullPath));
+                } else
+                {
+                    writer = new StreamWriter(FullPath, true);
+                }
                 writer.AutoFlush = true;
 
-                string recordingStartMessage = $"Recod start {DateTime.Now}.";
+                string recordingStartMessage = $"-----------------------------------\nRecording start {DateTime.Now}.";
 
                 Write(recordingStartMessage, true);
                 NewLine();
                 Write("Recorded Contents : ", true);
-            }
-            catch (Exception e)
+            } catch (Exception e)
             {
                 MonoBehaviour.print(e);
             }
@@ -48,24 +60,13 @@ namespace Utility
 
         public void Write(string content, bool newLine=false)
         {
-            WriteAfterFileExist(content);
-            if (newLine) NewLine();
-        }
-
-        private async void WriteAfterFileExist(string content)
-        {
-            if (!File.Exists(FileName))
-            {
-                File.Create(FileName);
-                await Task.Yield();
-            }
-
             writer.Write(content);
+            if (newLine) NewLine();
         }
 
         public void NewLine()
         {
-            WriteAfterFileExist("\n");
+            writer.Write("\n");
         }
 
         public void Flush()
@@ -77,7 +78,6 @@ namespace Utility
         {
             writer.Close();
         }
-
 
         public void DebugWrite(string content)
         {
