@@ -54,12 +54,6 @@ namespace Utility
         {
             SceneManager.sceneLoaded += OnSceneLoad;
             LoadShared();
-
-            Debug.LogError(ResourceSubDirectories.Count);
-            foreach (var v in ResourceSubDirectories)
-            {
-                Debug.LogError(v);
-            }
         }
 
         protected virtual void LoadShared()
@@ -158,16 +152,26 @@ namespace Utility
 
         public static T SGet<T>(Enum sourceName) where T : UnityEngine.Object
         {
-            ResourceLoader[] loaders = GameObject.FindObjectsOfType<ResourceLoader>();
-
-            foreach (ResourceLoader loader in loaders)
+            ResourceLoader loader;
+            if ((loader = GetLoader<T>()) != null)
             {
-                if (loader.EnumValue.GetType() != sourceName.GetType()) continue;
-
                 return loader.Get<T>(sourceName);
             }
 
             return null;
+        }
+
+        public static ResourceLoader GetLoader<T>()
+        {
+            ResourceLoader[] loaders = GameObject.FindObjectsOfType<ResourceLoader>();
+
+            foreach (ResourceLoader loader in loaders)
+            {
+                if (loader.EnumValue.GetType() == typeof(T)) return loader;
+            }
+
+            return null;
+
         }
 
         void OnSceneLoad(Scene scene, LoadSceneMode mode)
