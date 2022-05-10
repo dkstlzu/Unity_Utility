@@ -1,0 +1,91 @@
+using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+namespace Utility
+{
+    public class EventTriggerChildCollider : MonoBehaviour
+    {
+        public EventTrigger ET;
+        internal EventTrigger.EventTriggerState State;
+
+        public bool use2D
+        {
+            get {return ET.use2D;}
+        }
+
+        void Reset()
+        {
+            ET = GetComponentInParent<EventTrigger>();
+            if (!ET)
+            {
+                var headertext = "Warning";
+                var maintext = "Could not Find EventTrigger among parents";
+                var ops1 = "Ok";
+            
+                if (EditorUtility.DisplayDialog(headertext, maintext, ops1)) {
+                    Debug.LogWarning("Check if EventTrigger exist.");
+                } 
+
+                Debug.LogWarning("Check if EventTrigger exist.");
+                DestroyImmediate(this);
+                return;
+            }
+
+            if (use2D)
+            {
+                var col = gameObject.AddComponent(ET.Collider2D.GetType()) as Collider2D;
+                col.isTrigger = true;
+            } else
+            {
+                var col = gameObject.AddComponent(ET.Collider.GetType()) as Collider;
+                col.isTrigger = true;
+            }
+        }
+
+        void Awake()
+        {
+            ET.Childs.Add(this);
+        }
+
+        void OnTriggerEnter(Collider collider)
+        {
+            ET.OnTriggerEnter(collider);
+            State = EventTrigger.EventTriggerState.Staying;
+        }
+
+        void OnTriggerStay(Collider collider)
+        {
+            ET.OnTriggerStay(collider);
+        }
+
+        void OnTriggerExit(Collider collider)
+        {
+            State = EventTrigger.EventTriggerState.Default;
+            ET.OnTriggerExit(collider);
+        }
+
+        void OnTriggerEnter2D(Collider2D collider)
+        {
+            ET.OnTriggerEnter2D(collider);
+            State = EventTrigger.EventTriggerState.Staying;
+        }
+
+        void OnTriggerStay2D(Collider2D collider)
+        {
+            ET.OnTriggerStay2D(collider);
+        }
+
+        void OnTriggerExit2D(Collider2D collider)
+        {
+            State = EventTrigger.EventTriggerState.Default;
+            ET.OnTriggerExit2D(collider);
+        }
+
+        void OnDestroy()
+        {
+            ET.Childs.Remove(this);
+        }
+    }
+}

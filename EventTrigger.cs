@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor.Events;
 #endif
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,6 +9,12 @@ namespace Utility
 {
     public class EventTrigger : MonoBehaviour
     {
+        public enum EventTriggerState
+        {
+            Default,
+            Staying,
+        }
+
         public bool use2D;
         public bool isReady;
         public LayerMask TargetLayerMask;
@@ -24,82 +31,121 @@ namespace Utility
             get {if (use2D) return Collider2D; else return Collider;}
         }
 
-        void OnTriggerEnter(Collider collider)
+        internal EventTriggerState State;
+        internal List<EventTriggerChildCollider> Childs = new List<EventTriggerChildCollider>();
+        internal bool noOneEntered
         {
-            if ((enteredOnce && PlayOnlyFirst) || use2D)
+            get 
+            {
+                bool result = true;
+                result = !(State == EventTriggerState.Staying);
+                if (!result) return false;
+
+                foreach (EventTriggerChildCollider ETChild in Childs)
+                {
+                    result = !(ETChild.State == EventTriggerState.Staying);
+                    if (!result) return false;
+                }
+
+                return true;
+            }
+        }
+
+        internal bool stayCalledAlready;
+
+        void FixedUpdate()
+        {
+            stayCalledAlready = false;
+        }
+
+        internal void OnTriggerEnter(Collider collider)
+        {
+            if ((enteredOnce && PlayOnlyFirst) || use2D || ((1 << collider.gameObject.layer) & TargetLayerMask.value) == 0)
             {
                 return;
             }
             
-            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
+            if (noOneEntered)
             {
                 OnTriggerEnterEvent.Invoke();
                 enteredOnce = true;
             }
+
+            State = EventTriggerState.Staying;
         }
 
-        void OnTriggerStay(Collider collider)
+        internal void OnTriggerStay(Collider collider)
         {
-            if (use2D)
+            if (use2D || ((1 << collider.gameObject.layer) & TargetLayerMask.value) == 0)
             {
                 return;
             }
             
-            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
+            if (!stayCalledAlready)
             {
                 OnTriggerStayEvent.Invoke();
             }
+
+            stayCalledAlready = true;
         }
 
-        void OnTriggerExit(Collider collider)
+        internal void OnTriggerExit(Collider collider)
         {
-            if ((exitedOnce && PlayOnlyFirst) || use2D)
+            if ((exitedOnce && PlayOnlyFirst) || use2D || ((1 << collider.gameObject.layer) & TargetLayerMask.value) == 0)
             {
                 return;
             }
             
-            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
+            State = EventTriggerState.Default;
+
+            if (noOneEntered)
             {
                 OnTriggerExitEvent.Invoke();
                 exitedOnce = true;
             }
         }
 
-        void OnTriggerEnter2D(Collider2D collider)
+        internal void OnTriggerEnter2D(Collider2D collider)
         {
-            if ((enteredOnce && PlayOnlyFirst) || !use2D)
+            if ((enteredOnce && PlayOnlyFirst) || !use2D || ((1 << collider.gameObject.layer) & TargetLayerMask.value) == 0)
             {
                 return;
             }
             
-            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
+            if (noOneEntered)
             {
                 OnTriggerEnterEvent.Invoke();
                 enteredOnce = true;
             }
+            
+            State = EventTriggerState.Staying;
         }
 
-        void OnTriggerStay2D(Collider2D collider)
+        internal void OnTriggerStay2D(Collider2D collider)
         {
-            if (!use2D)
+            if (!use2D || ((1 << collider.gameObject.layer) & TargetLayerMask.value) == 0)
             {
                 return;
             }
-            
-            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
+
+            if (!stayCalledAlready)
             {
                 OnTriggerStayEvent.Invoke();
             }
+
+            stayCalledAlready = true;
         }
 
-        void OnTriggerExit2D(Collider2D collider)
+        internal void OnTriggerExit2D(Collider2D collider)
         {
-            if ((exitedOnce && PlayOnlyFirst) || !use2D)
+            if ((exitedOnce && PlayOnlyFirst) || !use2D || ((1 << collider.gameObject.layer) & TargetLayerMask.value) == 0)
             {
                 return;
             }
             
-            if (((1 << collider.gameObject.layer) & TargetLayerMask.value) > 0)
+            State = EventTriggerState.Default;
+
+            if (noOneEntered)
             {
                 OnTriggerExitEvent.Invoke();
                 exitedOnce = true;
