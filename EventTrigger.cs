@@ -15,6 +15,7 @@ namespace Utility
             Staying,
         }
 
+        public bool DrawGizmo;
         public bool use2D;
         public bool isReady;
         public LayerMask TargetLayerMask;
@@ -32,7 +33,7 @@ namespace Utility
         }
 
         internal EventTriggerState State;
-        internal List<EventTriggerChildCollider> Childs = new List<EventTriggerChildCollider>();
+        public List<EventTriggerChildCollider> Childs = new List<EventTriggerChildCollider>();
         internal bool noOneEntered
         {
             get 
@@ -156,6 +157,20 @@ namespace Utility
         {
             enteredOnce = false;
             exitedOnce = false;
+        }
+
+        void OnDrawGizmosSelected()
+        {
+            if (!DrawGizmo) return;
+
+            Gizmos.color = new Color(Color.red.r, Color.red.g, Color.red.b, 0.3f);
+
+            Gizmos.DrawCube(new Vector2(transform.position.x, transform.position.y) + Collider2D.offset, Collider2D.bounds.size);
+
+            foreach(EventTriggerChildCollider Child in Childs)
+            {
+                Gizmos.DrawCube(new Vector2(Child.transform.position.x, Child.transform.position.y) + Child.Collider2D.offset, Child.Collider2D.bounds.size);
+            }
         }
 
 #if UNITY_EDITOR

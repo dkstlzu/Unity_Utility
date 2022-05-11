@@ -8,6 +8,16 @@ namespace Utility
     public class EventTriggerChildCollider : MonoBehaviour
     {
         public EventTrigger ET;
+        public Collider Collider;
+        public Collider2D Collider2D;
+        public Object ValidCollider
+        {
+            get 
+            {
+                if (use2D) return Collider2D;
+                else return Collider;
+            }
+        }
         internal EventTrigger.EventTriggerState State;
 
         public bool use2D
@@ -35,17 +45,13 @@ namespace Utility
 
             if (use2D)
             {
-                var col = gameObject.AddComponent(ET.Collider2D.GetType()) as Collider2D;
-                col.isTrigger = true;
+                Collider2D = gameObject.AddComponent(ET.Collider2D.GetType()) as Collider2D;
+                Collider2D.isTrigger = true;
             } else
             {
-                var col = gameObject.AddComponent(ET.Collider.GetType()) as Collider;
-                col.isTrigger = true;
+                Collider = gameObject.AddComponent(ET.Collider.GetType()) as Collider;
+                Collider.isTrigger = true;
             }
-        }
-
-        void Awake()
-        {
             ET.Childs.Add(this);
         }
 

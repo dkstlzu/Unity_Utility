@@ -10,6 +10,12 @@ namespace Utility
         protected SerializedProperty Collider;
         protected SerializedProperty Collider2D;
         protected SerializedProperty use2D;
+        protected SerializedProperty DrawGizmo;
+        protected SerializedProperty TargetLayerMask;
+        protected SerializedProperty OnTriggerEnterEvent;
+        protected SerializedProperty OnTriggerStayEvent;
+        protected SerializedProperty OnTriggerExitEvent;
+        protected SerializedProperty PlayOnlyFirst;
 
         protected virtual void OnEnable()
         {
@@ -17,6 +23,12 @@ namespace Utility
             Collider = serializedObject.FindProperty("Collider");
             Collider2D = serializedObject.FindProperty("Collider2D");
             use2D = serializedObject.FindProperty("use2D");
+            DrawGizmo = serializedObject.FindProperty("DrawGizmo");
+            TargetLayerMask = serializedObject.FindProperty("TargetLayerMask");
+            OnTriggerEnterEvent = serializedObject.FindProperty("OnTriggerEnterEvent");
+            OnTriggerStayEvent = serializedObject.FindProperty("OnTriggerStayEvent");
+            OnTriggerExitEvent = serializedObject.FindProperty("OnTriggerExitEvent");
+            PlayOnlyFirst = serializedObject.FindProperty("PlayOnlyFirst");
         }
 
         public override void OnInspectorGUI()
@@ -114,11 +126,12 @@ namespace Utility
 
                 if (use2D.boolValue && !Collider2D.objectReferenceValue && isReady.boolValue || !use2D.boolValue && !Collider.objectReferenceValue && isReady.boolValue) isReady.boolValue = false;
                 
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("TargetLayerMask"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("OnTriggerEnterEvent"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("OnTriggerStayEvent"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("OnTriggerExitEvent"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("PlayOnlyFirst"));
+                EditorGUILayout.PropertyField(DrawGizmo);
+                EditorGUILayout.PropertyField(TargetLayerMask);
+                EditorGUILayout.PropertyField(OnTriggerEnterEvent);
+                EditorGUILayout.PropertyField(OnTriggerStayEvent);
+                EditorGUILayout.PropertyField(OnTriggerExitEvent);
+                EditorGUILayout.PropertyField(PlayOnlyFirst);
             }         
             serializedObject.ApplyModifiedProperties();
         }
