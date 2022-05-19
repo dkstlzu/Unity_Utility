@@ -173,6 +173,51 @@ namespace Utility
         {
             UnityEventTools.AddPersistentListener(OnTriggerExitEvent, action);
         }
+
+        public void RemoveEnterEvent(UnityAction action)
+        {
+            UnityEventTools.RemovePersistentListener(OnTriggerEnterEvent, action);
+        }
+
+        public void RemoveStayEvent(UnityAction action)
+        {
+            UnityEventTools.RemovePersistentListener(OnTriggerStayEvent, action);
+        }
+
+        public void RemoveExitEvent(UnityAction action)
+        {
+            UnityEventTools.RemovePersistentListener(OnTriggerExitEvent, action);
+        }
+
+        public void ClearEnterEvent()
+        {
+            int eventNum = OnTriggerEnterEvent.GetPersistentEventCount();
+
+            while (eventNum-- > 0)
+            {
+                UnityEventTools.RemovePersistentListener(OnTriggerEnterEvent, 0);
+            }
+        }
+
+        public void ClearStayEvent()
+        {
+            int eventNum = OnTriggerStayEvent.GetPersistentEventCount();
+
+            while (eventNum-- > 0)
+            {
+                UnityEventTools.RemovePersistentListener(OnTriggerStayEvent, 0);
+            }
+        }
+
+        public void ClearExitEvent()
+        {
+            int eventNum = OnTriggerExitEvent.GetPersistentEventCount();
+
+            while (eventNum-- > 0)
+            {
+                UnityEventTools.RemovePersistentListener(OnTriggerExitEvent, 0);
+            }
+        }
 #endif
     }
 }
