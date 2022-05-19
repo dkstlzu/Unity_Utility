@@ -15,7 +15,6 @@ namespace Utility
             Staying,
         }
 
-        public bool DrawGizmo;
         public bool use2D;
         public bool isReady;
         public LayerMask TargetLayerMask;
@@ -157,20 +156,6 @@ namespace Utility
         {
             enteredOnce = false;
             exitedOnce = false;
-        }
-
-        void OnDrawGizmosSelected()
-        {
-            if (!DrawGizmo) return;
-
-            Gizmos.color = new Color(Color.red.r, Color.red.g, Color.red.b, 0.3f);
-
-            Gizmos.DrawCube(new Vector2(transform.position.x, transform.position.y) + Collider2D.offset, Collider2D.bounds.size);
-
-            foreach(EventTriggerChildCollider Child in Childs)
-            {
-                Gizmos.DrawCube(new Vector2(Child.transform.position.x, Child.transform.position.y) + Child.Collider2D.offset, Child.Collider2D.bounds.size);
-            }
         }
 
 #if UNITY_EDITOR

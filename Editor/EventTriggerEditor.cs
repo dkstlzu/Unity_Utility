@@ -126,7 +126,6 @@ namespace Utility
 
                 if (use2D.boolValue && !Collider2D.objectReferenceValue && isReady.boolValue || !use2D.boolValue && !Collider.objectReferenceValue && isReady.boolValue) isReady.boolValue = false;
                 
-                EditorGUILayout.PropertyField(DrawGizmo);
                 EditorGUILayout.PropertyField(TargetLayerMask);
                 EditorGUILayout.PropertyField(OnTriggerEnterEvent);
                 EditorGUILayout.PropertyField(OnTriggerStayEvent);
