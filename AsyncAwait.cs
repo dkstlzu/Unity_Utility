@@ -10,22 +10,49 @@ namespace Utility
             await Task.Delay((int)(time * 1000));
             action();
         }
+
+        public static async void Delay(Action action, Func<bool> validation)
+        {
+            while (!validation()) await Task.Delay((1000));
+            action();
+        }
         
         public static async void Delay<T1>(Action<T1> action, float time, T1 parm1)
         {
             await Task.Delay((int)(time * 1000));
             action(parm1);
         }
+
+        public static async void Delay<T1>(Action<T1> action, Func<bool> validation, T1 parm1)
+        {
+            while (!validation()) await Task.Delay((1000));
+            action(parm1);
+        }
+        
         public static async void Delay<T1, T2>(Action<T1, T2> action, float time, T1 parm1, T2 parm2)
         {
             await Task.Delay((int)(time * 1000));
             action(parm1, parm2);
         }
+
+        public static async void Delay<T1, T2>(Action<T1, T2> action, Func<bool> validation, T1 parm1, T2 parm2)
+        {
+            while (!validation()) await Task.Delay((1000));
+            action(parm1, parm2);
+        }
+        
         public static async void Delay<T1, T2, T3>(Action<T1, T2, T3> action, float time, T1 parm1, T2 parm2, T3 parm3)
         {
             await Task.Delay((int)(time * 1000));
             action(parm1, parm2, parm3);
         }
+
+        public static async void Delay<T1, T2, T3>(Action<T1, T2, T3> action, Func<bool> validation, T1 parm1, T2 parm2, T3 parm3)
+        {
+            while (!validation()) await Task.Delay((1000));
+            action(parm1, parm2, parm3);
+        }
+        
 
         // public static async Task<TResult> Delay<TResult>(Func<TResult> func, float time)
         // {
