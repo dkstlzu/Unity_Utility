@@ -7,6 +7,13 @@ using UnityEngine.SceneManagement;
 
 namespace Utility
 {
+    [Serializable]
+    public class ClipArg
+    {
+        public AudioClip Clip;
+        public SoundArgs Arg;
+    }
+
     public class SoundManager : Singleton<SoundManager>
     {
         [SerializeField] private int WorldAudioSourceCount = 5;

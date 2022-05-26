@@ -12,8 +12,8 @@ namespace Utility
         }
 
         public SoundPlayMode PlayMode;
-        public Transform Transform;
-        public Vector3 RelativePosition;
+        [HideInInspector] public Transform Transform;
+        [HideInInspector] public Vector3 RelativePosition;
         public bool AutoReturn;
     }
 }
