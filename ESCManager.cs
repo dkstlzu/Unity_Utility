@@ -4,7 +4,8 @@ namespace Utility
 {
     public class ESCManager : Singleton<ESCManager>
     {
-        private PriorityQueue<Action> PQ = new PriorityQueue<Action>();
+        class ActionPriorityQueue : PriorityQueue<Action> {}
+        private ActionPriorityQueue PQ = new ActionPriorityQueue();
         public void ESC()
         {
             PriorityQueue<Action>.Item item = PQ.Pop();
@@ -16,9 +17,9 @@ namespace Utility
             PQ.AddItem(name, action, priority);
         }
 
-        public void RemoveItem(string name)
+        public PriorityQueue<Action>.Item RemoveItem(string name)
         {
-            PQ.RemoveItem(name);
+            return PQ.RemoveItem(name);
         }
     }
 }

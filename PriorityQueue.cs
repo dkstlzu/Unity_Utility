@@ -6,6 +6,7 @@ namespace Utility
     public class PriorityQueue<T>
     {
         private Dictionary<string, Item> ItemDict = new Dictionary<string, Item>();
+
         public class Item
         {
             public T Element;
@@ -30,10 +31,15 @@ namespace Utility
             AddItem(name, new Item(element, priority));
         }
 
-        public void RemoveItem(string name)
+        public Item RemoveItem(string name)
         {
+            Item target = null;
             if (ItemDict.ContainsKey(name))
+            {
+                target = ItemDict[name];
                 ItemDict.Remove(name);
+            }
+            return target;
         }
 
         public Item Pop()
@@ -42,20 +48,31 @@ namespace Utility
             var valueEnumerator = ItemDict.Values.GetEnumerator();
             int priorityTemp = -1;
             string targetKey = string.Empty;
-            Item targetItem = null;
 
             while(keyEnumerator.MoveNext() && valueEnumerator.MoveNext())
             {
                 if (priorityTemp < valueEnumerator.Current.Priority)
                 {
                     targetKey = keyEnumerator.Current;
-                    targetItem = valueEnumerator.Current;
                     priorityTemp = valueEnumerator.Current.Priority;
                 }
             }
 
-            RemoveItem(targetKey);
-            return targetItem;
+            return RemoveItem(targetKey);
+        }
+
+        public static object Pop(PriorityQueue<object> queue1, PriorityQueue<object> queue2)
+        {
+            object obj1 = queue1.Pop();
+            object obj2 = queue2.Pop();
+
+            if (((Item)obj1).Priority >= ((Item)obj2).Priority)
+            {
+                return (Item)obj1;
+            } else
+            {
+                return (Item)obj2;
+            }
         }
     }
 }
