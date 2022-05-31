@@ -1,12 +1,21 @@
 public class trigger
 {
     private bool value;
-    public trigger(bool set = false)
+    private bool onlyFirst;
+    private bool usedAlready;
+    public trigger(){}
+    public trigger(bool set)
     {
         value = set;
     }
+    public trigger(bool set, bool onlyFirst)
+    {
+        this.onlyFirst = onlyFirst;
+    }
+
     public trigger set()
     {
+        if (onlyFirst && usedAlready) return this;
         value = true;
         return this;
     }
@@ -26,6 +35,12 @@ public class trigger
     {
         if (tr.value)
         {
+
+            if (tr.onlyFirst) 
+            {
+                if (tr.usedAlready) return false;
+                tr.usedAlready = true;
+            }
             tr.value = false;
             return true;
         } else
@@ -33,6 +48,9 @@ public class trigger
             return false;
         }
     }
+
+    public static implicit operator trigger(bool b) => new trigger(b);
+
     public override string ToString()
     {
         if (value)
