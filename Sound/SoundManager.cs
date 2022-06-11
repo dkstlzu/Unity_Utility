@@ -17,7 +17,16 @@ namespace Utility
     public class SoundManager : Singleton<SoundManager>
     {
         [SerializeField] private int WorldAudioSourceCount = 5;
-        [SerializeField] private AudioClip BackGroundMusicClip;
+        [SerializeField] private AudioClip backGroundMusicClip;
+        public AudioClip BackGroundMusicClip
+        {
+            get{return backGroundMusicClip;}
+            set
+            {
+                backGroundMusicClip = value;
+                BackGroundAudioSource.clip = value;
+            }
+        }
 
         public Dictionary<AudioClip, AudioSource> PlayingAudioSourceDict = new Dictionary<AudioClip, AudioSource>();
         private Queue<AudioSource> _audioSourcesQueue = new Queue<AudioSource>();
@@ -37,8 +46,10 @@ namespace Utility
 
         void BackGroundAudioSourceSetting()
         {
-            BackGroundAudioSource = gameObject.AddComponent<AudioSource>();
-            BackGroundAudioSource.clip = BackGroundMusicClip;
+            Transform ChildTransform = new GameObject("BackGround AudioSource").transform;
+            ChildTransform.SetParent(transform);
+            BackGroundAudioSource = ChildTransform.gameObject.AddComponent<AudioSource>();
+            BackGroundAudioSource.clip = backGroundMusicClip;
             BackGroundAudioSource.playOnAwake = true;
             BackGroundAudioSource.loop = true;
             BackGroundAudioSource.Play();
