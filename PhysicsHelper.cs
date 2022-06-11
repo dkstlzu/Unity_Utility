@@ -1,12 +1,13 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Utility
 {
     public class PhysicsHelper
     {
-        static public RaycastHit2D BoxCast( Vector2 origen, Vector2 size, float angle, Vector2 direction, float distance, int mask ) 
+        public static RaycastHit2D BoxCast( Vector2 origin, Vector2 size, float angle, Vector2 direction, float distance, int mask ) 
         {
-            RaycastHit2D hit = Physics2D.BoxCast(origen, size, angle, direction, distance, mask);
+            RaycastHit2D hit = Physics2D.BoxCast(origin, size, angle, direction, distance, mask);
 
             //Setting up the points to draw the cast
             Vector2 p1, p2, p3, p4, p5, p6, p7, p8;
@@ -23,10 +24,10 @@ namespace Utility
             p3 = q * p3;
             p4 = q * p4;
 
-            p1 += origen;
-            p2 += origen;
-            p3 += origen;
-            p4 += origen;
+            p1 += origin;
+            p2 += origin;
+            p3 += origin;
+            p4 += origin;
 
             Vector2 realDistance = direction.normalized * distance;
             p5 = p1 + realDistance;
@@ -56,6 +57,23 @@ namespace Utility
             }
 
             return hit;
+        }
+
+        public static RaycastHit2D[] RadialCast( Vector2 origin, float fromDegree, float toDegree, int rayNumber, float distance, int layerMask )
+        {
+            List<RaycastHit2D> hits = new List<RaycastHit2D>();
+
+            float fromRadius = fromDegree * Mathf.Deg2Rad;
+            float radiusCycle = ((toDegree - fromDegree) / (rayNumber - 1)) * Mathf.Deg2Rad;
+
+            for (int i = 0; i < rayNumber; i++)
+            {
+                float currentRadius = fromRadius + radiusCycle * i;
+                RaycastHit2D hit;
+                if (hit = Physics2D.Raycast(origin, new Vector2(Mathf.Cos(currentRadius), Mathf.Sin(currentRadius)), distance, layerMask)) hits.Add(hit);
+            }
+
+            return hits.ToArray();
         }
     }
 }
