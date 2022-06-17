@@ -1,10 +1,6 @@
 using System;
-using System.Reflection;
-using System.Collections;
-using System.Collections.Generic;
 
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEditor;
 
 namespace Utility
@@ -12,29 +8,6 @@ namespace Utility
     [CustomEditor(typeof(ObjectPool))]
     public class ObjectPoolEditor : Editor
     {
-        [MenuItem("ObjectPool/Print Properties")]
-        static void PrintProperties()
-        {
-            UnityConsole.ClearConsole();
-            Component[] components = Selection.activeGameObject.GetComponents(typeof(Component));
-
-            foreach(Component component in components)
-            {
-                if (component is Transform) continue;
-                SerializedProperty property = new SerializedObject(component).GetIterator();
-
-                string PropString = "";
-
-                while(property.Next(true))
-                {
-                    PropString += property.propertyPath + "\n";
-                }
-
-                MonoBehaviour.print($"Properties of {component.gameObject.name}.{component.name}");
-                MonoBehaviour.print(PropString);
-            }
-        }
-
         SerializedProperty EnumName;
         SerializedProperty EnumValue;
         SerializedProperty EnumNameCorrect;
