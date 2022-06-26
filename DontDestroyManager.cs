@@ -21,10 +21,11 @@ namespace Utility
         public Component TargetComponent;
         public string HashID;
         [Tooltip("Replace old one with new one if duplicate")]
-        public bool ReplaceAsNew = false;
+        public bool ReplacePreviousOne = false;
         void Awake()
         {
-            Add(TargetComponent, Uniqueness, HashID, ReplaceAsNew);
+            Add(TargetComponent, Uniqueness, HashID, ReplacePreviousOne);
+            Destroy(this);
         }
 
         static Dictionary<object, Component> ComponentsDict = new Dictionary<object, Component>();
@@ -39,25 +40,25 @@ namespace Utility
             get{return ComponentsDict.Count == 0;}
         }
 
-        public static void Add(Component component, DontDestroyMethod method, string HashID, bool replaceAsNew = false, GameObject rootObj = null)
+        public static void Add(Component component, DontDestroyMethod method, string HashID, bool resplacePrevious = false, GameObject rootObj = null)
         {
             switch (method)
             {
                 case DontDestroyMethod.Normal:
-                AddNormal(component, replaceAsNew, rootObj);
+                AddNormal(component, resplacePrevious, rootObj);
                 break;
                 case DontDestroyMethod.Unique:
                 Unique:
-                AddUnique(component, replaceAsNew, rootObj);
+                AddUnique(component, resplacePrevious, rootObj);
                 break;
                 case DontDestroyMethod.UniqueID:
                 if (HashID == string.Empty) goto Unique;
-                AddUniqueID(component, HashID, replaceAsNew, rootObj);
+                AddUniqueID(component, HashID, resplacePrevious, rootObj);
                 break;
             }
         }
 
-        static void AddNormal(Component component, bool replaceAsNew = false, GameObject rootObj = null)
+        static void AddNormal(Component component, bool resplacePrevious = false, GameObject rootObj = null)
         {
             ComponentsDict.Add(component.GetHashCode(), component);
             if (rootObj == null)
@@ -66,11 +67,11 @@ namespace Utility
             }
         }
 
-        static void AddUnique(Component component, bool replaceAsNew = false, GameObject rootObj = null)
+        static void AddUnique(Component component, bool resplacePrevious = false, GameObject rootObj = null)
         {
             if (Contain(component.GetType()))
             {
-                if (replaceAsNew)
+                if (resplacePrevious)
                 {
                     Destroy(ComponentsDict[component.GetType()]);
                     ComponentsDict[component.GetType()] = component;
@@ -86,18 +87,30 @@ namespace Utility
             }
         }
 
-        static void AddUniqueID(Component component, string hashID, bool replaceAsNew = false, GameObject rootObj = null)
+        static void AddUniqueID(Component component, string hashID, bool resplacePrevious = false, GameObject rootObj = null)
         {
             if (Contain(hashID))
             {
-                if (replaceAsNew)
+                if (resplacePrevious)
                 {
-                    Destroy(ComponentsDict[hashID]);
+                    if (component is Transform || component is RectTransform)
+                    {
+                        Destroy(ComponentsDict[hashID].gameObject);
+                    } else
+                    {
+                        Destroy(ComponentsDict[hashID]);
+                    }
                     ComponentsDict[hashID] = component;
                     DontDestroyOnLoad(component);
                 } else
                 {
-                    Destroy(component);
+                    if (component is Transform || component is RectTransform)
+                    {
+                        Destroy(component.gameObject);
+                    } else
+                    {
+                        Destroy(component);
+                    }
                 }
             } else
             {

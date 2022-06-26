@@ -12,14 +12,14 @@ namespace Utility
 
         SerializedProperty Uniqueness;
         SerializedProperty TargetComponent;
-        SerializedProperty ReplaceAsNew;
+        SerializedProperty ReplacePreviousOne;
         SerializedProperty HashID;
 
         void OnEnable()
         {
             Uniqueness = serializedObject.FindProperty("Uniqueness");
             TargetComponent = serializedObject.FindProperty("TargetComponent");
-            ReplaceAsNew = serializedObject.FindProperty("ReplaceAsNew");
+            ReplacePreviousOne = serializedObject.FindProperty("ReplacePreviousOne");
             HashID = serializedObject.FindProperty("HashID");
         }
         
@@ -30,7 +30,7 @@ namespace Utility
 
             EditorGUILayout.PropertyField(Uniqueness, new GUIContent("Method"));
             EditorGUILayout.PropertyField(TargetComponent, new GUIContent("Target Component"));
-            EditorGUILayout.PropertyField(ReplaceAsNew, new GUIContent("Replace as new when duplicated"));
+            EditorGUILayout.PropertyField(ReplacePreviousOne, new GUIContent("Replace as new when duplicated"));
 
             if (Uniqueness.enumValueIndex == EnumHelper.GetIndexOf(DontDestroyManager.DontDestroyMethod.UniqueID))
             {
