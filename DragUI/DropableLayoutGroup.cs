@@ -31,15 +31,13 @@ namespace Utility.UI
                 // BeforeDropCallBack(DragAndDropableUI.DragingUI, eventData);
                 DragAndDropableUI.DragingUI.transform.SetParent(LayoutGroup.transform);
                 DragAndDropableUI.DragingUI.SuccessfullyDroped = true;
-                OnDropCallBack(DragAndDropableUI.DragingUI, eventData);
-                OnLateDropCallBack(DragAndDropableUI.DragingUI, eventData);
-                OnLateBoolDropCallBack(DragAndDropableUI.DragingUI, eventData);
+                OnDropCallBack?.Invoke(DragAndDropableUI.DragingUI, eventData);
+                OnLateDropCallBack?.Invoke(DragAndDropableUI.DragingUI, eventData);
             }
         }
 
         // public Action<DragAndDropableUI, PointerEventData> BeforeDropCallBack;
         public Action<DragAndDropableUI, PointerEventData> OnDropCallBack;
         public Action<DragAndDropableUI, PointerEventData> OnLateDropCallBack;
-        public Func<DragAndDropableUI, PointerEventData, bool> OnLateBoolDropCallBack;
     }
 }
