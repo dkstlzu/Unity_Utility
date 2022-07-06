@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using BansheeGz.BGSpline.Curve;
 using Random = UnityEngine.Random;
 
+#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+#endif
 
 namespace BansheeGz.BGSpline.Example
 {
@@ -50,8 +52,13 @@ namespace BansheeGz.BGSpline.Example
         private void Update()
         {
             testCurves.Update();
+#if ENABLE_INPUT_SYSTEM
             if (Keyboard.current.leftArrowKey.wasPressedThisFrame) testCurves.MoveLeft();
             if (Keyboard.current.rightArrowKey.wasPressedThisFrame) testCurves.MoveRight();
+#else
+            if (Input.GetKey(KeyCode.LeftArrow)) testCurves.MoveLeft();
+            if (Input.GetKey(KeyCode.RightArrow)) testCurves.MoveRight();
+#endif
         }
 
         private void OnGUI()

@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
+#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+#endif
 
 namespace BansheeGz.BGSpline.Example
 {
@@ -15,8 +17,13 @@ namespace BansheeGz.BGSpline.Example
         // Update is called once per frame
         private void Update()
         {
+#if ENABLE_INPUT_SYSTEM
             if (Keyboard.current.aKey.isPressed) transform.RotateAround(Vector3.zero, Vector3.up, Speed*Time.deltaTime);
             else if (Keyboard.current.dKey.isPressed) transform.RotateAround(Vector3.zero, Vector3.up, -Speed*Time.deltaTime);
+#else
+            if (Input.GetKey(KeyCode.A)) transform.RotateAround(Vector3.zero, Vector3.up, Speed*Time.deltaTime);
+            else if (Input.GetKey(KeyCode.D)) transform.RotateAround(Vector3.zero, Vector3.up, -Speed*Time.deltaTime);
+#endif
         }
 
         private void OnGUI()
