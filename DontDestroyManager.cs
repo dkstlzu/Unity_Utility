@@ -20,12 +20,30 @@ namespace Utility
         public DontDestroyMethod Uniqueness;
         public Component TargetComponent;
         public string HashID;
+        public GameObject DestroyGameObject;
         [Tooltip("Replace old one with new one if duplicate")]
         public bool ReplacePreviousOne = false;
+        private bool isRegistered = false;
         void Awake()
         {
-            Add(TargetComponent, Uniqueness, HashID, ReplacePreviousOne);
-            Destroy(this);
+            isRegistered = add();
+            if (isRegistered)
+            {
+                if (TargetComponent is MonoBehaviour mb)
+                {
+                    mb.StartCoroutine(DDMAwakeInvoker());
+                }
+            } else
+            {
+                DestroyTarget();
+            }
+        }
+
+        IEnumerator DDMAwakeInvoker()
+        {
+            yield return null;
+            if (TargetComponent)
+                TargetComponent.SendMessage("DDMAwake", SendMessageOptions.DontRequireReceiver);
         }
 
         static Dictionary<object, Component> ComponentsDict = new Dictionary<object, Component>();
@@ -40,82 +58,94 @@ namespace Utility
             get{return ComponentsDict.Count == 0;}
         }
 
-        public static void Add(Component component, DontDestroyMethod method, string HashID, bool resplacePrevious = false, GameObject rootObj = null)
+        bool add()
+        {
+            return Add(TargetComponent, Uniqueness, HashID, ReplacePreviousOne, DestroyGameObject);
+        }
+
+        public static bool Add(Component component, DontDestroyMethod method, string HashID, bool resplacePrevious = false, GameObject rootObj = null)
         {
             switch (method)
             {
                 case DontDestroyMethod.Normal:
-                AddNormal(component, resplacePrevious, rootObj);
-                break;
+                return AddNormal(component, resplacePrevious, rootObj);
                 case DontDestroyMethod.Unique:
-                Unique:
-                AddUnique(component, resplacePrevious, rootObj);
-                break;
+                return AddUnique(component, resplacePrevious, rootObj);
                 case DontDestroyMethod.UniqueID:
-                if (HashID == string.Empty) goto Unique;
-                AddUniqueID(component, HashID, resplacePrevious, rootObj);
-                break;
+                if (HashID == string.Empty) Debug.LogError($"{component.gameObject}'s DDM has wrong Unique ID");
+                return AddUniqueID(component, HashID, resplacePrevious, rootObj);
+                default: return false;
             }
         }
 
-        static void AddNormal(Component component, bool resplacePrevious = false, GameObject rootObj = null)
+        static bool AddNormal(Component component, bool resplacePrevious = false, GameObject rootObj = null)
         {
             ComponentsDict.Add(component.GetHashCode(), component);
-            if (rootObj == null)
-            {
-                DontDestroyOnLoad(component);
-            }
+            DontDestroyOnLoad(component);
+            return true;
         }
 
-        static void AddUnique(Component component, bool resplacePrevious = false, GameObject rootObj = null)
+        static bool AddUnique(Component component, bool resplacePrevious = false, GameObject rootObj = null)
         {
+            bool result = false;
+
             if (Contain(component.GetType()))
             {
                 if (resplacePrevious)
                 {
-                    Destroy(ComponentsDict[component.GetType()]);
+                    ComponentsDict[component.GetType()].GetComponent<DontDestroyManager>().DestroyTarget();
                     ComponentsDict[component.GetType()] = component;
                     DontDestroyOnLoad(component);
+                    result = true;
                 } else
                 {
-                    Destroy(component);
+                    result = false;
                 }
             } else
             {
                 ComponentsDict[component.GetType()] = component;
                 DontDestroyOnLoad(component);
+                result = true;
             }
+
+            return result;
         }
 
-        static void AddUniqueID(Component component, string hashID, bool resplacePrevious = false, GameObject rootObj = null)
+        static bool AddUniqueID(Component component, string hashID, bool resplacePrevious = false, GameObject rootObj = null)
         {
+            bool result = false;
+
             if (Contain(hashID))
             {
                 if (resplacePrevious)
                 {
-                    if (component is Transform || component is RectTransform)
-                    {
-                        Destroy(ComponentsDict[hashID].gameObject);
-                    } else
-                    {
-                        Destroy(ComponentsDict[hashID]);
-                    }
+                    ComponentsDict[hashID].GetComponent<DontDestroyManager>().DestroyTarget();
                     ComponentsDict[hashID] = component;
                     DontDestroyOnLoad(component);
+                    result = true;
                 } else
                 {
-                    if (component is Transform || component is RectTransform)
-                    {
-                        Destroy(component.gameObject);
-                    } else
-                    {
-                        Destroy(component);
-                    }
+                    result = false;
                 }
             } else
             {
                 ComponentsDict[hashID] = component;
                 DontDestroyOnLoad(component);
+                result = true;
+            }
+
+            return result;
+        }
+
+        public void DestroyTarget()
+        {
+            if (DestroyGameObject) Destroy(DestroyGameObject);
+            else 
+            {
+                if (TargetComponent is Transform || TargetComponent is RectTransform)
+                    Destroy(TargetComponent.gameObject);
+                else
+                    Destroy(TargetComponent);
             }
         }
 

@@ -14,6 +14,7 @@ namespace Utility
         SerializedProperty TargetComponent;
         SerializedProperty ReplacePreviousOne;
         SerializedProperty HashID;
+        SerializedProperty DestroyGO;
 
         void OnEnable()
         {
@@ -21,6 +22,7 @@ namespace Utility
             TargetComponent = serializedObject.FindProperty("TargetComponent");
             ReplacePreviousOne = serializedObject.FindProperty("ReplacePreviousOne");
             HashID = serializedObject.FindProperty("HashID");
+            DestroyGO = serializedObject.FindProperty("DestroyGameObject");
         }
         
         public override void OnInspectorGUI()
@@ -31,6 +33,7 @@ namespace Utility
             EditorGUILayout.PropertyField(Uniqueness, new GUIContent("Method"));
             EditorGUILayout.PropertyField(TargetComponent, new GUIContent("Target Component"));
             EditorGUILayout.PropertyField(ReplacePreviousOne, new GUIContent("Replace as new when duplicated"));
+            EditorGUILayout.PropertyField(DestroyGO, new GUIContent("GO will be Destroy"));
 
             if (Uniqueness.enumValueIndex == EnumHelper.GetIndexOf(DontDestroyManager.DontDestroyMethod.UniqueID))
             {
