@@ -21,9 +21,12 @@ namespace Utility
         public bool PlayOnlyFirst;
         private bool enteredOnce;
         private bool exitedOnce;
-        public UnityEvent OnTriggerEnterEvent = new UnityEvent();
-        public UnityEvent OnTriggerStayEvent = new UnityEvent();
-        public UnityEvent OnTriggerExitEvent = new UnityEvent();
+        public UnityEvent OnTriggerEnterEvent;
+        public UnityEvent OnTriggerStayEvent;
+        public UnityEvent OnTriggerExitEvent;
+        public UnityEvent<GameObject> OnTriggerEnterGOEvent;
+        public UnityEvent<GameObject> OnTriggerStayGOEvent;
+        public UnityEvent<GameObject> OnTriggerExitGOEvent;
         public Collider Collider;
         public Collider2D Collider2D;
         public Object ValidCollider
@@ -67,7 +70,8 @@ namespace Utility
             
             if (noOneEntered)
             {
-                OnTriggerEnterEvent.Invoke();
+                OnTriggerEnterEvent?.Invoke();
+                OnTriggerExitGOEvent?.Invoke(collider.gameObject);
                 enteredOnce = true;
             }
 
@@ -83,10 +87,11 @@ namespace Utility
             
             if (!stayCalledAlready)
             {
-                OnTriggerStayEvent.Invoke();
+                OnTriggerStayEvent?.Invoke();
+                OnTriggerStayGOEvent?.Invoke(collider.gameObject);
+                stayCalledAlready = true;
             }
 
-            stayCalledAlready = true;
         }
 
         internal void OnTriggerExit(Collider collider)
@@ -100,7 +105,8 @@ namespace Utility
 
             if (noOneEntered)
             {
-                OnTriggerExitEvent.Invoke();
+                OnTriggerExitEvent?.Invoke();
+                OnTriggerExitGOEvent?.Invoke(collider.gameObject);
                 exitedOnce = true;
             }
         }
@@ -114,7 +120,8 @@ namespace Utility
             
             if (noOneEntered)
             {
-                OnTriggerEnterEvent.Invoke();
+                OnTriggerEnterEvent?.Invoke();
+                OnTriggerEnterGOEvent?.Invoke(collider.gameObject);
                 enteredOnce = true;
             }
             
@@ -130,7 +137,8 @@ namespace Utility
 
             if (!stayCalledAlready)
             {
-                OnTriggerStayEvent.Invoke();
+                OnTriggerStayEvent?.Invoke();
+                OnTriggerStayGOEvent?.Invoke(collider.gameObject);
             }
 
             stayCalledAlready = true;
@@ -147,7 +155,8 @@ namespace Utility
 
             if (noOneEntered)
             {
-                OnTriggerExitEvent.Invoke();
+                OnTriggerExitEvent?.Invoke();
+                OnTriggerExitGOEvent?.Invoke(collider.gameObject);
                 exitedOnce = true;
             }
         }
@@ -189,6 +198,36 @@ namespace Utility
             UnityEventTools.RemovePersistentListener(OnTriggerExitEvent, action);
         }
 
+        public void AddEnterGOEvent(UnityAction<GameObject> action)
+        {
+            UnityEventTools.AddPersistentListener(OnTriggerEnterGOEvent, action);
+        }
+
+        public void AddStayGOEvent(UnityAction<GameObject> action)
+        {
+            UnityEventTools.AddPersistentListener(OnTriggerStayGOEvent, action);
+        }
+
+        public void AddExitGOEvent(UnityAction<GameObject> action)
+        {
+            UnityEventTools.AddPersistentListener(OnTriggerExitGOEvent, action);
+        }
+
+        public void RemoveEnterGOEvent(UnityAction<GameObject> action)
+        {
+            UnityEventTools.RemovePersistentListener(OnTriggerEnterGOEvent, action);
+        }
+
+        public void RemoveStayGOEvent(UnityAction<GameObject> action)
+        {
+            UnityEventTools.RemovePersistentListener(OnTriggerStayGOEvent, action);
+        }
+
+        public void RemoveExitGOEvent(UnityAction<GameObject> action)
+        {
+            UnityEventTools.RemovePersistentListener(OnTriggerExitGOEvent, action);
+        }
+
         public void ClearEnterEvent()
         {
             int eventNum = OnTriggerEnterEvent.GetPersistentEventCount();
@@ -196,6 +235,13 @@ namespace Utility
             while (eventNum-- > 0)
             {
                 UnityEventTools.RemovePersistentListener(OnTriggerEnterEvent, 0);
+            }
+
+            eventNum = OnTriggerEnterGOEvent.GetPersistentEventCount();
+
+            while (eventNum-- > 0)
+            {
+                UnityEventTools.RemovePersistentListener(OnTriggerEnterGOEvent, 0);
             }
         }
 
@@ -207,6 +253,13 @@ namespace Utility
             {
                 UnityEventTools.RemovePersistentListener(OnTriggerStayEvent, 0);
             }
+
+            eventNum = OnTriggerStayGOEvent.GetPersistentEventCount();
+
+            while (eventNum-- > 0)
+            {
+                UnityEventTools.RemovePersistentListener(OnTriggerStayGOEvent, 0);
+            }
         }
 
         public void ClearExitEvent()
@@ -216,6 +269,13 @@ namespace Utility
             while (eventNum-- > 0)
             {
                 UnityEventTools.RemovePersistentListener(OnTriggerExitEvent, 0);
+            }
+
+            eventNum = OnTriggerExitGOEvent.GetPersistentEventCount();
+
+            while (eventNum-- > 0)
+            {
+                UnityEventTools.RemovePersistentListener(OnTriggerExitGOEvent, 0);
             }
         }
 #endif
