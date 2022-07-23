@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Utility
 {
-    [CustomEditor(typeof(EnumSettableMonoBehaviour))]
+    [CustomEditor(typeof(EnumSettableMonoBehaviour), true)]
     public class EnumSettableEditor : Editor
     {
         SerializedProperty EnumName;

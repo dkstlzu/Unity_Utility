@@ -3,7 +3,7 @@ using UnityEditor;
 
 namespace Utility
 {
-    [CustomEditor(typeof(EventTrigger))]
+    [CustomEditor(typeof(EventTrigger), true)]
     public class EventTriggerEditor : Editor
     {
         protected SerializedProperty isReady;
