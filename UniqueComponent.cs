@@ -1,11 +1,11 @@
 using System;
-using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Utility
 {
+    [DefaultExecutionOrder(-100)]
     public class UniqueComponent : MonoBehaviour
     {
 
@@ -22,21 +22,31 @@ namespace Utility
         public GameObject DestroyGameObject;
         [Tooltip("Replace old one with new one if duplicate")]
         public bool ReplacePreviousOne = false;
-        private bool isRegistered = false;
+        public bool DestroyRequiredComponentsAlso;
 
         static Dictionary<object, Component> ComponentsDict = new Dictionary<object, Component>();
 
         void Awake()
         {
-            isRegistered = add();
+            if (!_Add())
+            {
+                if (DestroyGameObject) DestroyImmediate(DestroyGameObject);
+                else if (TargetComponent is Transform || TargetComponent is RectTransform) DestroyImmediate(TargetComponent.gameObject);
+                else if (!DestroyRequiredComponentsAlso) DestroyImmediate(TargetComponent);
+                else if (DestroyRequiredComponentsAlso) DestroyWithRequireComponent(TargetComponent);
 
-            if (isRegistered)
-            {
-                StartCoroutine(UniqueAwakeInvoker());
-            } else
-            {
-                DestroyWithRequireComponent();
+                Destroy(this);
             }
+
+            // isRegistered = add();
+            
+            // if (isRegistered)
+            // {
+            //     StartCoroutine(UniqueAwakeInvoker());
+            // } else
+            // {
+            //     DestroyWithRequireComponent();
+            // }
         }
 
         void Update()
@@ -63,42 +73,40 @@ namespace Utility
                 TargetComponent.SendMessage("UniqueOnDestroy", SendMessageOptions.DontRequireReceiver);
             yield return null;
 
-            DestroyWithRequireComponent();
+            DestroyWithRequireComponent(TargetComponent);
         }
 
-        void DestroyWithRequireComponent()
+        void DestroyWithRequireComponent(Component component)
         {
             if (DestroyGameObject) Destroy(DestroyGameObject);
             else 
             {
-                if (TargetComponent is Transform || TargetComponent is RectTransform)
-                    Destroy(TargetComponent.gameObject);
+                if (component is Transform || component is RectTransform)
+                    Destroy(component.gameObject);
                 else
                 {
                     Component component0 = null, component1 = null, component2 = null;
-                    if (TargetComponent.GetType().IsDefined(typeof(RequireComponent), true))
+                    if (component.GetType().IsDefined(typeof(RequireComponent), true))
                     {
-                        RequireComponent RC = (RequireComponent) Attribute.GetCustomAttribute(TargetComponent.GetType(), typeof(RequireComponent));
+                        RequireComponent RC = (RequireComponent) Attribute.GetCustomAttribute(component.GetType(), typeof(RequireComponent));
 
-                        if (RC.m_Type0 != null) component0 = TargetComponent.GetComponent(RC.m_Type0);
-                        if (RC.m_Type1 != null) component1 = TargetComponent.GetComponent(RC.m_Type1);
-                        if (RC.m_Type2 != null) component2 = TargetComponent.GetComponent(RC.m_Type2);
+                        if (RC.m_Type0 != null) component0 = component.GetComponent(RC.m_Type0);
+                        if (RC.m_Type1 != null) component1 = component.GetComponent(RC.m_Type1);
+                        if (RC.m_Type2 != null) component2 = component.GetComponent(RC.m_Type2);
                     }
 
-                    if (TargetComponent) 
+                    if (component) 
                     {
-                        Destroy(TargetComponent);
+                        Destroy(component);
                     }
                     if (component0 != null) Destroy(component0);
                     if (component1 != null) Destroy(component1);
                     if (component2 != null) Destroy(component2);
                 }
             }
-
-            Destroy(this);
         }
 
-        private bool add()
+        private bool _Add()
         {
             return Add(TargetComponent, Uniqueness, HashID, ReplacePreviousOne);
         }

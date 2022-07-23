@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
@@ -14,6 +11,7 @@ namespace Utility
         SerializedProperty ReplacePreviousOne;
         SerializedProperty HashID;
         SerializedProperty DestroyGO;
+        SerializedProperty DestroyRequiredComponents;
 
         void OnEnable()
         {
@@ -22,7 +20,7 @@ namespace Utility
             ReplacePreviousOne = serializedObject.FindProperty("ReplacePreviousOne");
             HashID = serializedObject.FindProperty("HashID");
             DestroyGO = serializedObject.FindProperty("DestroyGameObject");
-
+            DestroyRequiredComponents = serializedObject.FindProperty("DestroyRequiredComponentsAlso");
         }
         
         public override void OnInspectorGUI()
@@ -37,6 +35,7 @@ namespace Utility
             {
                 EditorGUILayout.PropertyField(HashID, new GUIContent("Unique ID"));
             }
+            EditorGUILayout.PropertyField(DestroyRequiredComponents);
             serializedObject.ApplyModifiedProperties();
         }
     }
