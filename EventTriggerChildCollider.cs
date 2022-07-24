@@ -5,6 +5,7 @@ using UnityEditor;
 
 namespace Utility
 {
+    [ExecuteInEditMode]
     public class EventTriggerChildCollider : MonoBehaviour
     {
         public EventTrigger ET;
@@ -33,10 +34,12 @@ namespace Utility
                 var headertext = "Warning";
                 var maintext = "Could not Find EventTrigger among parents";
                 var ops1 = "Ok";
-            
+
+#if UNITY_EDITOR
                 if (EditorUtility.DisplayDialog(headertext, maintext, ops1)) {
                     Debug.LogWarning("Check if EventTrigger exist.");
                 } 
+#endif
 
                 Debug.LogWarning("Check if EventTrigger exist.");
                 DestroyImmediate(this);
