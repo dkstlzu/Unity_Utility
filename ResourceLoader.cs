@@ -83,7 +83,7 @@ namespace Utility
             EnumHelper.ClapIndexOfEnum(EnumValue.GetType(), _namingStart, _namingEnd, out indexOfEnumStart, out indexOfEnumEnd);
             if (indexOfEnumStart < 0) 
             {
-                print("Empty Enum Region");
+                Debug.Log("ResourceLoader : Empty Enum Region");
                 return;
             }
 
