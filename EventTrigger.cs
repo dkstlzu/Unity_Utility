@@ -24,9 +24,17 @@ namespace Utility
         public UnityEvent OnTriggerEnterEvent = new UnityEvent();
         public UnityEvent OnTriggerStayEvent = new UnityEvent();
         public UnityEvent OnTriggerExitEvent = new UnityEvent();
+#if UNITY_2020_1_OR_NEWER
         public UnityEvent<GameObject> OnTriggerEnterGOEvent = new UnityEvent<GameObject>();
         public UnityEvent<GameObject> OnTriggerStayGOEvent = new UnityEvent<GameObject>();
         public UnityEvent<GameObject> OnTriggerExitGOEvent = new UnityEvent<GameObject>();
+#else
+        [System.Serializable]
+        public class GameObjectUnityEvent : UnityEvent<GameObject> {}
+        public GameObjectUnityEvent OnTriggerEnterGOEvent = new GameObjectUnityEvent();
+        public GameObjectUnityEvent OnTriggerStayGOEvent = new GameObjectUnityEvent();
+        public GameObjectUnityEvent OnTriggerExitGOEvent = new GameObjectUnityEvent();
+#endif
         public Collider Collider;
         public Collider2D Collider2D;
         public Object ValidCollider
