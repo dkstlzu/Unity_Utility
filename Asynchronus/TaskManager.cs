@@ -31,6 +31,7 @@
 /// for Tasks is done through this component.
 
 using UnityEngine;
+using System;
 using System.Collections;
 
 /// A Task object represents a coroutine.  Tasks can be started, paused, and stopped.
@@ -53,12 +54,12 @@ public class TaskManagerTask
 		}
 	}
 	
-	/// Delegate for termination subscribers.  manual is true if and only if
-	/// the coroutine was stopped with an explicit call to Stop().
-	public delegate void FinishedHandler(bool manual);
-	
 	/// Termination event.  Triggered when the coroutine completes execution.
-	public event FinishedHandler Finished;
+	public event Action<bool> Finished
+	{
+		add => task.Finished += value;
+		remove => task.Finished -= value;
+	}
 
 	/// Creates a new Task object for the given coroutine.
 	///
@@ -67,7 +68,6 @@ public class TaskManagerTask
 	public TaskManagerTask(IEnumerator c, bool autoStart = true)
 	{
 		task = TaskManager.CreateTask(c);
-		task.Finished += TaskFinished;
 		if(autoStart)
 			Start();
 	}
@@ -93,12 +93,10 @@ public class TaskManagerTask
 	{
 		task.Unpause();
 	}
-	
-	void TaskFinished(bool manual)
+
+	public void Interrupt()
 	{
-		FinishedHandler handler = Finished;
-		if(handler != null)
-			handler(manual);
+		task.Interrupt();
 	}
 	
 	TaskManager.TaskState task;
@@ -125,8 +123,7 @@ class TaskManager : MonoBehaviour
 			}
 		}
 
-		public delegate void FinishedHandler(bool manual);
-		public event FinishedHandler Finished;
+		public event Action<bool> Finished;
 
 		IEnumerator coroutine;
 		bool running;
@@ -160,6 +157,11 @@ class TaskManager : MonoBehaviour
 			running = false;
 		}
 
+		public void Interrupt()
+		{
+			running = false;
+		}
+
 		IEnumerator CallWrapper()
 		{
 			yield return null;
@@ -177,9 +179,7 @@ class TaskManager : MonoBehaviour
 				}
 			}
 			
-			FinishedHandler handler = Finished;
-			if(handler != null)
-				handler(stopped);
+			Finished?.Invoke(stopped);
 		}
 	}
 
