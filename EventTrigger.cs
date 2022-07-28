@@ -21,12 +21,12 @@ namespace Utility
         public bool PlayOnlyFirst;
         private bool enteredOnce;
         private bool exitedOnce;
-        public UnityEvent OnTriggerEnterEvent;
-        public UnityEvent OnTriggerStayEvent;
-        public UnityEvent OnTriggerExitEvent;
-        public UnityEvent<GameObject> OnTriggerEnterGOEvent;
-        public UnityEvent<GameObject> OnTriggerStayGOEvent;
-        public UnityEvent<GameObject> OnTriggerExitGOEvent;
+        public UnityEvent OnTriggerEnterEvent = new UnityEvent();
+        public UnityEvent OnTriggerStayEvent = new UnityEvent();
+        public UnityEvent OnTriggerExitEvent = new UnityEvent();
+        public UnityEvent<GameObject> OnTriggerEnterGOEvent = new UnityEvent<GameObject>();
+        public UnityEvent<GameObject> OnTriggerStayGOEvent = new UnityEvent<GameObject>();
+        public UnityEvent<GameObject> OnTriggerExitGOEvent = new UnityEvent<GameObject>();
         public Collider Collider;
         public Collider2D Collider2D;
         public Object ValidCollider
