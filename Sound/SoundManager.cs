@@ -18,6 +18,7 @@ namespace Utility
     {
         [SerializeField] private int WorldAudioSourceCount = 5;
         [SerializeField] private AudioClip backGroundMusicClip;
+        public AudioSource BackGroundAudioSource;
         public AudioClip BackGroundMusicClip
         {
             get{return backGroundMusicClip;}
@@ -31,7 +32,6 @@ namespace Utility
         public Dictionary<AudioClip, AudioSource> PlayingAudioSourceDict = new Dictionary<AudioClip, AudioSource>();
         private Queue<AudioSource> _audioSourcesQueue = new Queue<AudioSource>();
 
-        public AudioSource BackGroundAudioSource;
 
         void Awake()
         {
@@ -46,12 +46,7 @@ namespace Utility
 
         void BackGroundAudioSourceSetting()
         {
-            Transform ChildTransform = new GameObject("BackGround AudioSource").transform;
-            ChildTransform.SetParent(transform);
-            BackGroundAudioSource = ChildTransform.gameObject.AddComponent<AudioSource>();
             BackGroundAudioSource.clip = backGroundMusicClip;
-            BackGroundAudioSource.playOnAwake = true;
-            BackGroundAudioSource.loop = true;
             BackGroundAudioSource.Play();
         }
         void WorldAudioSourceSetting()
