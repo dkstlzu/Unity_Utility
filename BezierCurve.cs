@@ -70,10 +70,10 @@ namespace Utility
             return AddBGCc<BGCcTriangulate2D>() as BGCcTriangulate2D;
         }
 
-        public BGCcTrs AddTRS(Transform transform)
+        public BGCcTrs AddTRS(Transform transform = null)
         {
             var c = AddBGCc<BGCcTrs>() as BGCcTrs;
-            c.ObjectToManipulate = transform;
+            if (transform != null) c.ObjectToManipulate = transform;
             return c;
         }
 
@@ -112,6 +112,17 @@ namespace Utility
             } else
             {
                 Component = gameObject.AddComponent<T>();
+            }
+
+            return Component;
+        }
+
+        public BGCc GetBGCc<T>() where T : BGCc
+        {
+            T Component = null;
+            if (!gameObject.TryGetComponent<T>(out Component))
+            {
+                Debug.LogWarning($"{gameObject.name} does not have {Component.GetType()}");
             }
 
             return Component;
