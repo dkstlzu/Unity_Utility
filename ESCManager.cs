@@ -1,10 +1,11 @@
 using System;
+using UnityEngine;
 
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using Context = UnityEngine.InputSystem.InputAction.CallbackContext;
 #endif
 
-using Context = UnityEngine.InputSystem.InputAction.CallbackContext;
 
 namespace Utility
 {
