@@ -16,6 +16,7 @@ namespace Utility
                     try
                     {
                         _instance = FindObjectOfType(typeof(T)) as T;
+                        if (_instance == null) throw new NullReferenceException();
                     } catch (NullReferenceException e)
                     {
                         Debug.LogError(e.ToString() + "\nThere's no active " + typeof(T) + " in this scene");
