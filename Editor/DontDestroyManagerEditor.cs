@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace Utility
+namespace dkstlzu.Utility
 {
     [CustomEditor(typeof(DontDestroyManager))]
     public class DontDestroyManagerEditor : Editor

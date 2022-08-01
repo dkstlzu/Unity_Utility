@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UnityEditor;
 
-namespace Utility
+namespace dkstlzu.Utility
 {
     [CustomEditor(typeof(ObjectPool))]
     public class ObjectPoolEditor : Editor

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace Utility
+namespace dkstlzu.Utility
 {
     [CustomEditor(typeof(ResourceLoader))]
     public class ResourceLoaderEditor : EnumSettableEditor

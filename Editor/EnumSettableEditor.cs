@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Utility
+namespace dkstlzu.Utility
 {
     [CustomEditor(typeof(EnumSettableMonoBehaviour), true)]
     public class EnumSettableEditor : Editor

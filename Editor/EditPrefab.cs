@@ -6,7 +6,7 @@ using UnityEditor.SceneManagement;
 // This opens an empty scene with your prefab where you can edit it.
 // Put this script in your project as Assets/Editor/EditPrefab.cs
 
-namespace Utility
+namespace dkstlzu.Utility
 {
     public class EditPrefab {
         // Replace Absoluted functions

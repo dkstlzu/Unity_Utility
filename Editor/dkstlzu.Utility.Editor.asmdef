@@ -1,0 +1,16 @@
+{
+    "name": "dkstlzu.Utility.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:0e8db18548185d94daf72bf1ae076258"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
