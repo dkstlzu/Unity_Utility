@@ -14,7 +14,7 @@ namespace dkstlzu.Utility
         public SoundArgs Arg;
     }
 
-    public class SoundManager : Singleton<SoundManager>
+    public class SoundManager : MonoBehaviour
     {
         [SerializeField] private int WorldAudioSourceCount = 5;
         [SerializeField] private AudioClip backGroundMusicClip;
