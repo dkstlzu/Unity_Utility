@@ -8,24 +8,53 @@ namespace dkstlzu.Utility
 {
     public class UIHelper
     {
+        static AnimationCurve _defaultCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+        private static Dictionary<RectTransform, TaskManagerTask> _taskDict = new Dictionary<RectTransform, TaskManagerTask>();
+
         public static TaskManagerTask ScaleOpen(RectTransform rectTransform, float time)
         {
-            return new TaskManagerTask(ScaleTimeOpenCoroutine(rectTransform, time), true);
+            TaskManagerTask task;
+            if (_taskDict.TryGetValue(rectTransform, out task))
+            {
+                task.Stop();
+            }
+            task = new TaskManagerTask(ScaleTimeOpenCoroutine(rectTransform, time), true);
+            return task;
         }
 
-        public static TaskManagerTask ScaleOpen(RectTransform rectTransform, AnimationCurve curve, float timeMultiplier = 1)
+        public static TaskManagerTask ScaleOpen(RectTransform rectTransform, AnimationCurve curve = null, float timeMultiplier = 1)
         {
-            return new TaskManagerTask(ScaleCurveOpenCoroutine(rectTransform, curve, timeMultiplier), true);
+            TaskManagerTask task;
+            if (_taskDict.TryGetValue(rectTransform, out task))
+            {
+                task.Stop();
+            }
+            if (curve == null) task = new TaskManagerTask(ScaleCurveOpenCoroutine(rectTransform, _defaultCurve, timeMultiplier), true);
+            else task =  new TaskManagerTask(ScaleCurveOpenCoroutine(rectTransform, curve, timeMultiplier), true);
+            return task;
         }
 
         public static TaskManagerTask ScaleClose(RectTransform rectTransform, float time)
         {
-            return new TaskManagerTask(ScaleTimeCloseCoroutine(rectTransform, time), true);
+            TaskManagerTask task;
+            if (_taskDict.TryGetValue(rectTransform, out task))
+            {
+                task.Stop();
+            }
+            task = new TaskManagerTask(ScaleTimeCloseCoroutine(rectTransform, time), true);
+            return task;
         }
 
-        public static TaskManagerTask ScaleClose(RectTransform rectTransform, AnimationCurve curve, float timeMultiplier = 1)
+        public static TaskManagerTask ScaleClose(RectTransform rectTransform, AnimationCurve curve = null, float timeMultiplier = 1)
         {
-            return new TaskManagerTask(ScaleCurveCloseCoroutine(rectTransform, curve, timeMultiplier), true);
+            TaskManagerTask task;
+            if (_taskDict.TryGetValue(rectTransform, out task))
+            {
+                task.Stop();
+            }
+            if (curve == null) task = new TaskManagerTask(ScaleCurveCloseCoroutine(rectTransform, AnimationCurveHelper.ReverseCurve(_defaultCurve), timeMultiplier), true);
+            task = new TaskManagerTask(ScaleCurveCloseCoroutine(rectTransform, curve, timeMultiplier), true);
+            return task;
         }
 
         static IEnumerator ScaleTimeOpenCoroutine(RectTransform rectTransform, float time)
@@ -63,7 +92,7 @@ namespace dkstlzu.Utility
             while(rectTransform.localScale.x < 1)
             {
                 value = curve.Evaluate(time);
-                rectTransform.localScale = new Vector3(value, value, 0);
+                rectTransform.localScale = new Vector3(value, value, 1);
                 time += Time.deltaTime/timeMultiplier;
                 yield return null;
             }
@@ -78,7 +107,7 @@ namespace dkstlzu.Utility
             while(rectTransform.localScale.x > 0)
             {
                 value = curve.Evaluate(time);
-                rectTransform.localScale = new Vector3(value, value, 0);
+                rectTransform.localScale = new Vector3(value, value, 1);
                 time += Time.deltaTime/timeMultiplier;
                 yield return null;
             }
