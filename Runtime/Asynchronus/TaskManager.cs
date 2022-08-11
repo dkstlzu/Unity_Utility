@@ -54,7 +54,10 @@ public class TaskManagerTask
 		}
 	}
 	
+	/// <summary>
 	/// Termination event.  Triggered when the coroutine completes execution.
+	/// This will be riggered at the end of frame.
+	/// </summary>
 	public event Action<bool> Finished
 	{
 		add => task.Finished += value;
