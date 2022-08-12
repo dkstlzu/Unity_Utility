@@ -6,6 +6,10 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+#if USING_URP
+using UnityEngine.Rendering.Universal;
+#endif
+
 namespace dkstlzu.Utility
 {
     public class FadeEffect : MonoBehaviour, IDisposable
@@ -17,10 +21,14 @@ namespace dkstlzu.Utility
         public bool isFadedIn;
         public bool isFadedOut;
         public Image FadeImage;
+        
         private bool started;
+        private Camera fadeCamera;
+        private bool autoDispose;
         
         void Update()
         {
+            if (!started) return;
             if (!isFadingIn && !isFadingOut) return;
 
             if (isFadingIn)
@@ -36,33 +44,47 @@ namespace dkstlzu.Utility
             if (Alpha <= 0 || Alpha >= 1)
             {
                 Alpha = Mathf.Clamp01(Alpha);
-                Reset();
+                EndFade();
                 if (Alpha <= 0) isFadedIn = true;
                 else isFadedOut = true;
             }
         }
         
         /// <param name="sortingOrder">Canvas Sorting Order that can be at most frontside</param>
-        public static FadeEffect Init(int sortingOrder)
+        public static FadeEffect Init(int sortingOrder = 100, bool autoDispose = true)
         {
-            Type[] types = new Type[]{typeof(Canvas), typeof(CanvasScaler)};
-            GameObject CanvasGO;
-            (CanvasGO = new GameObject("FadeEffect Canvas", types)).transform.SetParent(Camera.main.transform);
-            CanvasGO.GetComponent<Canvas>().sortingOrder = sortingOrder;
-            FadeEffect fadeEffect = CanvasGO.AddComponent<FadeEffect>();
-            GameObject FadeImageGO;
-            (FadeImageGO = new GameObject("FadeImage")).transform.SetParent(CanvasGO.transform);
-            fadeEffect.FadeImage = FadeImageGO.AddComponent<Image>();
-            fadeEffect.FadeImage.color = new Color(0, 0, 0, 0);
-            fadeEffect.Alpha = 1;
-            return fadeEffect;
+            GameObject fadeEffectGO = Instantiate(Resources.Load("FadeEffect") as GameObject);
+            fadeEffectGO.layer = 1;
+            FadeEffect fadeEffect = fadeEffectGO.GetComponent<FadeEffect>();
+            fadeEffect.autoDispose = autoDispose;
+            GameObject CameraGO = new GameObject("FadeEffect Camera");
+            fadeEffectGO.transform.SetParent(CameraGO.transform);
+
+            fadeEffect.fadeCamera = CameraGO.AddComponent<Camera>();
+            fadeEffect.fadeCamera.orthographic = true;
+            fadeEffect.fadeCamera.orthographicSize = Camera.main.orthographicSize;
+            fadeEffect.fadeCamera.cullingMask = 2;
+            fadeEffect.fadeCamera.transform.position = Camera.main.transform.position;
+#if USING_URP
+            UniversalAdditionalCameraData data = fadeEffect.fadeCamera.GetUniversalAdditionalCameraData();
+            data.renderType = CameraRenderType.Overlay;
+            UniversalAdditionalCameraData cameraData = Camera.main.GetUniversalAdditionalCameraData();
+            cameraData.cameraStack.Add(fadeEffect.fadeCamera);
+#endif
+            fadeEffectGO.GetComponent<Canvas>().worldCamera = fadeEffect.fadeCamera;
+            return fadeEffectGO.GetComponent<FadeEffect>();
         }
 
-        public void Reset()
+        void EndFade()
         {
             isFadingIn = false;
             isFadingOut = false;
-            // GetComponent<Canvas>().sortingOrder *= -1; 
+            if (autoDispose) Dispose();
+        }
+
+        public void Stop()
+        {
+            started = false;
         }
 
         public void In(float duration)
@@ -93,31 +115,28 @@ namespace dkstlzu.Utility
             isFadedOut = false;
         }
 
-        public async void LoadSceneWithFadeEffect(string scene, float duration, LoadSceneMode mode = LoadSceneMode.Single)
+        public void LoadSceneWithFadeEffect(string scene, float duration, LoadSceneMode mode = LoadSceneMode.Single)
         {
+            new TaskManagerTask(LoadSceneAfter(scene, duration, mode), true);
+        }
+
+        IEnumerator LoadSceneAfter(string scene, float duration, LoadSceneMode mode = LoadSceneMode.Single)
+        {
+            bool disposeBank = autoDispose;
+            autoDispose = false;
+
             Out(duration);
-            await Task.Delay((int)(duration * 1000));
+            yield return new WaitForSeconds(duration);
             int sortingOrder = GetComponent<Canvas>().sortingOrder;
-            SceneManager.LoadSceneAsync(scene, mode).completed += (ar) => FadeEffect.Init(sortingOrder).In(duration);
+            SceneManager.LoadSceneAsync(scene, mode).completed += (ar) => FadeEffect.Init(sortingOrder, autoDispose: disposeBank).In(duration);
         }
 
         public void Dispose()
         {
-            Destroy(gameObject);
-        }
-
-#if UNITY_EDITOR
-        [UnityEditor.MenuItem("DevTest/FadeTest/In")]
-        static void DevTestIn()
-        {
-            FadeEffect.Init(100).In(3);
-        }
-
-        [UnityEditor.MenuItem("DevTest/FadeTest/Out")]
-        static void DevTestOut()
-        {
-            FadeEffect.Init(100).Out(3);
-        }
+#if USING_URP
+            Camera.main.GetUniversalAdditionalCameraData().cameraStack.Remove(fadeCamera);
 #endif
+            Destroy(fadeCamera.gameObject);
+        }
     }
 }
