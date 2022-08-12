@@ -11,11 +11,12 @@ namespace dkstlzu.Utility
         static AnimationCurve _defaultCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
         public static Dictionary<RectTransform, TaskManagerTask> TaskDict = new Dictionary<RectTransform, TaskManagerTask>();
 
-        public static void ScaleOpen(RectTransform rectTransform, float time)
+        public static void ScaleOpen(RectTransform rectTransform, float time, bool force = false)
         {
             TaskManagerTask task;
             if (TaskDict.TryGetValue(rectTransform, out task))
             {
+                if (!force) return;
                 task.Stop();
             } 
 
@@ -27,11 +28,12 @@ namespace dkstlzu.Utility
             });
         }
 
-        public static void ScaleOpen(RectTransform rectTransform, AnimationCurve curve = null, float timeMultiplier = 1)
+        public static void ScaleOpen(RectTransform rectTransform, AnimationCurve curve = null, float timeMultiplier = 1, bool force = false)
         {
             TaskManagerTask task;
             if (TaskDict.TryGetValue(rectTransform, out task))
             {
+                if (!force) return;
                 task.Stop();
             } 
 
@@ -44,11 +46,12 @@ namespace dkstlzu.Utility
             });
         }
 
-        public static void ScaleClose(RectTransform rectTransform, float time)
+        public static void ScaleClose(RectTransform rectTransform, float time, bool force = false)
         {
             TaskManagerTask task;
             if (TaskDict.TryGetValue(rectTransform, out task))
             {
+                if (!force) return;
                 task.Stop();
             }
 
@@ -60,11 +63,12 @@ namespace dkstlzu.Utility
             });
         }
 
-        public static void ScaleClose(RectTransform rectTransform, AnimationCurve curve = null, float timeMultiplier = 1)
+        public static void ScaleClose(RectTransform rectTransform, AnimationCurve curve = null, float timeMultiplier = 1, bool force = false)
         {
             TaskManagerTask task;
             if (TaskDict.TryGetValue(rectTransform, out task))
             {
+                if (!force) return;
                 task.Stop();
             }
 
