@@ -5,7 +5,7 @@ namespace dkstlzu.Utility
 {
     public class PriorityQueue<T>
     {
-        private Dictionary<string, Item> ItemDict = new Dictionary<string, Item>();
+        protected Dictionary<string, Item> ItemDict = new Dictionary<string, Item>();
 
         public class Item
         {
@@ -20,7 +20,7 @@ namespace dkstlzu.Utility
             }
         }
 
-        public void AddItem(string name, Item item)
+        public virtual void AddItem(string name, Item item)
         {
             if (!ItemDict.ContainsKey(name))
                 ItemDict.Add(name, item);
@@ -31,7 +31,7 @@ namespace dkstlzu.Utility
             AddItem(name, new Item(element, priority));
         }
 
-        public Item RemoveItem(string name)
+        public virtual Item RemoveItem(string name)
         {
             Item target = null;
             if (ItemDict.ContainsKey(name))
@@ -42,7 +42,29 @@ namespace dkstlzu.Utility
             return target;
         }
 
-        public Item Pop()
+        public virtual Item Peek()
+        {
+            var keyEnumerator = ItemDict.Keys.GetEnumerator();
+            var valueEnumerator = ItemDict.Values.GetEnumerator();
+            int priorityTemp = -1;
+            string targetKey = string.Empty;
+
+            while(keyEnumerator.MoveNext() && valueEnumerator.MoveNext())
+            {
+                if (priorityTemp < valueEnumerator.Current.Priority)
+                {
+                    targetKey = keyEnumerator.Current;
+                    priorityTemp = valueEnumerator.Current.Priority;
+                }
+            }
+
+            if (ItemDict.ContainsKey(targetKey))
+                return ItemDict[targetKey];
+            else
+                return null;
+        }
+
+        public virtual Item Pop()
         {
             var keyEnumerator = ItemDict.Keys.GetEnumerator();
             var valueEnumerator = ItemDict.Values.GetEnumerator();

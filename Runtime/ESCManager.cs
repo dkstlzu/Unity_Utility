@@ -44,13 +44,26 @@ namespace dkstlzu.Utility
         }
 #endif
 
-        class ActionPriorityQueue : PriorityQueue<Action> {}
+        class ActionPriorityQueue : PriorityQueue<Action> 
+        {
+            public override void AddItem(string name, Item item)
+            {
+                if (!ItemDict.ContainsKey(name))
+                {
+                    ItemDict.Add(name, item);
+                } else
+                {
+                    ItemDict[name].Element += item.Element;
+                }
+            }
+        }
+
         private ActionPriorityQueue PQ = new ActionPriorityQueue();
 
 
         public void ESC()
         {
-            PriorityQueue<Action>.Item item = PQ.Pop();
+            PriorityQueue<Action>.Item item = PQ.Peek();
             if (item != null) item.Element();
         }
 

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace dkstlzu.Utility
@@ -6,6 +8,8 @@ namespace dkstlzu.Utility
     {
         public RectTransform TargetUI;
         public string ESCManagerItemKey => TargetUI.GetHashCode() + "UIOpenClose";
+
+        List<Action> _closeActionList = new List<Action>();
 
         void Reset()
         {
@@ -17,8 +21,16 @@ namespace dkstlzu.Utility
         /// </summary>
         public void Open()
         {
+            Open(null);
+        }
+
+        public void Open(IEnumerable<Action> closeActions)
+        {
             if (UIHelper.ScaleOpen(TargetUI))
-                ESCManager.instance.AddItem(TargetUI.GetHashCode() + "UIOpenClose", () => Close(), 0);
+                ESCManager.instance.AddItem(ESCManagerItemKey, () => Close(), 0);
+            
+            if (closeActions != null)
+                _closeActionList.AddRange(closeActions);
         }
 
         /// <summary>
@@ -27,9 +39,13 @@ namespace dkstlzu.Utility
         public void Close()
         {
             if (UIHelper.ScaleClose(TargetUI))
-                ESCManager.instance.RemoveItem(TargetUI.GetHashCode() + "UIOpenClose");
-            else
-                ESCManager.instance.AddItem(TargetUI.GetHashCode() + "UIOpenClose", () => Close(), 0);
+            {
+                ESCManager.instance.RemoveItem(ESCManagerItemKey);
+                foreach(Action action in _closeActionList)
+                {
+                    action?.Invoke();
+                }
+            }
         }
     }
 }
