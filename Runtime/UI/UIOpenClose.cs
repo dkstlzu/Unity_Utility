@@ -8,6 +8,7 @@ namespace dkstlzu.Utility
     {
         public RectTransform TargetUI;
         public string ESCManagerItemKey => TargetUI.GetHashCode() + "UIOpenClose";
+        public event Action OnOpen;
 
         List<Action> _closeActionList = new List<Action>();
 
@@ -26,6 +27,8 @@ namespace dkstlzu.Utility
 
         public void Open(IEnumerable<Action> closeActions)
         {
+            OnOpen?.Invoke();
+            
             if (UIHelper.ScaleOpen(TargetUI))
                 ESCManager.instance.AddItem(ESCManagerItemKey, () => Close(), 0);
             
