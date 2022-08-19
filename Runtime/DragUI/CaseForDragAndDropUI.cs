@@ -1,14 +1,21 @@
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
 namespace dkstlzu.Utility.UI
 {
-    [RequireComponent(typeof(RectTransform))]
-    public class CasaForDragAndDropUI : MonoBehaviour, IDropHandler
+    [RequireComponent(typeof(CanvasRenderer))]
+    public class CaseForDragAndDropUI : Graphic, IDropHandler
     {
+        public int ID;
+        public DragAndDropableUI Item;
+        public UnityEvent<CaseForDragAndDropUI, DragAndDropableUI> OnDropEvent;
+        public UnityEvent<CaseForDragAndDropUI, DragAndDropableUI> OnDragOutEvent;
         RectTransform _rect;
-        void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             _rect = GetComponent<RectTransform>();
         }
 
@@ -16,7 +23,12 @@ namespace dkstlzu.Utility.UI
         {
             if (DragAndDropableUI.DragingUI != null)
             {
-                DragAndDropableUI.DragingUI.Rect.anchoredPosition = _rect.anchoredPosition;
+                if (DragAndDropableUI.DragingUI.ID != ID) return;
+                
+                Item = DragAndDropableUI.DragingUI;
+                Item.Rect.position = _rect.position;
+                Item.Case = this;
+                OnDropEvent.Invoke(this, Item);
             }
         }
     }
