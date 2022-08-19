@@ -26,7 +26,29 @@ namespace dkstlzu.Utility.Serializables
             this.a = Mathf.Clamp01(a);
         }
 
+        public override string ToString()
+        {
+            return string.Format("r : {0}, g : {1}, b : {2}, a : {3}", r, g, b, a);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+            {
+                return false;
+            }
+            
+            SerializableColor colorObj = obj as SerializableColor;
+            
+            return r == colorObj.r && g == colorObj.g && b == colorObj.b && a == colorObj.a;
+        }
+        
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         public static implicit operator SerializableColor(Color color) => new SerializableColor(color.r, color.g, color.b, color.a);
-        public static implicit operator Color(SerializableColor color) => new Color(color.r, color.g, color.b, color.a);        
+        public static implicit operator Color(SerializableColor color) => new Color(color.r, color.g, color.b, color.a);
     }
 }
