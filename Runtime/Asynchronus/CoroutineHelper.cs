@@ -21,6 +21,7 @@ namespace dkstlzu.Utility
         {
             while(frame-- > 0)
             {
+                Printer.DebugPrint($"CoroutineHelper AfterFrme {frame}");
                 yield return null;
             }
             action.Invoke();
