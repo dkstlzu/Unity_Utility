@@ -9,6 +9,7 @@ namespace dkstlzu.Utility.UI
     public class CaseForDragAndDropUI : Graphic, IDropHandler
     {
         public int ID;
+        public bool CannotTakeAgain;
         public DragAndDropableUI Item;
         public UnityEvent<CaseForDragAndDropUI, DragAndDropableUI> OnDropEvent;
         public UnityEvent<CaseForDragAndDropUI, DragAndDropableUI> OnDragOutEvent;
@@ -28,6 +29,7 @@ namespace dkstlzu.Utility.UI
                 Item = DragAndDropableUI.DragingUI;
                 Item.Rect.position = _rect.position;
                 Item.Case = this;
+                Item.CanvasGroup.blocksRaycasts = false;
                 OnDropEvent.Invoke(this, Item);
             }
         }

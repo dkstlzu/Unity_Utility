@@ -14,7 +14,7 @@ namespace dkstlzu.Utility.UI
         public CaseForDragAndDropUI Case;
         public float AlphaMultiplierWhileDrag = 1;
         [SerializeField] Canvas _canvas;
-        CanvasGroup CanvasGroup;
+        public CanvasGroup CanvasGroup{get; protected set;}
 
         
         [SerializeField] Vector2 _defaultPosition;
