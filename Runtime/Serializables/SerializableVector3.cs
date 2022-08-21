@@ -17,9 +17,12 @@ namespace dkstlzu.Utility.Serializables
             this.z = z;
         }
 
-        public static implicit operator SerializableVector3(Vector3 vector3) => new SerializableVector3(vector3.x, vector3.y, vector3.z);
+        public override string ToString()
+        {
+            return string.Format("X : {0}, Y : {1}, Z : {2}", x, y, z);
+        }
+
         public static implicit operator Vector3(SerializableVector3 position) => new Vector3(position.x, position.y, position.z);
-        public static implicit operator SerializableVector3(Vector2 vector2) => new SerializableVector3(vector2.x, vector2.y, 0);
         public static implicit operator Vector2(SerializableVector3 position) => new Vector2(position.x, position.y);
 
         public float this[int index]
