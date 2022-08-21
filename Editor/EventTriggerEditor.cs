@@ -4,6 +4,7 @@ using UnityEditor;
 namespace dkstlzu.Utility
 {
     [CustomEditor(typeof(EventTrigger), true)]
+    [CanEditMultipleObjects]
     public class EventTriggerEditor : Editor
     {
         protected SerializedProperty isReady;
