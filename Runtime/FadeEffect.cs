@@ -53,26 +53,43 @@ namespace dkstlzu.Utility
         /// <param name="sortingOrder">Canvas Sorting Order that can be at most frontside</param>
         public static FadeEffect Init(int sortingOrder = 100, bool autoDispose = true)
         {
-            GameObject fadeEffectGO = Instantiate(Resources.Load("FadeEffect") as GameObject);
+            GameObject CameraGO = new GameObject("FadeEffect Camera");
+            Camera FadeCam = CameraGO.AddComponent<Camera>();
+
+            GameObject fadeEffectGO = new GameObject("FadeEffect", new Type[]{typeof(FadeEffect), typeof(Canvas)});
+            Canvas FadeCanvas = fadeEffectGO.GetComponent<Canvas>();
+            fadeEffectGO.transform.SetParent(CameraGO.transform);
             fadeEffectGO.layer = 1;
+            
+            GameObject ImageGO = new GameObject("Image",  new Type[]{typeof(Image)});
+            ImageGO.transform.SetParent(fadeEffectGO.transform);
+            Image image = ImageGO.GetComponent<Image>();
+            RectTransform ImageRect = ImageGO.GetComponent<RectTransform>();
             FadeEffect fadeEffect = fadeEffectGO.GetComponent<FadeEffect>();
             fadeEffect.autoDispose = autoDispose;
-            GameObject CameraGO = new GameObject("FadeEffect Camera");
-            fadeEffectGO.transform.SetParent(CameraGO.transform);
-
-            fadeEffect.fadeCamera = CameraGO.AddComponent<Camera>();
+            
+            fadeEffect.FadeImage = image;
+            image.color = new Color(0, 0, 0, 0);
+            ImageRect.anchorMin = Vector2.zero;
+            ImageRect.anchorMax = Vector2.one;
+            
+            fadeEffect.fadeCamera = FadeCam;
             fadeEffect.fadeCamera.orthographic = true;
             fadeEffect.fadeCamera.orthographicSize = Camera.main.orthographicSize;
             fadeEffect.fadeCamera.cullingMask = 2;
             fadeEffect.fadeCamera.transform.position = Camera.main.transform.position;
+
+            FadeCanvas.sortingOrder = sortingOrder;
+            FadeCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+            FadeCanvas.worldCamera = fadeEffect.fadeCamera;
+
 #if USING_URP
             UniversalAdditionalCameraData data = fadeEffect.fadeCamera.GetUniversalAdditionalCameraData();
             data.renderType = CameraRenderType.Overlay;
             UniversalAdditionalCameraData cameraData = Camera.main.GetUniversalAdditionalCameraData();
             cameraData.cameraStack.Add(fadeEffect.fadeCamera);
 #endif
-            fadeEffectGO.GetComponent<Canvas>().worldCamera = fadeEffect.fadeCamera;
-            return fadeEffectGO.GetComponent<FadeEffect>();
+            return fadeEffect;
         }
 
         void EndFade()
