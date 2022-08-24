@@ -22,6 +22,7 @@ namespace dkstlzu.Utility
 
             CoroutineHelper.OnNextFrame(() => 
             {
+                if (TaskDict.ContainsKey(transform)) return;
                 task = new TaskManagerTask(ScaleTimeOpenCoroutine(transform, time), true);
                 TaskDict.Add(transform, task);
                 task.Finished += (stoped) => AfterTaskFinish(transform, stoped);
@@ -40,6 +41,7 @@ namespace dkstlzu.Utility
 
             CoroutineHelper.OnNextFrame(() => 
             {
+                if (TaskDict.ContainsKey(transform)) return;
                 if (curve == null) task = new TaskManagerTask(ScaleCurveOpenCoroutine(transform, _defaultCurve, timeMultiplier), true);
                 else task =  new TaskManagerTask(ScaleCurveOpenCoroutine(transform, curve, timeMultiplier), true);
                 TaskDict.Add(transform, task);
@@ -59,6 +61,7 @@ namespace dkstlzu.Utility
 
             CoroutineHelper.OnNextFrame(() =>
             {
+                if (TaskDict.ContainsKey(transform)) return;
                 task = new TaskManagerTask(ScaleTimeCloseCoroutine(transform, time), true);
                 TaskDict.Add(transform, task);
                 task.Finished += (stoped) => AfterTaskFinish(transform, stoped);
@@ -77,6 +80,7 @@ namespace dkstlzu.Utility
 
             CoroutineHelper.OnNextFrame(() =>
             {
+                if (TaskDict.ContainsKey(transform)) return;
                 if (curve == null) task = new TaskManagerTask(ScaleCurveCloseCoroutine(transform, AnimationCurveHelper.ReverseCurve(_defaultCurve), timeMultiplier), true);
                 else task = new TaskManagerTask(ScaleCurveCloseCoroutine(transform, curve, timeMultiplier), true);
                 TaskDict.Add(transform, task);
