@@ -24,7 +24,7 @@ namespace dkstlzu.Utility
         
         private bool started;
         private Camera fadeCamera;
-        private bool autoDispose;
+        public bool AutoDispose;
         
         void Update()
         {
@@ -51,7 +51,7 @@ namespace dkstlzu.Utility
         }
         
         /// <param name="sortingOrder">Canvas Sorting Order that can be at most frontside</param>
-        public static FadeEffect Init(int sortingOrder = 100, bool autoDispose = true)
+        public static FadeEffect Init(int sortingOrder = 100, bool AutoDispose = true)
         {
             GameObject CameraGO = new GameObject("FadeEffect Camera");
             Camera FadeCam = CameraGO.AddComponent<Camera>();
@@ -66,7 +66,7 @@ namespace dkstlzu.Utility
             Image image = ImageGO.GetComponent<Image>();
             RectTransform ImageRect = ImageGO.GetComponent<RectTransform>();
             FadeEffect fadeEffect = fadeEffectGO.GetComponent<FadeEffect>();
-            fadeEffect.autoDispose = autoDispose;
+            fadeEffect.AutoDispose = AutoDispose;
             
             fadeEffect.FadeImage = image;
             image.color = new Color(0, 0, 0, 0);
@@ -96,7 +96,7 @@ namespace dkstlzu.Utility
         {
             isFadingIn = false;
             isFadingOut = false;
-            if (autoDispose) Dispose();
+            if (AutoDispose) Dispose();
         }
 
         public void Stop()
@@ -139,13 +139,13 @@ namespace dkstlzu.Utility
 
         IEnumerator LoadSceneAfter(string scene, float duration, LoadSceneMode mode = LoadSceneMode.Single)
         {
-            bool disposeBank = autoDispose;
-            autoDispose = false;
+            bool disposeBank = AutoDispose;
+            AutoDispose = false;
 
             Out(duration);
             yield return new WaitForSeconds(duration);
             int sortingOrder = GetComponent<Canvas>().sortingOrder;
-            SceneManager.LoadSceneAsync(scene, mode).completed += (ar) => FadeEffect.Init(sortingOrder, autoDispose: disposeBank).In(duration);
+            SceneManager.LoadSceneAsync(scene, mode).completed += (ar) => FadeEffect.Init(sortingOrder, AutoDispose: disposeBank).In(duration);
         }
 
         public void Dispose()
