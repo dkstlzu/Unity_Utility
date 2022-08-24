@@ -63,21 +63,21 @@ namespace dkstlzu.Utility
         /// <summary>
         /// Play Clip with SoundArgs
         /// </summary>
-        public void Play(AudioClip clip, SoundArgs args)
+        public void Play(AudioClip clip, SoundArgs args, float volume = 1)
         {
             switch(args.PlayMode)
             {
                 case SoundArgs.SoundPlayMode.At :
                 if (args.Transform == null)
-                    PlayAt(clip, args.RelativePosition);
+                    PlayAt(clip, args.RelativePosition, volume);
                 else
-                    PlayAt(clip, args.Transform, args.RelativePosition);
+                    PlayAt(clip, args.Transform, args.RelativePosition, volume);
                 break;
                 case SoundArgs.SoundPlayMode.OnTransform :
                     PlayOnTransform(clip, args.Transform, args.RelativePosition, args.AutoReturn);
                 break;
                 case SoundArgs.SoundPlayMode.OnWorld :
-                    PlayOnWorld(clip);
+                    PlayOnWorld(clip, volume);
                 break;
             }
         }
@@ -127,7 +127,7 @@ namespace dkstlzu.Utility
             }
         }
 
-        private void PlayOnWorld(AudioClip clip)
+        private void PlayOnWorld(AudioClip clip, float volume = 1)
         {
             AudioSource audioSource = _audioSourcesQueue.Dequeue();
 
@@ -137,13 +137,14 @@ namespace dkstlzu.Utility
             }
 
             audioSource.clip = clip;
+            audioSource.volume = volume;
             audioSource.spatialBlend = 0;
             audioSource.Play();
             _audioSourcesQueue.Enqueue(audioSource);
         }
         
 
-        private void PlayAt(AudioClip clip, Vector3 absolutePos)
+        private void PlayAt(AudioClip clip, Vector3 absolutePos, float volume = 1)
         {
             if (clip == null)
             {
@@ -151,12 +152,12 @@ namespace dkstlzu.Utility
                 return;
             }
 
-            AudioSource.PlayClipAtPoint(clip, absolutePos);
+            AudioSource.PlayClipAtPoint(clip, absolutePos, volume);
         }
 
-        private void PlayAt(AudioClip clip, Transform obj, Vector3 relativePos = new Vector3())
+        private void PlayAt(AudioClip clip, Transform obj, Vector3 relativePos = new Vector3(), float volume = 1)
         {
-            PlayAt(clip, obj.position + relativePos);
+            PlayAt(clip, obj.position + relativePos, volume);
         }
 
         public void SetBackGroundMusic(AudioClip clip)
