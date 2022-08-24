@@ -8,9 +8,9 @@ namespace dkstlzu.Utility
 {
     public class Tester : MonoBehaviour
     {
-        public Vector2 TestButtonStartPosition;
-        public float TestButtonInterval;
-        public int FontSize;
+        public Vector2 TestButtonStartPosition = new Vector2(100, 100);
+        public float TestButtonInterval =20;
+        public int FontSize = 20;
         public List<TestButton> TestButtonList;
 
         protected void OnGUI()
