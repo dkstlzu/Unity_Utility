@@ -19,7 +19,7 @@ namespace dkstlzu.Utility
                         if (_instance == null) throw new NullReferenceException();
                     } catch (NullReferenceException e)
                     {
-                        Debug.LogError(e.ToString() + "\nThere's no active " + typeof(T) + " in this scene");
+                        Debug.LogWarning(e.ToString() + "\nThere's no active " + typeof(T) + " in this scene");
                     }
                 }
 
