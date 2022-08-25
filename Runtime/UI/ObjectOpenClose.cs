@@ -6,6 +6,7 @@ namespace dkstlzu.Utility
 {
     public class ObjectOpenClose : MonoBehaviour
     {
+        public bool isOpened;
         public Transform Target;
         public string ESCManagerItemKey => Target.GetHashCode() + "ObjectOpenClose";
         public event Action OnOpen = delegate{};
@@ -29,6 +30,7 @@ namespace dkstlzu.Utility
                 ESCManager.instance.AddItem(ESCManagerItemKey, Close, 0);
                 OnOpen?.Invoke();
                 CoroutineHelper.Delay(AfterOpen, 1.1f);
+                isOpened = true;
             }
         }
 
@@ -43,6 +45,7 @@ namespace dkstlzu.Utility
                 ESCManager.instance.RemoveItem(ESCManagerItemKey);
                 OnClose?.Invoke();
                 CoroutineHelper.Delay(AfterClose, 1.1f);
+                isOpened = false;
             } else
             {
                 ESCManager.instance.AddItem(ESCManagerItemKey, Close, 0);
