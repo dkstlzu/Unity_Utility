@@ -9,25 +9,37 @@ namespace dkstlzu.Utility
     public class Tester : MonoBehaviour
     {
         public Vector2 TestButtonStartPosition = new Vector2(100, 100);
-        public float TestButtonInterval =20;
+        public float TestButtonInterval = 20;
         public int FontSize = 20;
+        public bool VerticalArrange;
         public List<TestButton> TestButtonList;
 
         protected void OnGUI()
         {
             float x = TestButtonStartPosition.x;
+            float y = TestButtonStartPosition.y;
             GUIStyle tempGUIStyle = new GUIStyle(GUI.skin.button);
             tempGUIStyle.fontSize = FontSize;
 
             for (int i = 0; i < TestButtonList.Count; i++)
             {
                 TestButton temp = TestButtonList[i];
-                if (GUI.Button(rect(x, TestButtonStartPosition.y, temp.TestButtonRectSize), temp.Text, tempGUIStyle))
+                if (!VerticalArrange)
                 {
-                    temp.TestAction?.Invoke();
+                    if (GUI.Button(rect(x, y, temp.TestButtonRectSize), temp.Text, tempGUIStyle))
+                    {
+                        temp.TestAction?.Invoke();
+                    }
+                    x += temp.TestButtonRectSize.x + TestButtonInterval;
+                } else
+                {
+                    if (GUI.Button(rect(x, y, temp.TestButtonRectSize), temp.Text, tempGUIStyle))
+                    {
+                        temp.TestAction?.Invoke();
+                    }
+                    y += temp.TestButtonRectSize.y + TestButtonInterval;
                 }
 
-                x += temp.TestButtonRectSize.x + TestButtonInterval;
             }
         }
 
@@ -54,6 +66,12 @@ namespace dkstlzu.Utility
         public TestButton(Action action)
         {
             TestAction = action;
+        }
+
+        public TestButton(Action action, string text)
+        {
+            TestAction = action;
+            Text = text;
         }
     }
 }
