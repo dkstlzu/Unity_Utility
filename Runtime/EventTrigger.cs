@@ -286,6 +286,23 @@ namespace dkstlzu.Utility
                 UnityEventTools.RemovePersistentListener(OnTriggerExitGOEvent, 0);
             }
         }
+#else
+        // For NonEditor version Declaration of methods
+        public void AddEnterEvent(UnityAction action) {OnTriggerEnterEvent.AddListener(action);}
+        public void AddStayEvent(UnityAction action) {OnTriggerStayEvent.AddListener(action);}
+        public void AddExitEvent(UnityAction action) {OnTriggerExitEvent.AddListener(action);}
+        public void RemoveEnterEvent(UnityAction action) {OnTriggerEnterEvent.RemoveListener(action);}
+        public void RemoveStayEvent(UnityAction action) {OnTriggerStayEvent.RemoveListener(action);}
+        public void RemoveExitEvent(UnityAction action) {OnTriggerExitEvent.RemoveListener(action);}
+        public void AddEnterGOEvent(UnityAction<GameObject> action) {OnTriggerEnterGOEvent.AddListener(action);}
+        public void AddStayGOEvent(UnityAction<GameObject> action) {OnTriggerStayGOEvent.AddListener(action);}
+        public void AddExitGOEvent(UnityAction<GameObject> action) {OnTriggerExitGOEvent.AddListener(action);}
+        public void RemoveEnterGOEvent(UnityAction<GameObject> action) {OnTriggerEnterGOEvent.RemoveListener(action);}
+        public void RemoveStayGOEvent(UnityAction<GameObject> action) {OnTriggerStayGOEvent.RemoveListener(action);}
+        public void RemoveExitGOEvent(UnityAction<GameObject> action) {OnTriggerExitGOEvent.RemoveListener(action);}
+        public void ClearEnterEvent() {OnTriggerEnterEvent.RemoveAllListeners(); OnTriggerEnterGOEvent.RemoveAllListeners();}
+        public void ClearStayEvent() {OnTriggerStayEvent.RemoveAllListeners(); OnTriggerStayGOEvent.RemoveAllListeners();}
+        public void ClearExitEvent() {OnTriggerExitEvent.RemoveAllListeners(); OnTriggerExitGOEvent.RemoveAllListeners();}
 #endif
     }
 }
