@@ -8,6 +8,7 @@ namespace dkstlzu.Utility
     {
         public bool isOpened;
         public Transform Target;
+        public float Duration = 1;
         public string ESCManagerItemKey => Target.GetHashCode() + "ObjectOpenClose";
         public event Action OnOpen = delegate{};
         public event Action OnClose = delegate{};
@@ -25,11 +26,11 @@ namespace dkstlzu.Utility
         [ContextMenu("Open")]
         public void Open()
         {
-            if (UIHelper.ScaleOpen(Target))
+            if (UIHelper.ScaleOpen(Target, Duration))
             {
                 ESCManager.instance.AddItem(ESCManagerItemKey, Close, 0);
                 OnOpen?.Invoke();
-                CoroutineHelper.Delay(AfterOpen, 1.1f);
+                CoroutineHelper.Delay(AfterOpen, Duration + 0.1f);
                 isOpened = true;
             }
         }
@@ -40,11 +41,11 @@ namespace dkstlzu.Utility
         [ContextMenu("Close")]
         public void Close()
         {
-            if (UIHelper.ScaleClose(Target))
+            if (UIHelper.ScaleClose(Target, Duration))
             {
                 ESCManager.instance.RemoveItem(ESCManagerItemKey);
                 OnClose?.Invoke();
-                CoroutineHelper.Delay(AfterClose, 1.1f);
+                CoroutineHelper.Delay(AfterClose, Duration + 0.1f);
                 isOpened = false;
             } else
             {
