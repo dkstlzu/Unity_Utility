@@ -77,7 +77,7 @@ namespace dkstlzu.Utility
                     PlayOnTransform(clip, args.Transform, args.RelativePosition, args.AutoReturn);
                 break;
                 case SoundArgs.SoundPlayMode.OnWorld :
-                    PlayOnWorld(clip, volume);
+                    PlayOnWorld(clip, volume, args.LoopOnWorld);
                 break;
             }
         }
@@ -127,7 +127,7 @@ namespace dkstlzu.Utility
             }
         }
 
-        private void PlayOnWorld(AudioClip clip, float volume = 1)
+        private void PlayOnWorld(AudioClip clip, float volume = 1, bool loop = false)
         {
             AudioSource audioSource = _audioSourcesQueue.Dequeue();
 
@@ -139,6 +139,7 @@ namespace dkstlzu.Utility
             audioSource.clip = clip;
             audioSource.volume = volume;
             audioSource.spatialBlend = 0;
+            audioSource.loop = loop;
             audioSource.Play();
             _audioSourcesQueue.Enqueue(audioSource);
         }

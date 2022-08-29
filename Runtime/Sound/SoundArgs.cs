@@ -14,6 +14,7 @@ namespace dkstlzu.Utility
         public SoundPlayMode PlayMode;
         [HideInInspector] public Transform Transform;
         [HideInInspector] public Vector3 RelativePosition;
+        public bool LoopOnWorld;
         public bool AutoReturn;
     }
 }
