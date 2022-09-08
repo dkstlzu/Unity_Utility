@@ -31,21 +31,5 @@ namespace dkstlzu.Utility
         {
             if (Use) Debug.LogError(message);
         }
-
-#if Unity_Editor
-        [UnityEditor.MenuItem("DevTest/Printer Switch ^#&p")]
-        public static void SwitchPrinter()
-        {
-            Use = !Use;
-            Debug.Log($"Printer On : {Use}");
-        }
-
-        [UnityEditor.MenuItem("DevTest/DebugPrinter Switch ^#&o")]
-        public static void SwitchPrinterDebug()
-        {
-            UseDebugPrint = !UseDebugPrint;
-            Debug.Log($"DebugPrinter On : {UseDebugPrint}");
-        }
-#endif
     }
 }
