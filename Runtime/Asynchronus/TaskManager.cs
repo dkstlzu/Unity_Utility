@@ -1,73 +1,20 @@
-/// TaskManager.cs
-///
-/// This is a convenient coroutine API for Unity.
-///
-/// Example usage:
-///   IEnumerator MyAwesomeTask()
-///   {
-///       while(true) {
-///           // ...
-///           yield return null;
-////      }
-///   }
-///
-///   IEnumerator TaskKiller(float delay, Task t)
-///   {
-///       yield return new WaitForSeconds(delay);
-///       t.Stop();
-///   }
-///
-///   // From anywhere
-///   Task my_task = new Task(MyAwesomeTask());
-///   new Task(TaskKiller(5, my_task));
-///
-/// The code above will schedule MyAwesomeTask() and keep it running
-/// concurrently until either it terminates on its own, or 5 seconds elapses
-/// and triggers the TaskKiller Task that was created.
-///
-/// Note that to facilitate this API's behavior, a "TaskManager" GameObject is
-/// created lazily on first use of the Task API and placed in the scene root
-/// with the internal TaskManager component attached. All coroutine dispatch
-/// for Tasks is done through this component.
-
 using UnityEngine;
 using System;
 using System.Collections;
 
-/// A Task object represents a coroutine.  Tasks can be started, paused, and stopped.
-/// It is an error to attempt to start a task that has been stopped or which has
-/// naturally terminated.
 public class TaskManagerTask
 {
-	/// Returns true if and only if the coroutine is running.  Paused tasks
-	/// are considered to be running.
-	public bool Running {
-		get {
-			return task.Running;
-		}
-	}
+	TaskManager.TaskState task;
+	public bool Running => task.Running;
+	public bool Paused => task.Paused;
+	public bool Stopped => task.Stopped;
 	
-	/// Returns true if and only if the coroutine is currently paused.
-	public bool Paused {
-		get {
-			return task.Paused;
-		}
-	}
-	
-	/// <summary>
-	/// Termination event.  Triggered when the coroutine completes execution.
-	/// This will be riggered at the end of frame.
-	/// </summary>
 	public event Action<bool> Finished
 	{
 		add => task.Finished += value;
 		remove => task.Finished -= value;
 	}
 
-	/// Creates a new Task object for the given coroutine.
-	///
-	/// If autoStart is true (default) the task is automatically started
-	/// upon construction.
 	public TaskManagerTask(IEnumerator c, bool autoStart = true)
 	{
 		task = TaskManager.CreateTask(c);
@@ -75,13 +22,11 @@ public class TaskManagerTask
 			Start();
 	}
 	
-	/// Begins execution of the coroutine
 	public void Start()
 	{
 		task.Start();
 	}
 
-	/// Discontinues execution of the coroutine at its next yield.
 	public void Stop()
 	{
 		task.Stop();
@@ -101,37 +46,20 @@ public class TaskManagerTask
 	{
 		task.Interrupt();
 	}
-	
-	TaskManager.TaskState task;
-
-    public void Info()
-    {
-        MonoBehaviour.print($"Paused : {task.Paused}, Running : {task.Running}");
-    }
 }
 
 class TaskManager : MonoBehaviour
 {
+	static TaskManager singleton;
 	public class TaskState
 	{
-		public bool Running {
-			get {
-				return running;
-			}
-		}
-
-		public bool Paused  {
-			get {
-				return paused;
-			}
-		}
+		public bool Running {get; private set;}
+		public bool Paused {get; private set;}
+		public bool Stopped {get; private set;}
 
 		public event Action<bool> Finished;
 
 		IEnumerator coroutine;
-		bool running;
-		bool paused;
-		bool stopped;
 		
 		public TaskState(IEnumerator c)
 		{
@@ -140,53 +68,51 @@ class TaskManager : MonoBehaviour
 		
 		public void Pause()
 		{
-			paused = true;
+			Paused = true;
 		}
 		
 		public void Unpause()
 		{
-			paused = false;
+			Paused = false;
 		}
 		
 		public void Start()
 		{
-			running = true;
+			Running = true;
 			singleton.StartCoroutine(CallWrapper());
 		}
 		
 		public void Stop()
 		{
-			stopped = true;
-			running = false;
+			Stopped = true;
+			Running = false;
 		}
 
 		public void Interrupt()
 		{
-			running = false;
+			Running = false;
 		}
 
 		IEnumerator CallWrapper()
 		{
 			yield return null;
 			IEnumerator e = coroutine;
-			while(running) {
-				if(paused)
+			while(Running) {
+				if(Paused)
 					yield return null;
 				else {
 					if(e != null && e.MoveNext()) {
 						yield return e.Current;
 					}
 					else {
-						running = false;
+						Running = false;
 					}
 				}
 			}
 			
-			Finished?.Invoke(stopped);
+			Finished?.Invoke(Stopped);
 		}
 	}
-
-	static TaskManager singleton;
 
 	public static TaskState CreateTask(IEnumerator coroutine)
 	{
