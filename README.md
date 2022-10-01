@@ -1,7 +1,7 @@
 # Unity_Utility
-For Utility, Helper classes in Unity.
+For Utility, Helper classes can be used in Unity commonly.
 
-I Recommand you to Use [UPM](https://github.com/mob-sakai/UpmGitExtension.git) Package to Use This Plugin
+I Recommand you to Use [UPM](https://github.com/mob-sakai/UpmGitExtension.git) Package to Use This Plugin  
 Compatiable with Unity version 2021 LTS
 
 Dependencies : [Unity Input System](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.4/manual/index.html), [TextMeshPro](https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/manual/index.html), [Bezier Curve](http://www.bansheegz.com/BGCurve/UserGuide/).
