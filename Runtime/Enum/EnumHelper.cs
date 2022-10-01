@@ -45,10 +45,22 @@ namespace dkstlzu.Utility
 
         public static Type GetEnumType(string enumName)
         {
-            Type type = Type.GetType(enumName + ", Assembly-CSharp-firstpass", true, true);
-            if (type == null) Type.GetType(enumName + ", Assembly-CSharp", true, true);
+            Type type = null;
+            try
+            {
+                type = Type.GetType(enumName + ", Assembly-CSharp-firstpass", true, true);
+            } catch(TypeLoadException)
+            {
+                UnityEngine.Debug.LogWarning("Wrong EnumName of Assembly-CSharp-firstpass in EnumHelper.GetEnumType(). Check Assembly or NameSpace");
+                try
+                {
+                    type = Type.GetType(enumName + ", Assembly-CSharp", true, true);
+                } catch(TypeLoadException)
+                {
+                    UnityEngine.Debug.LogWarning("Wrong EnumName of Assembly-CSharp in EnumHelper.GetEnumType(). Check Assembly or NameSpace");
+                }
+            }
 
-            if (type == null) UnityEngine.Debug.LogWarning("Wrong EnumName in EnumHelper.GetEnumType(). Check Assembly");
             return type;
         }
 
