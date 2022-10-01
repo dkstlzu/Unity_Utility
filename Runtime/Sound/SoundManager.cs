@@ -30,6 +30,7 @@ namespace dkstlzu.Utility
         }
 
         public Dictionary<AudioClip, AudioSource> PlayingAudioSourceDict = new Dictionary<AudioClip, AudioSource>();
+        public Dictionary<string, AudioSource> SpecialAudioSourceDict = new Dictionary<string, AudioSource>();
         private Queue<AudioSource> _audioSourcesQueue = new Queue<AudioSource>();
 
 
@@ -58,6 +59,26 @@ namespace dkstlzu.Utility
                 // fold added component
                 _audioSourcesQueue.Enqueue(v);
             }
+        }
+
+        public void AddSpecialAudioSource(string audioSourceName)
+        {
+            AudioSource source = new GameObject(audioSourceName).AddComponent<AudioSource>();
+            source.transform.SetParent(transform);
+            SpecialAudioSourceDict.Add(audioSourceName, source);
+        }
+
+        public void RemoveSpecialAudioSource(string audioSourceName)
+        {
+            SpecialAudioSourceDict.Remove(audioSourceName);
+        }
+
+        public void PlaySpecial(string audioSourceName, AudioClip clip, float volume, bool loop)
+        {
+            SpecialAudioSourceDict[audioSourceName].clip = clip;
+            SpecialAudioSourceDict[audioSourceName].volume = volume;
+            SpecialAudioSourceDict[audioSourceName].loop = loop;
+            SpecialAudioSourceDict[audioSourceName].Play();
         }
 
         /// <summary>
