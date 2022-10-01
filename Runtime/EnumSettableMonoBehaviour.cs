@@ -5,6 +5,7 @@ namespace dkstlzu.Utility
 {
     public class EnumSettableMonoBehaviour : MonoBehaviour
     {
+        [Tooltip("Make Name form as [NameSpace].[EnumName]")]
         [SerializeField] protected string enumName;
         [SerializeField] protected string enumValue;
         [SerializeField] protected bool enumNameCorrect;
