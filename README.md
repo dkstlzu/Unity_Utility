@@ -28,7 +28,7 @@ Dependencies : [Unity Input System](https://docs.unity3d.com/Packages/com.unity.
 
 *EnumSettableMonoBehaviour.cs* : MonoBehaviour which take enum type as string in unity inspector (Use with **[EnumSettableMonoBehaviourEditor]**(/Editor/EnumSettableEditor.cs) when inherit)
 
-**:point_right:*EventTrigger.cs* : Easy component using unity OnTriggerXXX events which selectable collider type at inspector:point_left:**
+**:point_right:*EventTrigger.cs* : Component using unity OnTriggerXXX events with selectable collider type on inspector:point_left:**
 
 *EventTriggerChildCollider.cs* : Extend EventTrigger to child GameObjects' colliders
 
@@ -61,8 +61,8 @@ Dependencies : [Unity Input System](https://docs.unity3d.com/Packages/com.unity.
 *UndoableAction.cs* : Extension of System.Action which have undoable action
 
 *UniqueComponent.cs* : Keep unity component unique with [DontDestroyManager](/Runtime/DontDestroyManager.cs)
-                        since unity component does not made by constructor but AddComponent, therefore [Sigleton](/Runtime/Singleton.cs) can not limit constructor as private
-                        **!using \[DefaultExecutionOrder(-100)\] so when modifing ScriptExecutionOrder in Editor be careful**
+                        since unity component does not made by constructor but AddComponent, therefore [Sigleton](/Runtime/Singleton.cs) can not limit constructor as private  
+> using \[DefaultExecutionOrder(-100)\] so when modifing ScriptExecutionOrder in Editor be careful
         
 *UnityConsole.cs* : Helper Class controling Unity Console Message **(Wrong Position it should be in Editor folder:to be fixed)**
 
@@ -161,10 +161,10 @@ public event Action AfterClose;
 ### - BansheeGz Folder
 > ThirdParty Editor (Do not touch without error)
 
-CustomEditor of [DevConsole](/Runtime/DevConsole.cs)  
+\[CustomEditor of [DevConsole](/Runtime/DevConsole.cs)\]  
 *DevConsoleEditor.cs* : Show Static Command Stack while Editor is playing
 
-CustomEditor of [DontDestroyManager](/Runtime/DontDestroyManager.cs)  
+\[CustomEditor of [DontDestroyManager](/Runtime/DontDestroyManager.cs)\]  
 *DontDestroyManagerEditor.cs* : Expose 'Use UniqueComponent' button to connect with UniqueComponent(/Runtime/UniqueComponent.cs)
 
 *EditPrefab.cs* : Open new scene for edit prefab and save it over to original prefab object
@@ -172,22 +172,22 @@ CustomEditor of [DontDestroyManager](/Runtime/DontDestroyManager.cs)
                   
 *EditorInspectorUtility.cs* : Helper Class providing GroupPropertyField used on Editor.OnInspectorGUI() 
 
-CustomEditor of [EnumSettalbeMonoBehaviour](/Runtime/EnumSettalbeMonoBehaviour.cs)  
+\[CustomEditor of [EnumSettalbeMonoBehaviour](/Runtime/EnumSettalbeMonoBehaviour.cs)\]  
 :point_right:***EnumSettableEditor.cs* : Implementing dynamic enum type determination**:point_left:
 
-CustomEditor of [EventTrigger](/Runtime/EventTrigger.cs)  
+\[CustomEditor of [EventTrigger](/Runtime/EventTrigger.cs)\]  
 :point_right:***EventTriggerEditor.cs* : Offer selection of collider type**:point_left:
 
-CustomEditor of [ObjectPool](/Runtime/ObjectPool.cs)  
+\[CustomEditor of [ObjectPool](/Runtime/ObjectPool.cs)\]  
 :point_right:***ObjectPoolEditor.cs* : Offer Instantiating and Deleting feature of ObjectPool**:point_left: (should be modified to inherit [EnumSettableDitor](/Editor/EnumSettalbeEditor.cs))
 
 *PrinterEditor.cs* : Switch [Printer](/Runtime/Printer.cs) modes and provide shortcut
 
-CustomEditor of [ResourceLoader](/Runtime/ResourceLoader.cs)  
+\[CustomEditor of [ResourceLoader](/Runtime/ResourceLoader.cs)\]  
 *ResourceLoaderEditor.cs* : Editor features of ResourceLoader (Not using in any project now)
 
 *SerializableDictionaryPropertyDrawer.cs* : Inheritable Editor from [UnityAssetStore](https://assetstore.unity.com/packages/tools/integration/serializabledictionary-90477)
 
-CustomEditor of [UniqueComponent](/Runtime/UniqueComponent.cs)  
+\[CustomEditor of [UniqueComponent](/Runtime/UniqueComponent.cs)\]  
 *UniqueComponentEditor.cs* : Expose HashID only when Unique Method is HashID
 
