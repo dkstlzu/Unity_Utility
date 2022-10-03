@@ -26,7 +26,7 @@ Dependencies : [Unity Input System](https://docs.unity3d.com/Packages/com.unity.
 
 *ESCManager.cs* : Manage ESCInput action using [Unity Legacy Input System](https://docs.unity3d.com/Manual/Input.html) or [InputSystem](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.4/manual/index.html)
 
-*EnumSettableMonoBehaviour.cs* : MonoBehaviour which take enum type as string in unity inspector (Use with **[EnumSettableMonoBehaviourEditor]**(/Editor/EnumSettableEditor.cs) when inherit)
+*EnumSettableMonoBehaviour.cs* : MonoBehaviour which take enum type as string in unity inspector (Use with **[EnumSettableMonoBehaviourEditor](/Editor/EnumSettableEditor.cs)** when inherit)
 
 **:point_right:*EventTrigger.cs* : Component using unity OnTriggerXXX events with selectable collider type on inspector:point_left:**
 
@@ -165,7 +165,7 @@ public event Action AfterClose;
 *DevConsoleEditor.cs* : Show Static Command Stack while Editor is playing
 
 \[CustomEditor of [DontDestroyManager](/Runtime/DontDestroyManager.cs)\]  
-*DontDestroyManagerEditor.cs* : Expose 'Use UniqueComponent' button to connect with UniqueComponent(/Runtime/UniqueComponent.cs)
+*DontDestroyManagerEditor.cs* : Expose 'Use UniqueComponent' button to connect with [UniqueComponent](/Runtime/UniqueComponent.cs)
 
 *EditPrefab.cs* : Open new scene for edit prefab and save it over to original prefab object
                   - which can handle the problem of editor script effect not applied to prefab because of serialization system of unity (ref from StackOverFlow and modified)
