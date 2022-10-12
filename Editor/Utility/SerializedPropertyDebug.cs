@@ -7,7 +7,6 @@ namespace dkstlzu.Utility
 {
     public static class SerializedPropertyDebug
     {
-#if UNITY_EDITOR
         public static void LogProperties(SerializedObject so, bool includeChildren = true) {
             // Shows all the properties in the serialized object with name and type
             // You can use this to learn the structure
@@ -204,6 +203,5 @@ namespace dkstlzu.Utility
 
             Debug.Log(log);
         }
-#endif
     }
 }

@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 
@@ -29,4 +28,3 @@ namespace dkstlzu.Utility
          }
     }
 }
-#endif

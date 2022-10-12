@@ -3,7 +3,6 @@ using System.Reflection;
 
 namespace dkstlzu.Utility
 {
-#if UNITY_EDITOR
     public class UnityConsole
     {
         public static void ClearConsole()
@@ -14,5 +13,4 @@ namespace dkstlzu.Utility
             method.Invoke(new object(), null);
         }
     }
-#endif
 }
