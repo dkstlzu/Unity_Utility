@@ -1,3 +1,4 @@
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -149,59 +150,71 @@ namespace dkstlzu.Utility
             }
             return true;
         }
+
+        public static void LogAllValues(SerializedObject serializedObject)
+        {
+            LogAllValues(serializedObject.GetIterator());
+        }
+        
         // A way to see everything a SerializedProperty object contains in case you don't
         // know what type is stored.
         public static void LogAllValues(SerializedProperty serializedProperty) {
-            string log = "Log of All values in serialized property.\n";
+            StringBuilder log = new StringBuilder();
+            log.AppendLine("Log of All values in serialized property.");
             
-            log += "PROPERTY: name = " + serializedProperty.name + " type = " + serializedProperty.type + "\n";
-            log += "animationCurveValue = " + serializedProperty.animationCurveValue + "\n";
-            log += "arraySize = " + serializedProperty.arraySize + "\n";
-            log += "boolValue = " + serializedProperty.boolValue + "\n";
-            log += "boundsValue = " + serializedProperty.boundsValue + "\n";
-            log += "colorValue = " + serializedProperty.colorValue + "\n";
-            log += "depth = " + serializedProperty.depth + "\n";
-            log += "editable = " + serializedProperty.editable + "\n";
-            log += "enumNames = " + serializedProperty.enumNames + "\n";
-            log += "enumValueIndex = " + serializedProperty.enumValueIndex + "\n";
-            log += "floatValue = " + serializedProperty.floatValue + "\n";
-            log += "hasChildren = " + serializedProperty.hasChildren + "\n";
-            log += "hasMultipleDifferentValues = " + serializedProperty.hasMultipleDifferentValues + "\n";
-            log += "hasVisibleChildren = " + serializedProperty.hasVisibleChildren + "\n";
-            log += "intValue = " + serializedProperty.intValue + "\n";
-            log += "isAnimated = " + serializedProperty.isAnimated + "\n";
-            log += "isArray = " + serializedProperty.isArray + "\n";
-            log += "isExpanded = " + serializedProperty.isExpanded + "\n";
-            log += "isInstantiatedPrefab = " + serializedProperty.isInstantiatedPrefab + "\n";
-            log += "name = " + serializedProperty.name + "\n";
-            log += "objectReferenceInstanceIDValue = " + serializedProperty.objectReferenceInstanceIDValue + "\n";
-            log += "objectReferenceValue = " + serializedProperty.objectReferenceValue + "\n";
-            log += "prefabOverride = " + serializedProperty.prefabOverride + "\n";
-            log += "propertyPath = " + serializedProperty.propertyPath + "\n";
-            log += "propertyType = " + serializedProperty.propertyType + "\n";
-            log += "quaternionValue = " + serializedProperty.quaternionValue + "\n";
-            log += "rectValue = " + serializedProperty.rectValue + "\n";
-            log += "serializedObject = " + serializedProperty.serializedObject + "\n";
-            log += "stringValue = " + serializedProperty.stringValue + "\n";
-            log += "tooltip = " + serializedProperty.tooltip + "\n";
-            log += "type = " + serializedProperty.type + "\n";
-            log += "vector2Value = " + serializedProperty.vector2Value + "\n";
-            log += "vector3Value = " + serializedProperty.vector3Value + "\n";
+            log.AppendLine("PROPERTY: name = " + serializedProperty.name + " type = " + serializedProperty.type);
+            log.AppendLine("animationCurveValue = " + serializedProperty.animationCurveValue);
+            log.AppendLine("arraySize = " + serializedProperty.arraySize);
+            log.AppendLine("boolValue = " + serializedProperty.boolValue);
+            log.AppendLine("boundsValue = " + serializedProperty.boundsValue);
+            log.AppendLine("colorValue = " + serializedProperty.colorValue);
+            log.AppendLine("depth = " + serializedProperty.depth);
+            log.AppendLine("editable = " + serializedProperty.editable);
+            log.AppendLine("enumNames = " + serializedProperty.enumNames);
+            log.AppendLine("enumValueIndex = " + serializedProperty.enumValueIndex);
+            log.AppendLine("floatValue = " + serializedProperty.floatValue);
+            log.AppendLine("hasChildren = " + serializedProperty.hasChildren);
+            log.AppendLine("hasMultipleDifferentValues = " + serializedProperty.hasMultipleDifferentValues);
+            log.AppendLine("hasVisibleChildren = " + serializedProperty.hasVisibleChildren);
+            log.AppendLine("intValue = " + serializedProperty.intValue);
+            log.AppendLine("isAnimated = " + serializedProperty.isAnimated);
+            log.AppendLine("isArray = " + serializedProperty.isArray);
+            log.AppendLine("isExpanded = " + serializedProperty.isExpanded);
+            log.AppendLine("isInstantiatedPrefab = " + serializedProperty.isInstantiatedPrefab);
+            log.AppendLine("name = " + serializedProperty.name);
+            log.AppendLine("objectReferenceInstanceIDValue = " + serializedProperty.objectReferenceInstanceIDValue);
+            log.AppendLine("objectReferenceValue = " + serializedProperty.objectReferenceValue);
+            log.AppendLine("prefabOverride = " + serializedProperty.prefabOverride);
+            log.AppendLine("propertyPath = " + serializedProperty.propertyPath);
+            log.AppendLine("propertyType = " + serializedProperty.propertyType);
+            log.AppendLine("quaternionValue = " + serializedProperty.quaternionValue);
+            log.AppendLine("rectValue = " + serializedProperty.rectValue);
+            log.AppendLine("serializedObject = " + serializedProperty.serializedObject);
+            log.AppendLine("stringValue = " + serializedProperty.stringValue);
+            log.AppendLine("tooltip = " + serializedProperty.tooltip);
+            log.AppendLine("type = " + serializedProperty.type);
+            log.AppendLine("vector2Value = " + serializedProperty.vector2Value);
+            log.AppendLine("vector3Value = " + serializedProperty.vector3Value);
             
-            Debug.Log(log);
+            Debug.Log(log.ToString());
+        }
+
+        public static void LogAllPropertyPath(SerializedObject serializedObject)
+        {
+            LogAllPropertyPath(serializedObject.GetIterator());
         }
 
         public static void LogAllPropertyPath(SerializedProperty serializedProperty)
         {
-            string log = "Log of All path in serialized property.\n";
+            StringBuilder log = new StringBuilder("Log of All path in serialized property.\n");
 
             do
             {
-                log += serializedProperty.propertyPath + "\n";
+                log.AppendLine(serializedProperty.propertyPath);
             }
             while(serializedProperty.Next(true));
 
-            Debug.Log(log);
+            Debug.Log(log.ToString());
         }
     }
 }
