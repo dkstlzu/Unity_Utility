@@ -63,8 +63,6 @@ Dependencies : [Unity Input System](https://docs.unity3d.com/Packages/com.unity.
 *UniqueComponent.cs* : Keep unity component unique with [DontDestroyManager](/Runtime/DontDestroyManager.cs)
                         since unity component does not made by constructor but AddComponent, therefore [Sigleton](/Runtime/Singleton.cs) can not limit constructor as private  
 > using \[DefaultExecutionOrder(-100)\] so when modifing ScriptExecutionOrder in Editor be careful
-        
-*UnityConsole.cs* : Helper Class controling Unity Console Message **(Wrong Position it should be in Editor folder:to be fixed)**
 
 *trigger.cs* : use internal bool value when ref by other script 
 
@@ -113,10 +111,6 @@ Dependencies : [Unity Input System](https://docs.unity3d.com/Packages/com.unity.
 
 *EventSystem/EventSystem.cs* : Unity Component managing this EventSystem (Internal Dictionary should be replaced as [SerializableDictionary](/Runtime/Serializables/SerializableDictionary.cs))
 
-### - Gizmo Folder
-
-*Gizmo/GizmoHelper.cs* : Helper Class for DrawString on scene view in Unity Editor
-
 ### - Serializables Folder
 
 *Serializables/SerializableColor.cs* : SerializableColor class for Serialization which compatible with UnityEngine.Color
@@ -124,8 +118,6 @@ Dependencies : [Unity Input System](https://docs.unity3d.com/Packages/com.unity.
 *Serializables/SerializableDictionary.cs* : Inheritable SerializableDictionary from [UnityAssetStore](https://assetstore.unity.com/packages/tools/integration/serializabledictionary-90477)
 
 *Serializables/SerializableVector3.cs* : SerializableVector3 class for Serialization which compatible with UnityEngine.\[Vector3, Vector2\]
-
-*Serializables/SerializedPropertyDebug.cs* : Helper Class for UnityEditor.SerializedProperty and UnityEditor.SerializedObject **(Wrong Position it should be in Editor folder:to be fixed)**
 
 ### - Sound Folder
 
@@ -161,6 +153,16 @@ public event Action AfterClose;
 ### - BansheeGz Folder
 > ThirdParty Editor (Do not touch without error)
 
+### - Utility Folder  
+*Utility/EditorInspectorUtility.cs* : Helper Class providing GroupPropertyField used on Editor.OnInspectorGUI() 
+
+*Utility/GizmoHelper.cs* : Helper Class for DrawString on scene view in Unity Editor
+
+
+*Utility/SerializedPropertyDebug.cs* : Helper Class for UnityEditor.SerializedProperty and UnityEditor.SerializedObject
+
+*Utility/UnityConsole.cs* : Helper Class controling Unity Console Message
+
 \[CustomEditor of [DevConsole](/Runtime/DevConsole.cs)\]  
 *DevConsoleEditor.cs* : Show Static Command Stack while Editor is playing
 
@@ -170,7 +172,6 @@ public event Action AfterClose;
 *EditPrefab.cs* : Open new scene for edit prefab and save it over to original prefab object
                   - which can handle the problem of editor script effect not applied to prefab because of serialization system of unity (ref from StackOverFlow and modified)
                   
-*EditorInspectorUtility.cs* : Helper Class providing GroupPropertyField used on Editor.OnInspectorGUI() 
 
 \[CustomEditor of [EnumSettalbeMonoBehaviour](/Runtime/EnumSettalbeMonoBehaviour.cs)\]  
 :point_right:***EnumSettableEditor.cs* : Implementing dynamic enum type determination**:point_left:
