@@ -21,7 +21,7 @@ DevConsole.cs : Developer Command Console for Unity using [TMPRO](https://docs.u
 
 *EnumSettableMonoBehaviour.cs* : MonoBehaviour which take enum type as string in unity inspector (Use with **[EnumSettableMonoBehaviourEditor](/Editor/EnumSettableEditor.cs)** when inherit)
 
-**:point_right:*EventTrigger.cs* : Component using unity OnTriggerXXX events with selectable collider type on inspector:point_left:**
+**:point_right:*EventTrigger.cs : Component using unity OnTriggerXXX events with selectable collider type on inspector*:point_left:**
 
 *EventTriggerChildCollider.cs* : Extend EventTrigger to child GameObjects' colliders
 
