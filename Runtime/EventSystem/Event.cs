@@ -1,15 +1,20 @@
 using System;
 
-namespace dkstlzu.Utility.EventSystem
+namespace dkstlzu.Utility
 {
-    [System.Serializable]
+    public interface IEvent
+    {
+        Enum EventCode { get; }
+    }
+    
+    [Serializable]
     public class Event : IEvent
     {
-        public Enum eventCode{get; protected set;}
+        public Enum EventCode{get; protected set;}
 
         public Event(Enum name)
         {
-            eventCode = name;
+            EventCode = name;
         }
     }
 }

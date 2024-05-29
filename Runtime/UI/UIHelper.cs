@@ -1,14 +1,12 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
-namespace dkstlzu.Utility
+namespace dkstlzu.Utility.UI
 {
     public class UIHelper
     {
-        static AnimationCurve _defaultCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+        private static AnimationCurve _defaultCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
         public static Dictionary<Transform, TaskManagerTask> TaskDict = new Dictionary<Transform, TaskManagerTask>();
 
         public static bool ScaleOpen(Transform transform, float time, bool force = false)
@@ -81,7 +79,7 @@ namespace dkstlzu.Utility
             CoroutineHelper.OnNextFrame(() =>
             {
                 if (TaskDict.ContainsKey(transform)) return;
-                if (curve == null) task = new TaskManagerTask(ScaleCurveCloseCoroutine(transform, AnimationCurveHelper.ReverseCurve(_defaultCurve), timeMultiplier), true);
+                if (curve == null) task = new TaskManagerTask(ScaleCurveCloseCoroutine(transform, AnimationCurveExtensions.ReverseCurve(_defaultCurve), timeMultiplier), true);
                 else task = new TaskManagerTask(ScaleCurveCloseCoroutine(transform, curve, timeMultiplier), true);
                 TaskDict.Add(transform, task);
                 task.Finished += (stoped) => AfterTaskFinish(transform, stoped);

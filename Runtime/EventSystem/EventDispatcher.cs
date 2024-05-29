@@ -1,33 +1,33 @@
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace dkstlzu.Utility.EventSystem
+namespace dkstlzu.Utility
 {
+    public interface IEventListener
+    {
+        void OnEvent(IEvent @event);
+    }
+    
+    public interface IEventDispatcher
+    {
+        void Notify(IEvent @event);
+        void AddListener(IEventListener eventListener);
+        void RemoveListener(IEventListener eventListener);
+    }
+    
     [System.Serializable]
     public class EventDispatcher : IEventDispatcher
     {
-        public IEvent Event {get; set;}
         protected List<IEventListener> ListenerList = new List<IEventListener>();
         protected Stack<IEvent> EventStack = new Stack<IEvent>();
-        public void Notify()
+
+        public void Notify(IEvent @event)
         {
-            if (Event == null)
+            foreach (IEventListener listener in ListenerList)
             {
-                Debug.LogWarning("No Assigned Default Event on EventDispatcher");
-                return;
+                listener.OnEvent(@event);
             }
             
-            foreach (IEventListener listener in ListenerList)
-            {
-                listener.OnEvent(Event);
-            }
-        }
-        public void Notify(IEvent e)
-        {
-            foreach (IEventListener listener in ListenerList)
-            {
-                listener.OnEvent(e);
-            }
+            EventStack.Push(@event);
         }
 
         public void AddListener(IEventListener listener)

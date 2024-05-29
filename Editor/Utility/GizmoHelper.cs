@@ -3,7 +3,7 @@ using UnityEditor;
 
 namespace dkstlzu.Utility
 {
-    public class GizmoHelper
+    public static class GizmoHelper
     {
         public static void DrawString(string text, Vector3 worldPos, Color? colour = null) {
             Handles.BeginGUI();

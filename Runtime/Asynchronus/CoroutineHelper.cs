@@ -9,19 +9,18 @@ namespace dkstlzu.Utility
     {
         public static void OnNextFrame(Action action)
         {
-            CoroutineHelper.GetOrCreateInstance.StartCoroutine(AfterFrame(action, 1));
+            GetOrCreate().StartCoroutine(AfterFrame(action, 1));
         }
 
         public static void Delay(Action action, float time)
         {
-            CoroutineHelper.GetOrCreateInstance.StartCoroutine(AfterTime(action, time));
+            GetOrCreate().StartCoroutine(AfterTime(action, time));
         }
         
         static IEnumerator AfterFrame(Action action, int frame)
         {
             while(frame-- > 0)
             {
-                Printer.DebugPrint($"CoroutineHelper AfterFrme {frame}");
                 yield return null;
             }
             action.Invoke();

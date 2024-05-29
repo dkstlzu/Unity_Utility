@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace dkstlzu.Utility.UI
 {
@@ -21,8 +19,8 @@ namespace dkstlzu.Utility.UI
 
         public List<RectTransform> Children = new List<RectTransform>();
 
-        [ContextMenu("GetChildren")]
-        public void GetChildren()
+        [ContextMenu("FindChildren")]
+        public void FindChildren()
         {
             Children.Clear();
             for (int i = 0; i < transform.childCount; i++)

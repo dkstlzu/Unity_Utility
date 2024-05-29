@@ -1,3 +1,4 @@
+#if ENABLE_INPUT_SYSTEM
 using System;
 using System.Reflection;
 using System.Collections;
@@ -9,7 +10,6 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 using TMPro;
-using dkstlzu.Utility;
 
 using Context = UnityEngine.InputSystem.InputAction.CallbackContext;
 
@@ -208,3 +208,4 @@ namespace dkstlzu.Utility
         }
     }
 }
+#endif

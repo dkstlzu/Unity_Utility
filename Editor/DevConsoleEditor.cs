@@ -1,3 +1,4 @@
+#if ENABLE_INPUT_SYSTEM
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -59,3 +60,4 @@ namespace dkstlzu.Utility
         }
     }
 }
+#endif

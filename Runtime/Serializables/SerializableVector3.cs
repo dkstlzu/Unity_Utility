@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace dkstlzu.Utility.Serializables
+namespace dkstlzu.Utility
 {
     [System.Serializable]
     public class SerializableVector3

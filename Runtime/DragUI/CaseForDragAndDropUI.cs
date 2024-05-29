@@ -10,9 +10,9 @@ namespace dkstlzu.Utility.UI
     {
         public int ID;
         public bool CannotTakeAgain;
-        public DragAndDropableUI Item;
-        public UnityEvent<CaseForDragAndDropUI, DragAndDropableUI> OnDropEvent;
-        public UnityEvent<CaseForDragAndDropUI, DragAndDropableUI> OnDragOutEvent;
+        public DragAndDroppableUI Item;
+        public UnityEvent<CaseForDragAndDropUI, DragAndDroppableUI> OnDropEvent;
+        public UnityEvent<CaseForDragAndDropUI, DragAndDroppableUI> OnDragOutEvent;
         RectTransform _rect;
         protected override void Awake()
         {
@@ -22,11 +22,11 @@ namespace dkstlzu.Utility.UI
 
         public void OnDrop(PointerEventData eventData)
         {
-            if (DragAndDropableUI.DragingUI != null)
+            if (DragAndDroppableUI.DraggingUI != null)
             {
-                if (DragAndDropableUI.DragingUI.ID != ID) return;
+                if (DragAndDroppableUI.DraggingUI.ID != ID) return;
                 
-                Item = DragAndDropableUI.DragingUI;
+                Item = DragAndDroppableUI.DraggingUI;
                 Item.Rect.position = _rect.position;
                 Item.Case = this;
                 Item.CanvasGroup.blocksRaycasts = false;

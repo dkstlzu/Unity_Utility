@@ -8,28 +8,25 @@ namespace dkstlzu.Utility
     [ExecuteInEditMode]
     public class EventTriggerChildCollider : MonoBehaviour
     {
-        public EventTrigger ET;
+        public EventTrigger Parent;
         public Collider Collider;
         public Collider2D Collider2D;
         public Object ValidCollider
         {
             get 
             {
-                if (use2D) return Collider2D;
+                if (Use2D) return Collider2D;
                 else return Collider;
             }
         }
         internal EventTrigger.EventTriggerState State;
 
-        public bool use2D
-        {
-            get {return ET.use2D;}
-        }
+        public bool Use2D => Parent.Use2D;
 
         void Reset()
         {
-            ET = GetComponentInParent<EventTrigger>();
-            if (!ET)
+            Parent = GetComponentInParent<EventTrigger>();
+            if (!Parent)
             {
                 var headertext = "Warning";
                 var maintext = "Could not Find EventTrigger among parents";
@@ -46,55 +43,56 @@ namespace dkstlzu.Utility
                 return;
             }
 
-            if (use2D)
+            if (Use2D)
             {
-                Collider2D = gameObject.AddComponent(ET.Collider2D.GetType()) as Collider2D;
-                Collider2D.isTrigger = true;
+                Collider2D = gameObject.AddComponent(Parent.Collider2D.GetType()) as Collider2D;
+                Collider2D!.isTrigger = true;
             } else
             {
-                Collider = gameObject.AddComponent(ET.Collider.GetType()) as Collider;
-                Collider.isTrigger = true;
+                Collider = gameObject.AddComponent(Parent.Collider.GetType()) as Collider;
+                Collider!.isTrigger = true;
             }
-            ET.Childs.Add(this);
+            
+            Parent.Children.Add(this);
         }
 
-        void OnTriggerEnter(Collider collider)
+        void OnTriggerEnter(Collider other)
         {
-            ET.OnTriggerEnter(collider);
+            Parent.OnTriggerEnter(other);
             State = EventTrigger.EventTriggerState.Staying;
         }
 
-        void OnTriggerStay(Collider collider)
+        void OnTriggerStay(Collider other)
         {
-            ET.OnTriggerStay(collider);
+            Parent.OnTriggerStay(other);
         }
 
-        void OnTriggerExit(Collider collider)
+        void OnTriggerExit(Collider other)
         {
             State = EventTrigger.EventTriggerState.Default;
-            ET.OnTriggerExit(collider);
+            Parent.OnTriggerExit(other);
         }
 
-        void OnTriggerEnter2D(Collider2D collider)
+        void OnTriggerEnter2D(Collider2D other)
         {
-            ET.OnTriggerEnter2D(collider);
+            Parent.OnTriggerEnter2D(other);
             State = EventTrigger.EventTriggerState.Staying;
         }
 
-        void OnTriggerStay2D(Collider2D collider)
+        void OnTriggerStay2D(Collider2D other)
         {
-            ET.OnTriggerStay2D(collider);
+            Parent.OnTriggerStay2D(other);
         }
 
-        void OnTriggerExit2D(Collider2D collider)
+        void OnTriggerExit2D(Collider2D other)
         {
             State = EventTrigger.EventTriggerState.Default;
-            ET.OnTriggerExit2D(collider);
+            Parent.OnTriggerExit2D(other);
         }
 
         void OnDestroy()
         {
-            ET.Childs.Remove(this);
+            Parent.Children.Remove(this);
         }
     }
 }

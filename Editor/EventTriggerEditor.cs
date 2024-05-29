@@ -7,11 +7,10 @@ namespace dkstlzu.Utility
     [CanEditMultipleObjects]
     public class EventTriggerEditor : Editor
     {
-        protected SerializedProperty isReady;
+        protected SerializedProperty IsReady;
         protected SerializedProperty Collider;
         protected SerializedProperty Collider2D;
-        protected SerializedProperty use2D;
-        protected SerializedProperty DrawGizmo;
+        protected SerializedProperty Use2D;
         protected SerializedProperty TargetLayerMask;
         protected SerializedProperty OnTriggerEnterEvent;
         protected SerializedProperty OnTriggerStayEvent;
@@ -20,16 +19,15 @@ namespace dkstlzu.Utility
 
         protected virtual void OnEnable()
         {
-            isReady = serializedObject.FindProperty("isReady");
-            Collider = serializedObject.FindProperty("Collider");
-            Collider2D = serializedObject.FindProperty("Collider2D");
-            use2D = serializedObject.FindProperty("use2D");
-            DrawGizmo = serializedObject.FindProperty("DrawGizmo");
-            TargetLayerMask = serializedObject.FindProperty("TargetLayerMask");
-            OnTriggerEnterEvent = serializedObject.FindProperty("OnTriggerEnterEvent");
-            OnTriggerStayEvent = serializedObject.FindProperty("OnTriggerStayEvent");
-            OnTriggerExitEvent = serializedObject.FindProperty("OnTriggerExitEvent");
-            PlayOnlyFirst = serializedObject.FindProperty("PlayOnlyFirst");
+            IsReady = serializedObject.FindProperty(nameof(EventTrigger.IsReady));
+            Collider = serializedObject.FindProperty(nameof(EventTrigger.Collider));
+            Collider2D = serializedObject.FindProperty(nameof(EventTrigger.Collider2D));
+            Use2D = serializedObject.FindProperty(nameof(EventTrigger.Use2D));
+            TargetLayerMask = serializedObject.FindProperty(nameof(EventTrigger.TargetLayerMask));
+            OnTriggerEnterEvent = serializedObject.FindProperty(nameof(EventTrigger.OnTriggerEnterEvent));
+            OnTriggerStayEvent = serializedObject.FindProperty(nameof(EventTrigger.OnTriggerStayEvent));
+            OnTriggerExitEvent = serializedObject.FindProperty(nameof(EventTrigger.OnTriggerExitEvent));
+            PlayOnlyFirst = serializedObject.FindProperty(nameof(EventTrigger.PlayOnlyFirst));
         }
 
         public override void OnInspectorGUI()
@@ -37,7 +35,7 @@ namespace dkstlzu.Utility
             serializedObject.Update();
             EventTrigger ET = (EventTrigger)target;
 
-            if (!isReady.boolValue)
+            if (!IsReady.boolValue)
             {
                 EditorGUILayout.LabelField("Select your target Collider type.");
 
@@ -65,8 +63,8 @@ namespace dkstlzu.Utility
 
                 void Set3DColliderSettings()
                 {
-                    isReady.boolValue = true;
-                    use2D.boolValue = false;
+                    IsReady.boolValue = true;
+                    Use2D.boolValue = false;
                     ((Collider)Collider.objectReferenceValue).isTrigger = true;
                     UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(ET.Collider, false);
                 }
@@ -105,8 +103,8 @@ namespace dkstlzu.Utility
 
                 void Set2DColliderSettings()
                 {
-                    isReady.boolValue = true;
-                    use2D.boolValue = true;
+                    IsReady.boolValue = true;
+                    Use2D.boolValue = true;
                     ((Collider2D)Collider2D.objectReferenceValue).isTrigger = true;
                     UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(ET.Collider2D, false);
                 }
@@ -122,10 +120,10 @@ namespace dkstlzu.Utility
                     {
                         DestroyImmediate(ET.Collider2D);
                     }
-                    isReady.boolValue = false;
+                    IsReady.boolValue = false;
                 }
 
-                if (use2D.boolValue && !Collider2D.objectReferenceValue && isReady.boolValue || !use2D.boolValue && !Collider.objectReferenceValue && isReady.boolValue) isReady.boolValue = false;
+                if (Use2D.boolValue && !Collider2D.objectReferenceValue && IsReady.boolValue || !Use2D.boolValue && !Collider.objectReferenceValue && IsReady.boolValue) IsReady.boolValue = false;
                 
                 EditorGUILayout.PropertyField(TargetLayerMask);
                 EditorGUILayout.PropertyField(OnTriggerEnterEvent);

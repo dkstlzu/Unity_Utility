@@ -686,7 +686,7 @@ namespace BansheeGz.BGSpline.Editor
                 GUI.SetNextControlName("FreeMoveAxis");
 
 #if UNITY_5_6_OR_NEWER
-			return Handles.FreeMoveHandle(position, rotation, handleSize * 0.15f, new Vector3(xSnap, ySnap, zSnap), Handles.RectangleHandleCap);
+			return Handles.FreeMoveHandle(position, handleSize * 0.15f, new Vector3(xSnap, ySnap, zSnap), Handles.RectangleHandleCap);
 #else
 			return Handles.FreeMoveHandle(position, rotation, handleSize * 0.15f, new Vector3(xSnap, ySnap, zSnap), Handles.RectangleCap);
 #endif
@@ -1188,7 +1188,7 @@ namespace BansheeGz.BGSpline.Editor
             {
                 case BGCurveSettings.HandlesTypeEnum.FreeMove:
 #if UNITY_5_6_OR_NEWER
-				position = Handles.FreeMoveHandle(position, rotation, GetHandleSize(position, .2f), Vector3.zero, Handles.CircleHandleCap);
+				position = Handles.FreeMoveHandle(position, GetHandleSize(position, .2f), Vector3.zero, Handles.CircleHandleCap);
 #else
 				position = Handles.FreeMoveHandle(position, rotation, GetHandleSize(position, .2f), Vector3.zero, Handles.CircleCap);
 #endif

@@ -1,171 +1,95 @@
 using System;
-using System.Reflection;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace dkstlzu.Utility.EventSystem
+namespace dkstlzu.Utility
 {
     public class EventSystem : Singleton<EventSystem>
     {
-        private Dictionary<Enum, IEventDispatcher> EventDispatcherDict = new Dictionary<Enum, IEventDispatcher>();
-        private IEventDispatcher dispatcher;
-        public void Invoke(Enum eventEnum)
-        {
-            if (EventDispatcherDict.TryGetValue(eventEnum, out dispatcher))
-            {
-                dispatcher.Notify();
-            }
-        }
-
+        private readonly Dictionary<Enum, IEventDispatcher> _eventDispatcherDict = new Dictionary<Enum, IEventDispatcher>();
+        
         public void Invoke(Enum eventEnum, IEvent e)
         {
-            if (EventDispatcherDict.TryGetValue(eventEnum, out dispatcher))
+            if (_eventDispatcherDict.TryGetValue(eventEnum, out IEventDispatcher dispatcher))
             {
                 dispatcher.Notify(e);
-            }
-        }
-
-        public void Invoke(IEvent e)
-        {
-            if (EventDispatcherDict.TryGetValue(e.eventCode, out dispatcher))
-            {
-                dispatcher.Notify(e);
-            }
-        }
-
-
-        public void InvokeAll()
-        {
-            foreach (KeyValuePair<Enum, IEventDispatcher> pair in EventDispatcherDict)
-            {
-                pair.Value.Notify();
             }
         }
         
         public void InvokeAll(IEvent e)
         {
-            foreach (KeyValuePair<Enum, IEventDispatcher> pair in EventDispatcherDict)
+            foreach (KeyValuePair<Enum, IEventDispatcher> pair in _eventDispatcherDict)
             {
                 pair.Value.Notify(e);
             }
         }
 
-        public IEventDispatcher AddEventDispatcher(Enum eventEnum, IEventListener listener)
-        {
-            return AddEventDispatcher(eventEnum, new Event(eventEnum), listener);
-        }
-
-        public IEventDispatcher AddEventDispatcher(Enum eventEnum, IEventListener[] listeners = null)
-        {
-            return AddEventDispatcher(eventEnum, new Event(eventEnum), listeners);
-        }
-        public IEventDispatcher AddEventDispatcher(Enum eventEnum, IEvent Event, IEventListener listener)
-        {
-            IEventListener[] listeners = new IEventListener[1] {listener};
-            return AddEventDispatcher(eventEnum, Event, listeners);
-        }
-
-        public IEventDispatcher AddEventDispatcher(Enum eventEnum, IEvent Event, IEventListener[] listeners = null)
-        {
-            IEventDispatcher dispatcher;
-            if (!EventDispatcherDict.TryGetValue(eventEnum, out dispatcher))
-            {
-                dispatcher = new EventDispatcher();
-                dispatcher.Event = Event;
-                EventDispatcherDict.Add(eventEnum, dispatcher);
-
-                if (listeners != null)
-                {
-                    foreach (IEventListener listener in listeners)
-                    {
-                        dispatcher.AddListener(listener);
-                    }
-                }
-            }
-            return dispatcher;
-        }
-
-
         public IEventDispatcher[] AddEventDispatcher(Enum[] eventEnums)
         {
-            Event[] Events = new Event[eventEnums.Length];
+            List<IEventDispatcher> dispatchers = new List<IEventDispatcher>();
             
             for (int i = 0; i < eventEnums.Length; i++)
             {
-                Events[i] = new Event(eventEnums[i]);
+                dispatchers.Add(AddEventDispatcher(eventEnums[i]));
             }
 
-            return AddEventDispatcher(eventEnums, Events);
+            return dispatchers.ToArray();
         }
 
-        /// <summary>
-        /// Multi EventDispatcher adder Length of eventEnums and Events must be same 
-        /// </summary>
-        /// <returns></returns>
-        public IEventDispatcher[] AddEventDispatcher(Enum[] eventEnums, IEvent[] Events)
+        public IEventDispatcher AddEventDispatcher(Enum eventEnum)
         {
-            if (eventEnums.Length != Events.Length)
+            _eventDispatcherDict.Add(eventEnum, new EventDispatcher());
+            return _eventDispatcherDict[eventEnum];
+        }
+        
+        public IEventDispatcher AddEventDispatcher(Enum eventEnum, IEventListener listener) => AddEventDispatcher(eventEnum, new[] { listener });
+        public IEventDispatcher AddEventDispatcher(Enum eventEnum, IEventListener[] listeners)
+        {
+            if (_eventDispatcherDict.TryGetValue(eventEnum, out IEventDispatcher found))
             {
-                Debug.LogWarning("Wrong EventAdding. Check your code");
-                return null;
+                return found;
             }
 
-            IEventDispatcher[] dispatchers = new IEventDispatcher[eventEnums.Length];
+            var newDispatcher = new EventDispatcher();
+            _eventDispatcherDict.Add(eventEnum, newDispatcher);
 
-            for (int i = 0; i < eventEnums.Length; i++)
+            foreach (IEventListener listener in listeners)
             {
-                dispatchers[i] = AddEventDispatcher(eventEnums[i], Events[i]);
+                newDispatcher.AddListener(listener);
             }
-            return dispatchers;
+
+            return newDispatcher;
         }
 
-        public IEventDispatcher RemoveEventDispahtcer(Enum eventEnum)
+        public void RemoveEventDispatcher(Enum eventEnum)
         {
-            IEventDispatcher dispatcher;
-            if (EventDispatcherDict.TryGetValue(eventEnum, out dispatcher))
-            {
-                EventDispatcherDict.Remove(eventEnum);
-                return dispatcher;
-            }
-            return null;
+            _eventDispatcherDict.Remove(eventEnum);
         }
 
         public IEventDispatcher GetEventDispatcher(Enum eventEnum)
         {
-            IEventDispatcher dispatcher;
-            EventDispatcherDict.TryGetValue(eventEnum, out dispatcher);
+            _eventDispatcherDict.TryGetValue(eventEnum, out IEventDispatcher dispatcher);
             return dispatcher;
         }
 
         public void AddEventListener(Enum eventEnum, IEventListener listener)
         {
-            IEventDispatcher eventDispatcher = GetEventDispatcher(eventEnum);
-            if (eventDispatcher == null)
+            if (!_eventDispatcherDict.TryGetValue(eventEnum, out IEventDispatcher dispatcher))
             {
-                Debug.LogError($"�־��� Enum '{eventEnum}'�� ���� EventDispatcher�� ��ϵ��� �ʾҽ��ϴ�.");
-                return;
+                AddEventDispatcher(eventEnum);
             }
-
-            eventDispatcher.AddListener(listener);
+            
+            _eventDispatcherDict[eventEnum].AddListener(listener);
         }
 
         public void RemoveEventListener(Enum eventEnum, IEventListener listener)
         {
-            IEventDispatcher eventDispatcher = GetEventDispatcher(eventEnum);
-            if (eventDispatcher == null)
+            IEventDispatcher dispatcher = GetEventDispatcher(eventEnum);
+            if (dispatcher == null)
             {
-                Debug.LogError($"�־��� Enum'{eventEnum}'�� ���� EventDispatcher�� ��ϵ��� �ʾҽ��ϴ�.");
                 return;
             }
 
-            eventDispatcher.RemoveListener(listener);
-        }
-
-        public static void OnEvent(IEvent e, UnityEngine.Object obj, UnityEngine.Object[] param)
-        {
-            string eventcode = e.eventCode.ToString();
-            MethodInfo mi = obj.GetType().GetMethod(eventcode);
-            mi.Invoke(obj, param);
+            dispatcher.RemoveListener(listener);
         }
     }
 }

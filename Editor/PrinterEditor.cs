@@ -1,21 +1,26 @@
-using UnityEngine;
+using UnityEditor;
 
-namespace dkstlzu.Utility
+namespace dkstlzu.Utility.Editors
 {
-    public class PrinterEditor
+    public static class PrinterEditor
     {
-        [UnityEditor.MenuItem("DevTest/Printer Switch ^#&p")]
-        public static void SwitchPrinter()
+        [MenuItem("Dev/Printer/Up Priority %PGUP")]
+        public static void UpPriority()
         {
-            Printer.Use = !Printer.Use;
-            Debug.Log($"Printer On : {Printer.Use}");
+            Printer.CurrentPriority++;
+            Notify();
         }
 
-        [UnityEditor.MenuItem("DevTest/DebugPrinter Switch ^#&o")]
-        public static void SwitchPrinterDebug()
+        [MenuItem("Dev/Printer/Down Priority %PGDN")]
+        public static void DownPriority()
         {
-            Printer.UseDebugPrint = !Printer.UseDebugPrint;
-            Debug.Log($"DebugPrinter On : {Printer.UseDebugPrint}");
+            Printer.CurrentPriority--;
+            Notify();
+        }
+
+        static void Notify()
+        {
+            Printer.Print($"Printer priority update {Printer.CurrentPriority}", customTag:"WF Dev", priority:Printer.CurrentPriority);
         }
     }
 }

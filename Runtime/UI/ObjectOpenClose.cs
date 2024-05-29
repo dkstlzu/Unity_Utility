@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace dkstlzu.Utility
+namespace dkstlzu.Utility.UI
 {
     public class ObjectOpenClose : MonoBehaviour
     {
-        public bool isOpened;
+        public bool IsOpened;
         public Transform Target;
         public float Duration = 1;
         public string ESCManagerItemKey => Target.GetHashCode() + "ObjectOpenClose";
@@ -28,10 +27,10 @@ namespace dkstlzu.Utility
         {
             if (UIHelper.ScaleOpen(Target, Duration))
             {
-                ESCManager.instance.AddItem(ESCManagerItemKey, Close, 0);
+                ESCManager.GetOrNull.AddItem(ESCManagerItemKey, Close, 0);
                 OnOpen?.Invoke();
                 CoroutineHelper.Delay(AfterOpen, Duration + 0.1f);
-                isOpened = true;
+                IsOpened = true;
             }
         }
 
@@ -43,13 +42,13 @@ namespace dkstlzu.Utility
         {
             if (UIHelper.ScaleClose(Target, Duration))
             {
-                ESCManager.instance.RemoveItem(ESCManagerItemKey);
+                ESCManager.GetOrNull.RemoveItem(ESCManagerItemKey);
                 OnClose?.Invoke();
                 CoroutineHelper.Delay(AfterClose, Duration + 0.1f);
-                isOpened = false;
+                IsOpened = false;
             } else
             {
-                ESCManager.instance.AddItem(ESCManagerItemKey, Close, 0);
+                ESCManager.GetOrNull.AddItem(ESCManagerItemKey, Close, 0);
             }
         }
     }

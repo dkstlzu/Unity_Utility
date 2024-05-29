@@ -6,36 +6,30 @@ namespace dkstlzu.Utility
     [CustomEditor(typeof(UniqueComponent))]
     public class UniqueComponentEditor : Editor
     {
-        SerializedProperty Uniqueness;
-        SerializedProperty TargetComponent;
-        SerializedProperty ReplacePreviousOne;
-        SerializedProperty HashID;
-        SerializedProperty DestroyGO;
-        SerializedProperty DestroyRequiredComponents;
+        SerializedProperty _uniqueness;
+        SerializedProperty _targetComponent;
+        SerializedProperty _replacePreviousOne;
+        SerializedProperty _hashID;
 
         void OnEnable()
         {
-            TargetComponent = serializedObject.FindProperty("TargetComponent");
-            Uniqueness = serializedObject.FindProperty("Uniqueness");
-            ReplacePreviousOne = serializedObject.FindProperty("ReplacePreviousOne");
-            HashID = serializedObject.FindProperty("HashID");
-            DestroyGO = serializedObject.FindProperty("DestroyGameObject");
-            DestroyRequiredComponents = serializedObject.FindProperty("DestroyRequiredComponentsAlso");
+            _targetComponent = serializedObject.FindProperty(nameof(UniqueComponent.TargetComponent));
+            _uniqueness = serializedObject.FindProperty(nameof(UniqueComponent.Uniqueness));
+            _replacePreviousOne = serializedObject.FindProperty(nameof(UniqueComponent.ReplacePreviousOne));
+            _hashID = serializedObject.FindProperty(nameof(UniqueComponent.HashID));
         }
         
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            EditorGUILayout.PropertyField(Uniqueness, new GUIContent("Method"));
-            EditorGUILayout.PropertyField(TargetComponent, new GUIContent("Target Component"));
-            EditorGUILayout.PropertyField(ReplacePreviousOne, new GUIContent("Replace as new when duplicated"));
-            EditorGUILayout.PropertyField(DestroyGO, new GUIContent("GO will be Destroy"));
+            EditorGUILayout.PropertyField(_uniqueness, new GUIContent("Method"));
+            EditorGUILayout.PropertyField(_targetComponent, new GUIContent("Target Component"));
+            EditorGUILayout.PropertyField(_replacePreviousOne, new GUIContent("Replace as new when duplicated"));
 
-            if (Uniqueness.enumValueIndex == EnumHelper.GetIndexOf(UniqueComponent.UniqueComponentMethod.UniqueID))
+            if (_uniqueness.enumValueIndex == EnumHelper.GetIndexOf(UniqueComponent.UniqueComponentMethod.UniqueID))
             {
-                EditorGUILayout.PropertyField(HashID, new GUIContent("Unique ID"));
+                EditorGUILayout.PropertyField(_hashID, new GUIContent("Unique ID"));
             }
-            EditorGUILayout.PropertyField(DestroyRequiredComponents);
             serializedObject.ApplyModifiedProperties();
         }
     }

@@ -1,45 +1,40 @@
 using System.IO;
 using System;
 using UnityEngine;
-using System.Threading.Tasks;
 
 namespace dkstlzu.Utility
 {
     public class LogWriter
     {
-        public string Path;
+        public string FolderPath;
         public string FileName;
         public string Extention;
-        public string FullPath {get {return System.IO.Path.Combine(Application.streamingAssetsPath, Path) + FileName + "." + Extention;}}
-        protected StreamWriter writer = null;
 
-        public bool isValid
-        {
-            get {return writer != null;}
-        }
+        public string FullPath => Path.Combine(Application.streamingAssetsPath, FolderPath) + FileName + "." + Extention;
+        public bool IsValid => _writer != null;
 
-        public string testStr;
+        protected StreamWriter _writer = null;
 
         public LogWriter() {}
-        public LogWriter(string path, string fileName, string extention)
+        public LogWriter(string folderPath, string fileName, string extention)
         {
-            Path = path;
+            FolderPath = folderPath;
             FileName = fileName;
             Extention = extention;
 
-            Directory.CreateDirectory(System.IO.Path.Combine(Application.streamingAssetsPath, Path));
+            Directory.CreateDirectory(System.IO.Path.Combine(Application.streamingAssetsPath, FolderPath));
 
             try
             {
 
                 if (!File.Exists(FullPath)) 
                 {
-                    writer = new StreamWriter(File.Create(FullPath));
+                    _writer = new StreamWriter(File.Create(FullPath));
                 } else
                 {
-                    writer = new StreamWriter(FullPath, true);
+                    _writer = new StreamWriter(FullPath, true);
                 }
-                writer.AutoFlush = true;
+                _writer.AutoFlush = true;
 
                 string recordingStartMessage = $"-----------------------------------\nRecording start {DateTime.Now}.";
 
@@ -60,29 +55,29 @@ namespace dkstlzu.Utility
 
         public void Write(string content, bool newLine=false)
         {
-            writer.Write(content);
+            _writer.Write(content);
             if (newLine) NewLine();
         }
 
         public void NewLine()
         {
-            writer.Write("\n");
+            _writer.Write("\n");
         }
 
         public void Flush()
         {
-            writer.Flush();
+            _writer.Flush();
         }
 
         public virtual void Close()
         {
-            writer.Close();
+            _writer.Close();
         }
 
         public void DebugWrite(string content)
         {
-            writer.Write("Debug msg : " + content);
-            writer.WriteLine();
+            _writer.Write("Debug msg : " + content);
+            _writer.WriteLine();
         }
     }
 }

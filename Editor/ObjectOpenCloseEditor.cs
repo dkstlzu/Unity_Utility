@@ -3,26 +3,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace  dkstlzu.Utility
+namespace  dkstlzu.Utility.UI
 {
     [CustomEditor(typeof(ObjectOpenClose))]
     public class ObjectOpenCloseEditor : Editor
     {
-        SerializedObject targetTranstormSO;
+        SerializedObject _targetTranstormSO;
 
-        SerializedProperty isOpened;
-        SerializedProperty localScale;
+        SerializedProperty _isOpened;
+        SerializedProperty _localScale;
         
         void OnEnable()
         {
-            isOpened = serializedObject.FindProperty("isOpened");
+            _isOpened = serializedObject.FindProperty(nameof(ObjectOpenClose.IsOpened));
 
             ObjectOpenClose targetOOC = target as ObjectOpenClose;
 
             if (targetOOC.Target)
             {
-                targetTranstormSO = new SerializedObject(targetOOC.Target);
-                localScale = targetTranstormSO.FindProperty("m_LocalScale");
+                _targetTranstormSO = new SerializedObject(targetOOC.Target);
+                _localScale = _targetTranstormSO.FindProperty("m_LocalScale");
             }
         }
 
@@ -31,29 +31,29 @@ namespace  dkstlzu.Utility
             base.OnInspectorGUI();
             
             serializedObject.Update();
-            targetTranstormSO.Update();
+            _targetTranstormSO.Update();
 
-            if (localScale == null) return;
-            if (isOpened.boolValue)
+            if (_localScale == null) return;
+            if (_isOpened.boolValue)
             {
                 if (GUILayout.Button("Close"))
                 {
-                    isOpened.boolValue = false;
-                    localScale.FindPropertyRelative("x").floatValue = 0;
-                    localScale.FindPropertyRelative("y").floatValue = 0;
+                    _isOpened.boolValue = false;
+                    _localScale.FindPropertyRelative("x").floatValue = 0;
+                    _localScale.FindPropertyRelative("y").floatValue = 0;
                 }
             } else
             {
                 if (GUILayout.Button("Open"))
                 {
-                    isOpened.boolValue = true;
-                    localScale.FindPropertyRelative("x").floatValue = 1;
-                    localScale.FindPropertyRelative("y").floatValue = 1;
+                    _isOpened.boolValue = true;
+                    _localScale.FindPropertyRelative("x").floatValue = 1;
+                    _localScale.FindPropertyRelative("y").floatValue = 1;
                 }
             }
 
             serializedObject.ApplyModifiedProperties();
-            targetTranstormSO.ApplyModifiedProperties();
+            _targetTranstormSO.ApplyModifiedProperties();
         }
     }
 }

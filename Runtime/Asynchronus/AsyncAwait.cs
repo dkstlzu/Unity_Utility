@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace dkstlzu.Utility
 {
-    public class AsyncAwait
+    public static class AsyncAwait
     {
         public static async void Delay(Action action, float time)
         {

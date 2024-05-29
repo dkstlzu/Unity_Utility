@@ -20,9 +20,9 @@ namespace dkstlzu.Utility
 
         protected virtual void OnEnable()
         {
-            EnumName = serializedObject.FindProperty("enumName");
-            EnumValue = serializedObject.FindProperty("enumValue");
-            EnumNameCorrect = serializedObject.FindProperty("enumNameCorrect");
+            EnumName = serializedObject.FindProperty(nameof(EnumSettableMonoBehaviour.EnumName));
+            EnumValue = serializedObject.FindProperty(nameof(EnumSettableMonoBehaviour._EnumValue));
+            EnumNameCorrect = serializedObject.FindProperty(nameof(EnumSettableMonoBehaviour.EnumNameCorrect));
         }
         
         public override void OnInspectorGUI()
@@ -59,6 +59,8 @@ namespace dkstlzu.Utility
 
                 OnOverridingInspectorGUI();
             }
+            
+            base.OnInspectorGUI();
             serializedObject.ApplyModifiedProperties();
         }
 

@@ -6,53 +6,56 @@ namespace dkstlzu.Utility
     [CustomEditor(typeof(DontDestroyManager))]
     public class DontDestroyManagerEditor : Editor
     {
-        SerializedProperty TargetComponent;
-        SerializedProperty useUniqueComponent;
-        SerializedProperty UniqueComponent;
+        SerializedProperty _targetComponent;
+        SerializedProperty _useUniqueComponent;
+        SerializedProperty _uniqueComponent;
 
         void OnEnable()
         {
-            TargetComponent = serializedObject.FindProperty("TargetComponent");
-            useUniqueComponent = serializedObject.FindProperty("useUniqueComponent");
-            UniqueComponent = serializedObject.FindProperty("UniqueComponent");
+            _targetComponent = serializedObject.FindProperty(nameof(DontDestroyManager.TargetComponent));
+            _useUniqueComponent = serializedObject.FindProperty(nameof(DontDestroyManager.UseUniqueComponent));
+            _uniqueComponent = serializedObject.FindProperty(nameof(DontDestroyManager.UniqueComponent));
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            if (!useUniqueComponent.boolValue)
+            if (!_useUniqueComponent.boolValue)
             {
                 if (GUILayout.Button("Use UniqueComponent"))
                 {
                     DontDestroyManager targetDDM = (DontDestroyManager)target;
-                    UniqueComponent.objectReferenceValue = targetDDM.gameObject.AddComponent(typeof(UniqueComponent));
-                    useUniqueComponent.boolValue = true;
+                    _uniqueComponent.objectReferenceValue = targetDDM.gameObject.AddComponent(typeof(UniqueComponent));
+                    _useUniqueComponent.boolValue = true;
                 }
             } else
             {
-                if (UniqueComponent.objectReferenceValue == null)
+                if (_uniqueComponent.objectReferenceValue == null)
                 {
                     GUILayout.BeginHorizontal();
                     EditorGUILayout.LabelField("UniqueComponent reference corrupted check again or remake component");
                     if (GUILayout.Button("Reset"))
                     {
-                        useUniqueComponent.boolValue = false;
+                        _useUniqueComponent.boolValue = false;
                     }
                     GUILayout.EndHorizontal();
                 } else if (GUILayout.Button("Dont use UniqueComponent"))
                 {
-                    useUniqueComponent.boolValue = false;
-                    DestroyImmediate(UniqueComponent.objectReferenceValue);
+                    _useUniqueComponent.boolValue = false;
+                    DestroyImmediate(_uniqueComponent.objectReferenceValue);
                 }
             }
             serializedObject.ApplyModifiedProperties();
             serializedObject.Update();
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(TargetComponent);
+            EditorGUILayout.PropertyField(_targetComponent);
             if (EditorGUI.EndChangeCheck())
             {
-                ((UniqueComponent)UniqueComponent.objectReferenceValue).TargetComponent = (Component)TargetComponent.objectReferenceValue;
+                if (_useUniqueComponent.boolValue)
+                {
+                    ((UniqueComponent)_uniqueComponent.objectReferenceValue).TargetComponent = (Component)_targetComponent.objectReferenceValue;
+                }
             }
             serializedObject.ApplyModifiedProperties();
         }
