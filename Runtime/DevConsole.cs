@@ -59,7 +59,6 @@ namespace dkstlzu.Utility
             InputField.onSelect.AddListener((str) => OnSelect());
             InputField.onDeselect.AddListener((str) => OnDeselect());
 
-            OnCommandStackUpdate += () => Printer.DebugPrint($"DevConsole : OnCommandStackUpdate");
             PreviousCommandAction.performed += PreviousCommand;
             NextCommandAction.performed += NextCommand;
 
@@ -96,21 +95,18 @@ namespace dkstlzu.Utility
 
         void OnSelect()
         {
-            Printer.DebugPrint($"DevConsole : OnSelect");
             PreviousCommandAction.Enable();
             NextCommandAction.Enable();
         }
 
         void OnDeselect()
         {
-            Printer.DebugPrint($"DevConsole : OnDeselect");
             PreviousCommandAction.Disable();
             NextCommandAction.Disable();
         }
 
         void PreviousCommand(Context context)
         {
-            Printer.DebugPrint($"DevConsole : PreviousCommand");
             if (PreviousCommandStack.Count <= 0) return;
             NextCommandStack.Push(InputField.text);
             InputField.text = PreviousCommandStack.Pop();
@@ -118,7 +114,6 @@ namespace dkstlzu.Utility
 
         void NextCommand(Context context)
         {
-            Printer.DebugPrint($"DevConsole : NextCommand");
             if (NextCommandStack.Count <= 0) return;
             PreviousCommandStack.Push(InputField.text);
             InputField.text = NextCommandStack.Pop();
@@ -136,9 +131,9 @@ namespace dkstlzu.Utility
                 PreviousCommandStack.Push(command);
             }
 
-            instance.OnCommandStackUpdate?.Invoke();
+            GetOrNull.OnCommandStackUpdate?.Invoke();
 
-            instance.InputField.text = string.Empty;
+            GetOrNull.InputField.text = string.Empty;
 
             ProcessCommand(command);
         }
@@ -163,7 +158,7 @@ namespace dkstlzu.Utility
                 commandInput[1] = string.Empty;
             }
 
-            Printer.DebugPrint($"DevConsole ProcessCommand : {commandInput[0]}, {commandInput[1]}");
+            Printer.Print($"DevConsole ProcessCommand : {commandInput[0]}, {commandInput[1]}", logLevel : LogLevel.Error);
 
             UnityEvent<string> ue = GetEvent(commandInput[0]);
             if (ue != null)
@@ -171,19 +166,19 @@ namespace dkstlzu.Utility
                 ue.Invoke(commandInput[1]);
             } else
             {
-                instance.InputField.interactable = false;
-                instance.InputField.text = "Wrong command";
+                GetOrNull.InputField.interactable = false;
+                GetOrNull.InputField.text = "Wrong command";
                 CoroutineHelper.Delay(() => 
                 {
-                    instance.InputField.interactable = true;
-                    instance.InputField.text = string.Empty;
+                    GetOrNull.InputField.interactable = true;
+                    GetOrNull.InputField.text = string.Empty;
                 }, 1f);
             }
         }
 
         public static UnityEvent<string> GetEvent(string command)
         {
-            return instance.CommandActions.Find((ca) => String.Compare(ca.Command, command, instance.IgnoreCase) == 0)?.Event ?? null;
+            return GetOrNull.CommandActions.Find((ca) => String.Compare(ca.Command, command, GetOrNull.IgnoreCase) == 0)?.Event ?? null;
         }
 
         [ContextMenu("PrintCommandStackInfo")]
