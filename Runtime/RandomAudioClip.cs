@@ -49,7 +49,7 @@ namespace dkstlzu.Utility
                     if (randomWeight <= 0)
                     {
                         index = i;
-                        return;
+                        break;
                     }
                 }
                 
