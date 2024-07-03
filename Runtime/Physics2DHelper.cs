@@ -29,11 +29,11 @@ namespace dkstlzu.Utility
 #endif
         
 #if UNITY_EDITOR
-        public static bool DrawGizmo = false;
+        public static bool DrawGizmo => PhysicsHelper.DrawGizmo;
 
-        public static Color HitColor = Color.red;
-        public static Color UnHitColor = Color.green;
-        public static Color TrajectoryColor = Color.grey;
+        public static Color HitColor => PhysicsHelper.HitColor;
+        public static Color UnHitColor = PhysicsHelper.UnHitColor;
+        public static Color TrajectoryColor = PhysicsHelper.TrajectoryColor;
 
         public static int CircleLineSegmentNumber = 20;
 #endif
@@ -43,6 +43,7 @@ namespace dkstlzu.Utility
         public static ReadOnlySpan<RaycastHit2D> RayCast(Vector3 origin, Vector3 direction, RaycastHit2D[] results, float distance = Mathf.Infinity,
             int layerMask = Physics2D.DefaultRaycastLayers, float minDepth = -Mathf.Infinity, float maxDepth = Mathf.Infinity)
         {
+            direction = direction == default ? Vector2.right : direction.normalized;
             int foundNum = Physics2D.RaycastNonAlloc(origin, direction, results, distance, layerMask, minDepth, maxDepth);
 
 #if UNITY_EDITOR
@@ -68,6 +69,7 @@ namespace dkstlzu.Utility
             RaycastHit2D[] results, float distance = Mathf.Infinity, int layerMask = Physics2D.DefaultRaycastLayers,
             float minDepth = -Mathf.Infinity, float maxDepth = Mathf.Infinity)
         {
+            direction = direction == default ? Vector2.right : direction.normalized;
             int foundNum = Physics2D.BoxCastNonAlloc(origin, size, angle, direction, results, distance, layerMask, minDepth, maxDepth);
 
 #if UNITY_EDITOR
@@ -109,10 +111,10 @@ namespace dkstlzu.Utility
             DebugExtensions.DrawBox(origin, size, angle, found ? HitColor : UnHitColor);
 
             // End points version
-            if (!direction.Equals(Vector2.zero) && distance > 0)
+            if (!direction.Equals(Vector2.zero) && distance != 0)
             {
                 Vector2 p5, p6, p7, p8;
-                Vector2 vectorDistance = direction.normalized * distance;
+                Vector2 vectorDistance = direction * distance;
                 p5 = p1 + vectorDistance;
                 p6 = p2 + vectorDistance;
                 p7 = p3 + vectorDistance;
@@ -136,6 +138,7 @@ namespace dkstlzu.Utility
             RaycastHit2D[] results, float distance = Mathf.Infinity, int layerMask = Physics2D.DefaultRaycastLayers,
             float minDepth = -Mathf.Infinity, float maxDepth = Mathf.Infinity)
         {
+            direction = direction == default ? Vector2.right : direction.normalized;
             int foundNum = Physics2D.CircleCastNonAlloc(origin, radius, direction, results, distance, layerMask, minDepth, maxDepth);
 
 #if UNITY_EDITOR
@@ -174,22 +177,22 @@ namespace dkstlzu.Utility
                 startCirclePoints[i] += origin;
             }
 
-            if (!direction.Equals(Vector2.zero) && distance > 0)
+            if (!direction.Equals(Vector2.zero) && distance != 0)
             {
-                Vector2[] endCirclePoints = new Vector2[CircleLineSegmentNumber];
-                
-                Vector2 vectorDistance = direction.normalized * distance;
+                Vector2 vectorDistance = direction * distance;
                 DebugExtensions.DrawCircle(origin + vectorDistance, radius, CircleLineSegmentNumber, found ? HitColor : UnHitColor);
 
-                for (int i = 0; i < CircleLineSegmentNumber; i++)
-                {
-                    endCirclePoints[i] = startCirclePoints[i] + vectorDistance;
-                }
+                Vector2 s1, s2, d1, d2;
+                Vector2 vec = new Vector2(1, -direction.y / direction.x).normalized;
+
+                s1 = origin + vec * radius;
+                s2 = origin + -vec * radius;
                 
-                for (int i = 0; i < CircleLineSegmentNumber; i++)
-                {
-                    Debug.DrawLine(startCirclePoints[i], endCirclePoints[i], TrajectoryColor);
-                }
+                d1 = origin + vec * radius + direction * distance;
+                d2 = origin + -vec * radius + direction * distance;
+
+                Debug.DrawLine(s1, d1, TrajectoryColor);
+                Debug.DrawLine(s2, d2, TrajectoryColor);
             }
         }
 #endif

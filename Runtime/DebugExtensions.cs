@@ -4,6 +4,48 @@ namespace dkstlzu.Utility
 {
     public static class DebugExtensions
     {
+        public static void DrawBox(Vector3 center, Vector3 size, Quaternion orientation, Color color)
+        {
+            Vector3 p1, p2, p3, p4, p5, p6, p7, p8;
+            float x = size.x;
+            float y = size.y;
+            float z = size.z;
+            
+            p1 = new Vector3(x, y, z);
+            p2 = new Vector3(x, y, -z);
+            p3 = new Vector3(x, -y, -z);
+            p4 = new Vector3(x, -y, z);
+            p5 = new Vector3(-x, y, z);
+            p6 = new Vector3(-x, y, -z);
+            p7 = new Vector3(-x, -y, -z);
+            p8 = new Vector3(-x, -y, z);
+        
+            p1 = orientation * p1 + center;
+            p2 = orientation * p2 + center;
+            p3 = orientation * p3 + center;
+            p4 = orientation * p4 + center;
+            p5 = orientation * p5 + center;
+            p6 = orientation * p6 + center;
+            p7 = orientation * p7 + center;
+            p8 = orientation * p8 + center;
+        
+            // Drawing the cast of start points
+            Debug.DrawLine(p1, p2, color);
+            Debug.DrawLine(p2, p3, color);
+            Debug.DrawLine(p3, p4, color);
+            Debug.DrawLine(p4, p1, color);
+            
+            Debug.DrawLine(p5, p6, color);
+            Debug.DrawLine(p6, p7, color);
+            Debug.DrawLine(p7, p8, color);
+            Debug.DrawLine(p8, p5, color);
+            
+            Debug.DrawLine(p1, p5, color);
+            Debug.DrawLine(p2, p6, color);
+            Debug.DrawLine(p3, p7, color);
+            Debug.DrawLine(p4, p8, color);
+        }
+        
         public static void DrawBox(Vector2 center, Vector2 size, float angle, Color color)
         {
             Vector2 p1, p2, p3, p4;

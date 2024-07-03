@@ -1,6 +1,6 @@
 using UnityEditor;
 
-namespace dkstlzu.Utility.Editors
+namespace dkstlzu.Utility
 {
     public static class PrinterEditor
     {
