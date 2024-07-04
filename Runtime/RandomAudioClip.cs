@@ -19,6 +19,7 @@ namespace dkstlzu.Utility
         
         public List<ClipWeight> Clips;
 
+        [SerializeField]
         private AudioSource _audioSource;
 
         private void Awake()
