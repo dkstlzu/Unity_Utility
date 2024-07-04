@@ -12,7 +12,7 @@ namespace dkstlzu.Utility
         public SoundArgs Arg;
     }
 
-    public class WorldSoundManager : MonoBehaviour
+    public class SoundManager : Singleton<SoundManager>
     {
         [SerializeField]
         private BehaviourObjectPool<AudioSource> _audioSourcePool;
@@ -26,6 +26,7 @@ namespace dkstlzu.Utility
             {
                 backGroundMusicClip = value;
                 BackGroundAudioSource.clip = value;
+                BackGroundAudioSource.Play();
             }
         }
 
@@ -33,18 +34,25 @@ namespace dkstlzu.Utility
         public bool IsPaused;
         public bool IsMuted;
 
-        public List<AudioSource> PlayingAudioSourceList = new List<AudioSource>();
+        public List<AudioSource> PlayingAudioSourceList;
+
+        [Serializable]
+        public class ClipInfo
+        {
+            public string Name;
+            public AudioClip Clip;
+        }
+
+        // Odin을 기본으로 사용한다는 가정을 하기 어려워 간단한 형태로 대체합니다.
+        public List<ClipInfo> PreloadedClipList;
+        public Dictionary<string, AudioClip> ClipDict = new Dictionary<string, AudioClip>();
         public Dictionary<string, AudioSource> AudioSourceDict = new Dictionary<string, AudioSource>();
 
         void Awake()
         {
             BackGroundAudioSourceSetting();
+            SetPreloadedClips();
             _audioSourcePool.Init();
-            
-            // Fold Audiosource Components
-#if UNITY_EDITOR
-            UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(BackGroundAudioSource, false);
-#endif
         }
 
         void BackGroundAudioSourceSetting()
@@ -55,7 +63,39 @@ namespace dkstlzu.Utility
             }
             
             BackGroundAudioSource.clip = backGroundMusicClip;
+            BackGroundAudioSource.loop = true;
             BackGroundAudioSource.Play();
+            
+            // Fold Audiosource Components
+#if UNITY_EDITOR
+            UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(BackGroundAudioSource, false);
+#endif
+        }
+
+        void SetPreloadedClips()
+        {
+            foreach (ClipInfo clipInfo in PreloadedClipList)
+            {
+                if (clipInfo == null || clipInfo.Name == string.Empty || clipInfo.Clip == null)
+                {
+                    continue;
+                }
+                
+                ClipDict.Add(clipInfo.Name, clipInfo.Clip);
+            }
+        }
+
+        public void Play(string clipName) => Play(clipName, 1, false);
+        public void Play(string clipName, bool loop) => Play(clipName, 1, loop);
+        public void Play(string clipName, float volume) => Play(clipName, volume, false);
+        public void Play(string clipName, float volume, bool loop)
+        {
+            if (!ClipDict.ContainsKey(clipName))
+            {
+                return;
+            }
+            
+            PlayOnWorld(ClipDict[clipName], volume, loop, true);
         }
 
         public void Play(string audioSourceName, AudioClip clip, float volume, bool loop)
@@ -89,14 +129,6 @@ namespace dkstlzu.Utility
         /// </summary>
         public void Play(AudioClip clip, SoundArgs args, float volume = 1)
         {
-            AudioSource audioSource = _audioSourcePool.Get();
-
-            if (audioSource == null)
-            {
-                Printer.Print("All World Audio Source is being used");
-                return;
-            }
-                
             switch(args.PlayMode)
             {
                 case SoundArgs.SoundPlayMode.At :
@@ -108,15 +140,12 @@ namespace dkstlzu.Utility
                 break;
                 default:
                 case SoundArgs.SoundPlayMode.OnWorld :
-                    PlayOnWorld(audioSource, clip, volume, args.LoopOnWorld);
+                    PlayOnWorld(clip, volume, args.LoopOnWorld, args.AutoReturn);
                 break;
             }
-            
-            if (IsPaused) audioSource.Pause();
-            audioSource.mute = IsMuted;
         }
 
-        private void PlayAt(AudioClip clip, Vector3 position, bool loop)
+        public void PlayAt(AudioClip clip, Vector3 position, bool loop)
         {
             var go = new GameObject("Temporary Audio");
             go.transform.SetParent(transform);
@@ -131,7 +160,7 @@ namespace dkstlzu.Utility
         /// <summary>
         /// Play sound at relative position
         /// </summary>
-        private void PlayOnTransform(AudioClip clip, Transform obj, Vector3 relativePos, bool autoReturn)
+        public void PlayOnTransform(AudioClip clip, Transform obj, Vector3 relativePos, bool autoDestroy)
         {
             GameObject audioObj = new GameObject("AudioObject");
             audioObj.transform.SetParent(obj);
@@ -144,19 +173,37 @@ namespace dkstlzu.Utility
 
             PlayingAudioSourceList.Add(source);
 
-            if (autoReturn)
+            if (autoDestroy)
             {
-                StartCoroutine(ReturnSound(source));
+                StartCoroutine(DestroySound(source));
             }
         }
 
-        private void PlayOnWorld(AudioSource source, AudioClip clip, float volume, bool loop)
+        public void PlayOnWorld(AudioClip clip, float volume, bool loop, bool autoReturn)
         {
+            AudioSource source = _audioSourcePool.Get();
+
+            if (source == null)
+            {
+                Printer.Print("All World Audio Source is being used");
+                return;
+            }
+            
             source.clip = clip;
             source.volume = volume;
             source.spatialBlend = 0;
             source.loop = loop;
             source.Play();
+            
+            if (IsPaused) source.Pause();
+            source.mute = IsMuted;
+            
+            PlayingAudioSourceList.Add(source);
+
+            if (autoReturn)
+            {
+                StartCoroutine(ReturnSound(source));
+            }
         }
 
         public void PauseAll()
@@ -199,12 +246,20 @@ namespace dkstlzu.Utility
             IsMuted = false;
         }
 
+        private IEnumerator DestroySound(AudioSource source)
+        {
+            yield return new WaitWhile(() => source.isPlaying);
+            
+            PlayingAudioSourceList.Remove(source);
+            Destroy(source.gameObject);
+        }
+        
         private IEnumerator ReturnSound(AudioSource source)
         {
             yield return new WaitWhile(() => source.isPlaying);
 
             PlayingAudioSourceList.Remove(source);
-            Destroy(source.gameObject);
+            _audioSourcePool.Return(source);
         }
     }
 }
