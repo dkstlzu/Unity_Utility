@@ -88,7 +88,11 @@ namespace dkstlzu.Utility
                             commandAction.Event.AddListener((str) => action?.Invoke());
                         }
                     }
-                    UnityEditor.Events.UnityEventTools.RemovePersistentListener(commandAction.Event, 0);
+#if UNITY_EDITOR
+                    UnityEditor.Events.UnityEventTools.AddPersistentListener(commandAction.Event, 0);
+#else
+                    Event.AddListener(action);
+#endif
                 }
             }
         }
