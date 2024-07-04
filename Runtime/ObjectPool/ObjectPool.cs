@@ -59,7 +59,7 @@ namespace dkstlzu.Utility
         public int Capacity { get; protected set; }
         public abstract int PoolingCount { get; }
         public int EnabledCount { get => Capacity - PoolingCount; }
-        private bool _initialized = false;
+        protected bool _initialized = false;
 
         public const int DEFAULT_CAPACITY = 16;
 
@@ -109,30 +109,40 @@ namespace dkstlzu.Utility
     /// <summary>
     /// c#의 reference type class에 대한 ObjectPool입니다.
     /// </summary>
+    [Serializable]
     public class ClassObjectPool<T> : ObjectPool<T> where T : class, new()
     {
-        private static string Key => typeof(T).Name;
-        private static int HashKey => Key.GetHashCode();
-        private static ClassObjectPool<T>? _instance;
-        
         public static ClassObjectPool<T> GetOrCreate(int initialSize = -1)
         {
-            if (_instance != null)
+            if (PoolDict.TryGetValue(typeof(T).Name.GetHashCode(), out var pool))
             {
-                return _instance;
+                return (ClassObjectPool<T>)pool;
             }
-            
-            if (!ContainsPool(HashKey))
-            {
-                if (TryAddPool(HashKey, new ClassObjectPool<T>()))
-                {
-                    ((ClassObjectPool<T>)PoolDict[HashKey]).initialize(initialSize < 0 ? DEFAULT_CAPACITY : initialSize);
-                }
-            }
-            
-            _instance = (ClassObjectPool<T>)PoolDict[HashKey];
+
+            var newPool = new ClassObjectPool<T>();
+            newPool._initialCapacity = initialSize < 0 ? DEFAULT_CAPACITY : initialSize;
+            TryAddPool(newPool.HashKey, newPool);
+            newPool.initialize(newPool._initialCapacity);
         
-            return _instance;
+            return newPool;
+        }
+        
+        public string Key => typeof(T).Name;
+        public int HashKey => Key.GetHashCode();
+
+        [SerializeField] 
+        private int _initialCapacity;
+
+        public void Init()
+        {
+            if (_initialized)
+            {
+                return;
+            }
+
+            _initialized = true;
+            Q = new Queue<T>();
+            instantiate(_initialCapacity);
         }
 
         protected override void instantiate(int number)
@@ -145,7 +155,7 @@ namespace dkstlzu.Utility
 
         protected override void destroy(int number)
         {
-            for (int i = 0; i < number && Q.Count > 0; i++, Capacity--)
+            for (int i = 0; i < number && PoolingCount > 0; i++, Capacity--)
             {
                 var t = Q.Dequeue();
 
@@ -158,7 +168,7 @@ namespace dkstlzu.Utility
 
         public override T? Get()
         {
-            if (Q.Count == 0)
+            if (PoolingCount == 0)
             {
                 return null;
             }
@@ -184,53 +194,69 @@ namespace dkstlzu.Utility
         }
     }
 
+    public class UnityObjectPool : Singleton<UnityObjectPool>
+    {
+    }
+    
     /// <summary>
     /// unity의 MonoBehaviour에 대한 ObjectPool입니다.
     /// </summary>
+    [Serializable]
     public class BehaviourObjectPool<T> : ObjectPool<T> where T : Behaviour
     {
-        private static string Key => typeof(T).Name;
-        private static int HashKey => Key.GetHashCode();
-        private static BehaviourObjectPool<T>? _instance;
-        
         public static BehaviourObjectPool<T> GetOrCreate(int initialSize = -1)
         {
-            if (_instance != null)
+            if (PoolDict.TryGetValue(typeof(T).Name.GetHashCode(), out ObjectPool pool))
             {
-                return _instance;
+                return (BehaviourObjectPool<T>)pool;
             }
+
+            var newPool = new BehaviourObjectPool<T>(ObjectPoolMonoBehaviour.GameObject);
+            newPool._initialCapacity = initialSize < 0 ? DEFAULT_CAPACITY : initialSize;
+            TryAddPool(newPool.HashKey, newPool);
+            newPool.initialize(newPool._initialCapacity);
             
-            if (!ContainsPool(HashKey))
-            {
-                if (TryAddPool(HashKey, new BehaviourObjectPool<T>(ObjectPoolMonoBehaviour.GameObject)))
-                {
-                    ((BehaviourObjectPool<T>)PoolDict[HashKey]).initialize(initialSize < 0 ? DEFAULT_CAPACITY : initialSize);
-                }
-            }
-            
-            _instance = (BehaviourObjectPool<T>)PoolDict[HashKey];
-        
-            return _instance;
+            return newPool;
         }
 
-        public GameObject Parent { get; }
+        public string Key => typeof(T).Name;
+        public int HashKey => Key.GetHashCode();
+        
+        [SerializeField] 
+        private int _initialCapacity;
+        
         [field:SerializeField]
+        public GameObject Parent { get; private set; }
         public GameObject? gameObject { get; private set; }
 
-        [SerializeField] private int _initialCapacity;
         
         private BehaviourObjectPool(GameObject parentGameObject)
         {
             Parent = parentGameObject;
         }
 
+        /// <summary>
+        /// Serializable을 활용한 사용례에서 호출되어야만 하는 함수입니다.
+        /// </summary>
         public void Init()
         {
+            if (_initialized)
+            {
+                return;
+            }
+
+            _initialized = true;
+            Q = new Queue<T>();
             instantiate(_initialCapacity);
         }
 
         protected override void instantiate(int number)
         {
+            if (Parent == null)
+            {
+                Parent = UnityObjectPool.GetOrCreate().gameObject;
+            }
+
             if (gameObject == null)
             {
                 gameObject = new GameObject($"{Key} ObjectPool");
@@ -253,7 +279,7 @@ namespace dkstlzu.Utility
 
         protected override void destroy(int number)
         {
-            for (int i = 0; i < number && Q.Count > 0; i++, Capacity--)
+            for (int i = 0; i < number && PoolingCount > 0; i++, Capacity--)
             {
                 var t = Q.Dequeue();
 
@@ -268,10 +294,13 @@ namespace dkstlzu.Utility
 
         public override T? Get()
         {
-            if (Q.Count == 0) return null;
+            if (PoolingCount == 0)
+            {
+                return null;
+            }
 
             T t = Q.Dequeue();
-            t.gameObject.SetActive(true);
+            t.enabled = true;
             
             if (t is IObjectPoolable poolable)
             {
@@ -287,8 +316,8 @@ namespace dkstlzu.Utility
             {
                 poolable.OnReturn();
             }
-            
-            t.gameObject.SetActive(false);
+
+            t.enabled = false;
             
             Q.Enqueue(t);
         }
@@ -303,24 +332,26 @@ namespace dkstlzu.Utility
     {
         public static GameObjectPool GetOrCreate(GameObject prefab, int initialSize = -1)
         {
-            if (!ContainsPool(prefab.name))
+            if (PoolDict.TryGetValue(prefab.name.GetHashCode(), out ObjectPool pool))
             {
-                if (TryAddPool(prefab.name, new GameObjectPool(prefab, ObjectPoolMonoBehaviour.GameObject)))
-                {
-                    ((GameObjectPool)PoolDict[prefab.name.GetHashCode()]).initialize(initialSize < 0 ? DEFAULT_CAPACITY : initialSize);
-                }
+                return (GameObjectPool)pool;
             }
             
-            return (GameObjectPool)PoolDict[prefab.name.GetHashCode()];
+            var newPool = new GameObjectPool(prefab, ObjectPoolMonoBehaviour.GameObject);
+            newPool._initialCapacity = initialSize < 0 ? DEFAULT_CAPACITY : initialSize;
+            TryAddPool(newPool.HashKey, newPool);
+            newPool.initialize(newPool._initialCapacity);
+            
+            return newPool;
         }
+        
+        public string Key => _prefab.name;
+        public int HashKey => Key.GetHashCode();
         
         [SerializeField]
         private GameObject _prefab;
         [SerializeField]
         private int _initialCapacity;
-        
-        public string Key => _prefab.name;
-        public int HashKey => _prefab.GetHashCode();
         
         [field:SerializeField]
         public GameObject Parent { get; private set; }
@@ -334,15 +365,23 @@ namespace dkstlzu.Utility
 
         public void Init()
         {
-            if (Q == null)
+            if (_initialized)
             {
-                Q = new Queue<PooledObject>();
+                return;
             }
+
+            _initialized = true;
+            Q = new Queue<PooledObject>();
             instantiate(_initialCapacity);
         }
 
         protected override void instantiate(int number)
         {
+            if (Parent == null)
+            {
+                Parent = UnityObjectPool.GetOrCreate().gameObject;
+            }
+            
             if (gameObject == null)
             {
                 gameObject = new GameObject($"{Key} ObjectPool");
@@ -363,7 +402,7 @@ namespace dkstlzu.Utility
 
         protected override void destroy(int number)
         {
-            for (int i = 0; i < number && Q.Count > 0; i++, Capacity--)
+            for (int i = 0; i < number && PoolingCount > 0; i++, Capacity--)
             {
                 var t = Q.Dequeue();
                         
@@ -373,7 +412,10 @@ namespace dkstlzu.Utility
         
         public override PooledObject? Get()
         {
-            if (Q.Count == 0) return null;
+            if (PoolingCount == 0)
+            {
+                return null;
+            }
 
             PooledObject t = Q.Dequeue();
             t.gameObject.SetActive(true);
