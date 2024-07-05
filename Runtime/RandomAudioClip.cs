@@ -19,14 +19,13 @@ namespace dkstlzu.Utility
         
         public List<ClipWeight> Clips;
 
-        [SerializeField]
-        private AudioSource _audioSource;
+        public AudioSource AudioSource { get; private set; }
 
         private void Awake()
         {
-            if (!_audioSource)
+            if (!AudioSource)
             {
-                _audioSource = GetComponentInChildren<AudioSource>();
+                AudioSource = GetComponentInChildren<AudioSource>();
             }
         }
 
@@ -54,10 +53,10 @@ namespace dkstlzu.Utility
                     }
                 }
                 
-                _audioSource.clip = Clips[index].Clip;
+                AudioSource.clip = Clips[index].Clip;
             }
 
-            _audioSource.Play();
+            AudioSource.Play();
         }
     }
 }
