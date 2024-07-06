@@ -1,6 +1,6 @@
 {
     "name": "dkstlzu.Utility.Editor",
-    "rootNamespace": "",
+    "rootNamespace": "dkstlzu.Utility",
     "references": [
         "GUID:0e8db18548185d94daf72bf1ae076258"
     ],

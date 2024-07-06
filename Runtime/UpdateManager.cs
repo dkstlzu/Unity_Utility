@@ -1,177 +1,57 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace dkstlzu.Utility
 {
-    public interface IUpdatable<T>
+    public interface IUpdateManager
     {
-        void Update(T t);
+        public string Name { get; }
+        public int Count { get; }
+
+        void ManagerUpdate(float delta);
+    }
+    
+    public interface IUpdatableBase{}
+    public interface IUpdatableBase<T> : IUpdatableBase
+    {
+        public delegate void Updater(IUpdatableBase<T> updatable);
+    }
+    
+    public abstract class UpdateManager : Singleton<UpdateManagerMonoBehaviour>
+    {
+        public enum Type
+        {
+            MANUAL,
+            FRAME,
+            FIXED,
+            LATE,
+        }
     }
 
-    public interface IUpdatable : IUpdatable<VOID>{}
-    public struct VOID{}
-
-    public abstract class UpdateManager<T> : IUpdatable
+    public abstract class UpdateManager<T, TUpdatable> : IUpdateManager where TUpdatable : IUpdatableBase<T>
     {
-        public abstract class System : IUpdatable<T>
+        protected class HashComparer : IComparer<TUpdatable>
         {
-            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-            static void RuntimeInit()
-            {
-                Manager = null;
-                _systemDict.Clear();
-            }
-            
-            public static UpdateManager<T> Manager;
-
-            private static SortedDictionary<Type, Func<int>> _systemDict = new SortedDictionary<Type, Func<int>>(new HashComparer());
-
-            public event Action OnRegister;
-            public event Action OnUnregister;
-            
-            private Type _systemType;
-            private int _registeredOrder;
-            
-            public Func<int> UpdateOrderGetter
-            {
-                get => _systemDict[_systemType];
-                set => _systemDict[_systemType] = value;
-            }
-
-            protected System()
-            {
-                _systemType = GetType();
-                
-                if (!_systemDict.ContainsKey(_systemType))
-                {
-                    _systemDict.Add(_systemType, () => 0);
-                }
-            }
-
-            public abstract void Update(T t);
-
-            public void UpdateAfter<TOtherSystem>() where TOtherSystem : System
-            {
-                UpdateAfter(typeof(TOtherSystem));
-            }
-
-            public void UpdateBefore<TOtherSystem>() where TOtherSystem : System
-            {
-                UpdateBefore(typeof(TOtherSystem));
-            }
-            
-            public void UpdateAfter(Type other)
-            {
-                if (_systemDict.ContainsKey(other))
-                {
-                    _systemDict[_systemType] = () => _systemDict[other]() + 1;
-                    return;
-                }
-                
-                _systemDict[_systemType] = () =>
-                {
-                    if (_systemDict.ContainsKey(other))
-                    {
-                        _systemDict[_systemType] = () => _systemDict[other]() + 1;
-                        return UpdateOrderGetter();
-                    }
-
-                    return 0;
-                };
-            }
-
-            public void UpdateBefore(Type other)
-            {
-                if (_systemDict.ContainsKey(other))
-                {
-                    _systemDict[_systemType] = () => _systemDict[other]() - 1;
-                    return;
-                }
-                
-                _systemDict[_systemType] = () =>
-                {
-                    if (_systemDict.ContainsKey(other))
-                    {
-                        _systemDict[_systemType] = () => _systemDict[other]() - 1;
-                        return UpdateOrderGetter();
-                    }
-
-                    return 0;
-                };
-            }
-
-            public void Register()
-            {
-                Manager.Register(this, UpdateOrderGetter());
-                _registeredOrder = UpdateOrderGetter();
-                OnRegister?.Invoke();
-            }
-
-            public void Unregister()
-            {
-                Manager.Unregister(this);
-                OnUnregister?.Invoke();
-            }
-
-            protected void Reregister()
-            {
-                if (_registeredOrder != UpdateOrderGetter())
-                {
-                    Unregister();
-                    Register();
-                }
-            }
-            
-            private class HashComparer : IComparer<Type>
-            {
-                public int Compare(Type x, Type y)
-                {
-                    if (ReferenceEquals(x, y))
-                    {
-                        return 0;
-                    }
-
-                    if (ReferenceEquals(null, y))
-                    {
-                        return 1;
-                    }
-
-                    if (ReferenceEquals(null, x))
-                    {
-                        return -1;
-                    }
-
-                    int nameComparison = string.Compare(x.Name, y.Name, StringComparison.Ordinal);
-                    if (nameComparison != 0)
-                    {
-                        return nameComparison;
-                    }
-
-                    return x.GUID.CompareTo(y.GUID);
-                }
-            }
-        }
-        
-        protected class HashComparer : IComparer<IUpdatable<T>>
-        {
-            public int Compare(IUpdatable<T> x, IUpdatable<T> y)
+            public int Compare(TUpdatable x, TUpdatable y)
             {
                 return y.GetHashCode() - x.GetHashCode();
             }
         }
 
-        protected SortedList<int, SortedDictionary<IUpdatable<T>, IUpdatable<T>>> _updatableList = new SortedList<int, SortedDictionary<IUpdatable<T>, IUpdatable<T>>>();
-        
-        protected List<(int, IUpdatable<T>)> _addList = new List<(int, IUpdatable<T>)>();
-        protected List<(int, IUpdatable<T>)> _removeList = new List<(int, IUpdatable<T>)>();
+        protected SortedList<int, SortedDictionary<TUpdatable, TUpdatable>> _updatableList = new SortedList<int, SortedDictionary<TUpdatable, TUpdatable>>();
 
+        protected List<(int, TUpdatable)> _addList = new List<(int, TUpdatable)>();
+        protected List<(int, TUpdatable)> _removeList = new List<(int, TUpdatable)>();
+
+        public string Name { get; protected set; }
         public int Count
         {
             get
             {
                 int count = 0;
-                
+
                 foreach (var pair in _updatableList)
                 {
                     count += pair.Value.Count;
@@ -183,22 +63,24 @@ namespace dkstlzu.Utility
 
         private string _exceptionMsg;
         protected T _updateDelta;
+        protected IUpdatableBase<T>.Updater _updater;
 
-        public UpdateManager()
+        public UpdateManager(string managerName, IUpdatableBase<T>.Updater updater)
         {
-            System.Manager = this;
-            _exceptionMsg = $"{GetType().Name}.Update() 중에 문제가 발생했습니다. 해당 객체를 리스트에서 제외합니다.\n";
+            Name = managerName;
+            _updater = updater;
+            _exceptionMsg = $"{Name} UpdateManager.Update() 중에 문제가 발생했습니다. 해당 객체를 리스트에서 제외합니다.";
         }
 
         /// <summary>
         /// 작은 order 값부터 update됩니다
         /// </summary>
-        public void Register(IUpdatable<T> updatable, int order = 0)
+        public void Register(TUpdatable updatable, int order = 0)
         {
             _addList.Add((order, updatable));
         }
 
-        public void Unregister(IUpdatable<T> updatable, int order = 0)
+        public void Unregister(TUpdatable updatable, int order = 0)
         {
             _removeList.Add((order, updatable));
         }
@@ -209,32 +91,34 @@ namespace dkstlzu.Utility
             {
                 pair.Value.Clear();
             }
-            
+
             _updatableList.Clear();
         }
-        
-        public void Update(VOID @void)
+
+        public void ManagerUpdate(float delta)
         {
             AddUpdatables();
 
-            SetDelta();
-            
+            SetDelta(delta);
+
             UpdateElements();
-            
+
             RemoveUpdatables();
         }
-        
+
         private void AddUpdatables()
         {
             foreach (var updatable in _addList)
             {
                 if (!_updatableList.TryGetValue(updatable.Item1, out var dict))
                 {
-                    _updatableList.Add(updatable.Item1, new (new HashComparer()));
+                    dict = new(new HashComparer());
+                    _updatableList.Add(updatable.Item1, dict);
                 }
-                
-                _updatableList[updatable.Item1].Add(updatable.Item2, updatable.Item2);
+
+                dict.Add(updatable.Item2, updatable.Item2);
             }
+
             _addList.Clear();
         }
 
@@ -251,9 +135,10 @@ namespace dkstlzu.Utility
                     }
                 }
             }
+
             _removeList.Clear();
         }
-
+        
         private void UpdateElements()
         {
             foreach (var orderListPair in _updatableList)
@@ -262,11 +147,11 @@ namespace dkstlzu.Utility
                 {
                     try
                     {
-                        updatable.Value.Update(_updateDelta);
+                        _updater.Invoke(updatable.Value);
                     }
                     catch (Exception e)
                     {
-                        Printer.Print(_exceptionMsg + e, logLevel:LogLevel.Error);
+                        Printer.Print(_exceptionMsg + "\n" + e, logLevel: LogLevel.Error, customTag: "UpdateManager", priority: 1);
                         _removeList.Add((orderListPair.Key, updatable.Value));
                     }
                 }
@@ -276,22 +161,198 @@ namespace dkstlzu.Utility
         /// <summary>
         /// Must Set _updateDelta here
         /// </summary>
-        protected abstract void SetDelta();
-    }
-
-    public class UpdateManager : UpdateManager<float>
-    {
-        protected override void SetDelta()
+        protected abstract void SetDelta(float delta);
+        
+        public abstract class System
         {
-            _updateDelta = Time.deltaTime;
+            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+            static void RuntimeInit()
+            {
+                _systemDict.Clear();
+            }
+
+            private static SortedDictionary<string, Func<int>> _systemDict = new SortedDictionary<string, Func<int>>();
+
+            private TUpdatable _updater;
+
+            public UpdateManager<T, TUpdatable> Manager { get; protected set; }
+            public event Action OnRegister;
+            public event Action OnUnregister;
+
+            private string _systemName;
+            private int _registeredOrder;
+
+            public Func<int> UpdateOrderGetter
+            {
+                get => _systemDict[_systemName];
+                set => _systemDict[_systemName] = value;
+            }
+
+            protected System(string systemName)
+            {
+                _systemName = systemName;
+
+                if (!_systemDict.ContainsKey(_systemName))
+                {
+                    _systemDict.Add(_systemName, () => 0);
+                }
+            }
+
+            public void UpdateAfter(System other) => UpdateAfter(other._systemName);
+
+            public void UpdateAfter(string otherSystemName)
+            {
+                if (_systemDict.ContainsKey(otherSystemName))
+                {
+                    _systemDict[_systemName] = () => _systemDict[otherSystemName]() + 1;
+                    return;
+                }
+
+                _systemDict[_systemName] = () =>
+                {
+                    if (_systemDict.ContainsKey(otherSystemName))
+                    {
+                        _systemDict[_systemName] = () => _systemDict[otherSystemName]() + 1;
+                        return UpdateOrderGetter();
+                    }
+
+                    return 0;
+                };
+            }
+
+            public void UpdateBefore(System other) => UpdateBefore(other._systemName);
+
+            public void UpdateBefore(string otherSystemName)
+            {
+                if (_systemDict.ContainsKey(otherSystemName))
+                {
+                    _systemDict[_systemName] = () => _systemDict[otherSystemName]() - 1;
+                    return;
+                }
+
+                _systemDict[_systemName] = () =>
+                {
+                    if (_systemDict.ContainsKey(otherSystemName))
+                    {
+                        _systemDict[_systemName] = () => _systemDict[otherSystemName]() - 1;
+                        return UpdateOrderGetter();
+                    }
+
+                    return 0;
+                };
+            }
+
+            public void Register(UpdateManager<T, TUpdatable> manager)
+            {
+                Assert.IsTrue(this is TUpdatable, $"{GetType()}을 UpdateManager.System으로 사용하기 위해서는 적절한 {typeof(TUpdatable)}인터페이스를 구현해야 합니다.");
+
+                if (this is TUpdatable updatable)
+                {
+                    Manager = manager;
+                    manager.Register(updatable, UpdateOrderGetter());
+                    _registeredOrder = UpdateOrderGetter();
+                    OnRegister?.Invoke();
+                }
+            }
+
+            public void Unregister()
+            {
+                Assert.IsTrue(this is TUpdatable, $"{GetType()}을 UpdateManager.System으로 사용하기 위해서는 적절한 {typeof(TUpdatable)}인터페이스를 구현해야 합니다.");
+
+                if (this is TUpdatable updatable)
+                {
+                    Manager.Unregister(updatable);
+                    OnUnregister?.Invoke();
+                }
+            }
+
+            protected void Reregister()
+            {
+                if (_registeredOrder != UpdateOrderGetter())
+                {
+                    Unregister();
+                    Register(Manager);
+                }
+            }
         }
     }
 
-    public class FixedUpdateManager : UpdateManager<VOID>
+    public class TimeUpdateManager<TUpdatable> : UpdateManager<float, TUpdatable> where TUpdatable : IUpdatableBase<float>
     {
-        protected override void SetDelta()
+        public float TimeMultiplier;
+        
+        public TimeUpdateManager(string managerName, IUpdatableBase<float>.Updater updater, float timeMultiplier = 1) : base(managerName, updater)
         {
-            
+            TimeMultiplier = timeMultiplier;
+        }
+
+        protected override void SetDelta(float delta)
+        {
+            _updateDelta = delta * TimeMultiplier;
+        }
+    }
+    
+    public interface IManualUpdatable : IUpdatableBase<float>
+    {
+        void ManualUpdate(float delta);
+    }
+    
+    public class ManualUpdateManager : TimeUpdateManager<IManualUpdatable>
+    {
+        public static ManualUpdateManager Instance;
+
+        public ManualUpdateManager() : base("Default", null)
+        {
+            Instance = this;
+            _updater = updater => ((IManualUpdatable)updater).ManualUpdate(_updateDelta);
+        }
+    }
+    
+    public interface IFrameUpdatable : IUpdatableBase<float>
+    {
+        void FrameUpdate(float delta);
+    }
+    
+    public class DefaultFrameUpdateManager : TimeUpdateManager<IFrameUpdatable>
+    {
+        public static DefaultFrameUpdateManager Instance;
+        
+        public DefaultFrameUpdateManager() : base("Default", null)
+        {
+            Instance = this;
+            _updater = updater => ((IFrameUpdatable)updater).FrameUpdate(_updateDelta);
+        }
+    }
+    
+    public interface IFixedUpdatable : IUpdatableBase<float>
+    {
+        void ManualFixedUpdate(float delta);
+    }
+    
+    public class DefaultFixedUpdateManager : TimeUpdateManager<IFixedUpdatable>
+    {
+        public static DefaultFixedUpdateManager Instance;
+
+        public DefaultFixedUpdateManager() : base("Default", null)
+        {
+            Instance = this;
+            _updater = updater => ((IFixedUpdatable)updater).ManualFixedUpdate(_updateDelta);
+        }
+    }
+
+    public interface ILateUpdatable : IUpdatableBase<float>
+    {
+        void ManualLateUpdate(float delta);
+    }
+    
+    public class DefaultLateUpdateManager : TimeUpdateManager<ILateUpdatable>
+    {
+        public static DefaultLateUpdateManager Instance;
+
+        public DefaultLateUpdateManager() : base("Default", null)
+        {
+            Instance = this;
+            _updater = updater => ((ILateUpdatable)updater).ManualLateUpdate(_updateDelta);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace dkstlzu.Utility
         
         public List<ClipWeight> Clips;
 
-        public AudioSource AudioSource { get; private set; }
+        public AudioSource AudioSource;
 
         private void Awake()
         {
