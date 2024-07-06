@@ -15,6 +15,8 @@ namespace dkstlzu.Utility
         private Dictionary<UpdateManager.Type, List<IUpdateManager>> _addList = new Dictionary<UpdateManager.Type, List<IUpdateManager>>();
         private Dictionary<UpdateManager.Type, List<IUpdateManager>> _removeList = new Dictionary<UpdateManager.Type, List<IUpdateManager>>();
 
+        public bool EnableLog;
+        
 #if UNITY_EDITOR
         public int ManualUpdatableNumber;
         public int FrameUpdatableNumber;
@@ -123,6 +125,11 @@ namespace dkstlzu.Utility
             {
                 DefaultLateUpdateManager.Instance.Unregister(lateUpdatable);
             }
+            
+            if (updatableBase is IManualUpdatable manualUpdatable)
+            {
+                ManualUpdateManager.Instance.Unregister(manualUpdatable);
+            }
         }
 
         public void ManualUpdate()
@@ -171,15 +178,17 @@ namespace dkstlzu.Utility
 
         void UpdateWithDelta(UpdateManager.Type updateType)
         {
+            var managerList = ManagerDict[updateType];
+            
             foreach (var add in _addList[updateType])
             {
-                ManagerDict[updateType].Add(add);
+                managerList.Add(add);
             }
             _addList[updateType].Clear();
             
             float delta = Time.deltaTime;
             
-            foreach (IUpdateManager manager in ManagerDict[updateType])
+            foreach (IUpdateManager manager in managerList)
             {
                 try
                 {
@@ -187,7 +196,10 @@ namespace dkstlzu.Utility
                 }
                 catch (Exception e)
                 {
-                    Printer.Print($"{updateType} UpdateManager.Update() 중에 문제가 발생했습니다." + "\n" + e, logLevel:LogLevel.Error, customTag:"UpdateManager", priority:1);
+                    if (EnableLog)
+                    {
+                        Printer.Print($"{updateType} {manager.Name} UpdateManager.Update() 중에 문제가 발생했습니다." + "\n" + e, logLevel:LogLevel.Error, customTag:"UpdateManager", priority:1);
+                    }
                     _removeList[updateType].Add(manager);
                     throw;
                 }
@@ -195,7 +207,7 @@ namespace dkstlzu.Utility
             
             foreach (var remove in _removeList[updateType])
             {
-                ManagerDict[updateType].Remove(remove);
+                managerList.Remove(remove);
             }
             _removeList[updateType].Clear();
         }

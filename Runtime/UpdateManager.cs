@@ -28,6 +28,13 @@ namespace dkstlzu.Utility
             FIXED,
             LATE,
         }
+
+        private static bool _enableLog;
+        public static bool EnableLog
+        {
+            get => GetOrNull?.EnableLog ?? _enableLog;
+            set => _enableLog = value;
+        }
     }
 
     public abstract class UpdateManager<T, TUpdatable> : IUpdateManager where TUpdatable : IUpdatableBase<T>
@@ -151,7 +158,10 @@ namespace dkstlzu.Utility
                     }
                     catch (Exception e)
                     {
-                        Printer.Print(_exceptionMsg + "\n" + e, logLevel: LogLevel.Error, customTag: "UpdateManager", priority: 1);
+                        if (UpdateManager.EnableLog)
+                        {
+                            Printer.Print(_exceptionMsg + "\n" + e, logLevel: LogLevel.Error, customTag: "UpdateManager", priority: 1);
+                        }
                         _removeList.Add((orderListPair.Key, updatable.Value));
                     }
                 }
@@ -301,7 +311,7 @@ namespace dkstlzu.Utility
     {
         public static ManualUpdateManager Instance;
 
-        public ManualUpdateManager() : base("Default", null)
+        public ManualUpdateManager() : base("DefaultManual", null)
         {
             Instance = this;
             _updater = updater => ((IManualUpdatable)updater).ManualUpdate(_updateDelta);
@@ -317,7 +327,7 @@ namespace dkstlzu.Utility
     {
         public static DefaultFrameUpdateManager Instance;
         
-        public DefaultFrameUpdateManager() : base("Default", null)
+        public DefaultFrameUpdateManager() : base("DefaultFrame", null)
         {
             Instance = this;
             _updater = updater => ((IFrameUpdatable)updater).FrameUpdate(_updateDelta);
@@ -333,7 +343,7 @@ namespace dkstlzu.Utility
     {
         public static DefaultFixedUpdateManager Instance;
 
-        public DefaultFixedUpdateManager() : base("Default", null)
+        public DefaultFixedUpdateManager() : base("DefaultFixed", null)
         {
             Instance = this;
             _updater = updater => ((IFixedUpdatable)updater).ManualFixedUpdate(_updateDelta);
@@ -349,7 +359,7 @@ namespace dkstlzu.Utility
     {
         public static DefaultLateUpdateManager Instance;
 
-        public DefaultLateUpdateManager() : base("Default", null)
+        public DefaultLateUpdateManager() : base("DefaultLate", null)
         {
             Instance = this;
             _updater = updater => ((ILateUpdatable)updater).ManualLateUpdate(_updateDelta);
