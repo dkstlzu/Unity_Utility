@@ -81,12 +81,7 @@ namespace dkstlzu.Utility
         {
             get
             {
-                if (singletonGameObject != null && _instance == null)
-                {
-                    _instance = singletonGameObject.GetComponent<T>();
-                }
-                
-                if (_instance == null)
+                if (!_instance)
                 {
                     _instance = FindObjectOfType<T>();
                 }
@@ -97,12 +92,22 @@ namespace dkstlzu.Utility
 
         public static T GetOrCreate()
         {
+            if (!_instance)
+            {
+                _instance = FindObjectOfType<T>();
+            }
+
+            if (_instance)
+            {
+                return _instance;
+            }
+            
             if (!singletonGameObject)
             {
                 singletonGameObject = new GameObject("Singleton GameObject");
             }
             
-            if (_instance == null)
+            if (!_instance)
             {
                 _instance = singletonGameObject.AddComponent<T>();
             }
