@@ -20,7 +20,7 @@ namespace dkstlzu.Utility
     {
         
 #if UNITY_EDITOR
-        public struct LineGizmoData
+        public struct LineDrawData
         {
             public Vector3 Origin;
             public Vector2 EndPoint;
@@ -36,6 +36,8 @@ namespace dkstlzu.Utility
         public static Color TrajectoryColor = PhysicsHelper.TrajectoryColor;
 
         public static int CircleLineSegmentNumber = 20;
+        public static float FiniteDistanceWhenInfinity => PhysicsHelper.FiniteDistanceWhenInfinity;
+        private static float GetDrawableDistance(float distance) => PhysicsHelper.GetDrawableDistance(distance);
 #endif
 
         #region RayCast
@@ -47,7 +49,7 @@ namespace dkstlzu.Utility
             int foundNum = Physics2D.RaycastNonAlloc(origin, direction, results, distance, layerMask, minDepth, maxDepth);
 
 #if UNITY_EDITOR
-            if (DrawGizmo) DrawRayCastGizmo(origin, direction, foundNum > 0, distance);
+            if (DrawGizmo) DrawRayCastGizmo(origin, direction, foundNum > 0, distance, foundNum > 0 ? results[0] : default);
 #endif
 
             var result = new ReadOnlySpan<RaycastHit2D>(results);
@@ -55,9 +57,9 @@ namespace dkstlzu.Utility
         }
 
 #if UNITY_EDITOR
-        static void DrawRayCastGizmo(Vector3 origin, Vector3 direction, bool found, float distance = Mathf.Infinity)
+        static void DrawRayCastGizmo(Vector3 origin, Vector3 direction, bool found, float distance = Mathf.Infinity, RaycastHit2D hit = default)
         {
-            Debug.DrawLine(origin, origin + direction * distance, found ? HitColor : UnHitColor);
+            Debug.DrawLine(origin, found ? hit.point : origin + direction * GetDrawableDistance(distance), found ? HitColor : UnHitColor);
         }
 #endif
 
@@ -114,7 +116,7 @@ namespace dkstlzu.Utility
             if (!direction.Equals(Vector2.zero) && distance != 0)
             {
                 Vector2 p5, p6, p7, p8;
-                Vector2 vectorDistance = direction * distance;
+                Vector2 vectorDistance = direction * GetDrawableDistance(distance);
                 p5 = p1 + vectorDistance;
                 p6 = p2 + vectorDistance;
                 p7 = p3 + vectorDistance;
@@ -179,7 +181,7 @@ namespace dkstlzu.Utility
 
             if (!direction.Equals(Vector2.zero) && distance != 0)
             {
-                Vector2 vectorDistance = direction * distance;
+                Vector2 vectorDistance = direction * GetDrawableDistance(distance);
                 DebugExtensions.DrawCircle(origin + vectorDistance, radius, CircleLineSegmentNumber, found ? HitColor : UnHitColor);
 
                 Vector2 s1, s2, d1, d2;
@@ -188,8 +190,8 @@ namespace dkstlzu.Utility
                 s1 = origin + vec * radius;
                 s2 = origin + -vec * radius;
                 
-                d1 = origin + vec * radius + direction * distance;
-                d2 = origin + -vec * radius + direction * distance;
+                d1 = origin + vec * radius + vectorDistance;
+                d2 = origin + -vec * radius + vectorDistance;
 
                 Debug.DrawLine(s1, d1, TrajectoryColor);
                 Debug.DrawLine(s2, d2, TrajectoryColor);
@@ -209,7 +211,7 @@ namespace dkstlzu.Utility
             List<RaycastHit2D> hits = new List<RaycastHit2D>();
 #if UNITY_EDITOR
             // Only for gizmos
-            List<LineGizmoData> gizmoDatas = new List<LineGizmoData>();
+            List<LineDrawData> gizmoDatas = new List<LineDrawData>();
 #endif
 
             float fromRadius = fromDegree * Mathf.Deg2Rad;
@@ -226,7 +228,7 @@ namespace dkstlzu.Utility
                 {
                     hits.Add(hit);
 #if UNITY_EDITOR
-                    gizmoDatas.Add(new LineGizmoData()
+                    gizmoDatas.Add(new LineDrawData()
                     {
                         Origin = origin,
                         EndPoint = hit.point,
@@ -235,10 +237,10 @@ namespace dkstlzu.Utility
                 }
                 else
                 {
-                    gizmoDatas.Add(new LineGizmoData()
+                    gizmoDatas.Add(new LineDrawData()
                     {
                         Origin = origin,
-                        EndPoint = origin + direction * distance,
+                        EndPoint = origin + direction * GetDrawableDistance(distance),
                         Hit = false,
                     });
 #endif
@@ -253,7 +255,7 @@ namespace dkstlzu.Utility
         }
         
 #if UNITY_EDITOR
-        private static void DrawRadialCastGizmo(List<LineGizmoData> datas)
+        private static void DrawRadialCastGizmo(List<LineDrawData> datas)
         {
             if (datas.Count == 0)
             {

@@ -25,7 +25,13 @@ namespace dkstlzu.Utility
         public static Color UnHitColor = Color.green;
         public static Color TrajectoryColor = Color.grey;
 
-        public static int SphereCircleSegmentNumber = 2;
+        public static int SphereCircleSegmentNumber = 5;
+        public static float FiniteDistanceWhenInfinity = 10000;
+
+        public static float GetDrawableDistance(float distance)
+        {
+            return float.IsPositiveInfinity(distance) ? FiniteDistanceWhenInfinity : distance;
+        }
 #endif
 
         #region RayCast
@@ -36,7 +42,7 @@ namespace dkstlzu.Utility
             int foundNum = Physics.RaycastNonAlloc(origin, direction == default ? Vector3.forward : direction, results, distance, layerMask);
 
 #if UNITY_EDITOR
-            if (DrawGizmo) DrawRayCastGizmo(origin, direction, foundNum > 0, distance);
+            if (DrawGizmo) DrawRayCastGizmo(origin, direction, foundNum > 0, distance, foundNum > 0 ? results[0] : default);
 #endif
 
             var result = new ReadOnlySpan<RaycastHit>(results);
@@ -44,9 +50,9 @@ namespace dkstlzu.Utility
         }
 
 #if UNITY_EDITOR
-        static void DrawRayCastGizmo(Vector3 origin, Vector3 direction, bool found, float distance = Mathf.Infinity)
+        static void DrawRayCastGizmo(Vector3 origin, Vector3 direction, bool found, float distance = Mathf.Infinity, RaycastHit hit = default)
         {
-            Debug.DrawLine(origin, origin + direction * distance, found ? HitColor : UnHitColor);
+            Debug.DrawLine(origin, found ? hit.point : origin + direction * GetDrawableDistance(distance), found ? HitColor : UnHitColor);
         }
 #endif
 
@@ -113,7 +119,7 @@ namespace dkstlzu.Utility
             if (!direction.Equals(Vector2.zero) && distance != 0)
             {
                 Vector3 d1, d2, d3, d4, d5, d6, d7, d8;
-                Vector3 vectorDistance = direction.normalized * distance;
+                Vector3 vectorDistance = direction.normalized * GetDrawableDistance(distance);
                 
                 d1 = s1 + vectorDistance; 
                 d2 = s2 + vectorDistance; 
@@ -156,10 +162,10 @@ namespace dkstlzu.Utility
         }
 
 #if UNITY_EDITOR
-        public static List<SphereHandleInfo> SphereHandleInfoList = new List<SphereHandleInfo>();
+        public static List<SphereDrawData> SphereHandleInfoList = new List<SphereDrawData>();
         
         [Serializable]
-        public struct SphereHandleInfo
+        public struct SphereDrawData
         {
             public Vector3 Origin;
             public float Radius;
@@ -173,10 +179,12 @@ namespace dkstlzu.Utility
                 return;
             }
 
-            SphereHandleInfoList.Add(new SphereHandleInfo(){Origin = origin, Radius = radius, Color = found ? HitColor : UnHitColor});
+            SphereHandleInfoList.Add(new SphereDrawData(){Origin = origin, Radius = radius, Color = found ? HitColor : UnHitColor});
             if (direction != Vector3.zero && distance != 0)
             {
-                SphereHandleInfoList.Add(new SphereHandleInfo(){Origin = origin + direction * distance, Radius = radius, Color = found ? HitColor : UnHitColor});
+                Vector3 vectorDistance = direction.normalized * GetDrawableDistance(distance);
+
+                SphereHandleInfoList.Add(new SphereDrawData(){Origin = origin + vectorDistance, Radius = radius, Color = found ? HitColor : UnHitColor});
                 
                 Vector3 s1, s2, d1, d2;
                 var vec = Vector3.Cross(direction, SceneView.lastActiveSceneView.camera.transform.forward).normalized;
@@ -184,8 +192,8 @@ namespace dkstlzu.Utility
                 s1 = origin + vec * radius;
                 s2 = origin + -vec * radius;
 
-                d1 = origin + vec * radius + direction * distance;
-                d2 = origin + -vec * radius + direction * distance;
+                d1 = origin + vec * radius + vectorDistance;
+                d2 = origin + -vec * radius + vectorDistance;
             
                 Debug.DrawLine(s1, d1, TrajectoryColor);
                 Debug.DrawLine(s2, d2, TrajectoryColor);
