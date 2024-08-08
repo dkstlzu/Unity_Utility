@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace dkstlzu.Utility
 {
@@ -58,15 +59,15 @@ namespace dkstlzu.Utility
     {
         public string Text = "Do Test";
         public Vector2 TestButtonRectSize = new Vector2(100, 50);
-        public Action TestAction;
+        public UnityEvent TestAction;
 
         public TestButton() {}
-        public TestButton(Action action)
+        public TestButton(UnityEvent action)
         {
             TestAction = action;
         }
 
-        public TestButton(Action action, string text)
+        public TestButton(UnityEvent action, string text)
         {
             TestAction = action;
             Text = text;
