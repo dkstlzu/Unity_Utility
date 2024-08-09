@@ -45,6 +45,7 @@ namespace dkstlzu.Utility
         public static ReadOnlySpan<RaycastHit2D> RayCast(Vector3 origin, Vector3 direction, RaycastHit2D[] results, float distance = Mathf.Infinity,
             int layerMask = Physics2D.DefaultRaycastLayers, float minDepth = -Mathf.Infinity, float maxDepth = Mathf.Infinity)
         {
+            distance = direction == default ? 0 : distance;
             direction = direction == default ? Vector2.right : direction.normalized;
             int foundNum = Physics2D.RaycastNonAlloc(origin, direction, results, distance, layerMask, minDepth, maxDepth);
 
@@ -71,6 +72,7 @@ namespace dkstlzu.Utility
             RaycastHit2D[] results, float distance = Mathf.Infinity, int layerMask = Physics2D.DefaultRaycastLayers,
             float minDepth = -Mathf.Infinity, float maxDepth = Mathf.Infinity)
         {
+            distance = direction == default ? 0 : distance;
             direction = direction == default ? Vector2.right : direction.normalized;
             int foundNum = Physics2D.BoxCastNonAlloc(origin, size, angle, direction, results, distance, layerMask, minDepth, maxDepth);
 
@@ -140,6 +142,7 @@ namespace dkstlzu.Utility
             RaycastHit2D[] results, float distance = Mathf.Infinity, int layerMask = Physics2D.DefaultRaycastLayers,
             float minDepth = -Mathf.Infinity, float maxDepth = Mathf.Infinity)
         {
+            distance = direction == default ? 0 : distance;
             direction = direction == default ? Vector2.right : direction.normalized;
             int foundNum = Physics2D.CircleCastNonAlloc(origin, radius, direction, results, distance, layerMask, minDepth, maxDepth);
 
