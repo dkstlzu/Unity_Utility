@@ -40,6 +40,8 @@ ListBasedPriorityQueue.cs : Simple PriorityQueue which old c# does not have (Use
 
 *Singleton.cs* : Unity Singleton
 
+*StateMachine.cs* : StateMachine using generic enum type or string
+
 *Tester.cs* : Inheritable Tester class offering OnGUI -> GUI.Button
 
 *Trigger.cs* : use internal bool value when ref by other script
