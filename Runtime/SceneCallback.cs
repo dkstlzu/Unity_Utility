@@ -27,12 +27,24 @@ namespace dkstlzu.Utility
         
         public UnityEvent OnLoad;
         public UnityEvent OnUnload;
+
+        public void RegisterEvent()
+        {
+            SceneCallback.RegisterLoadEvent(SceneName, OnLoad.Invoke);
+            SceneCallback.RegisterUnloadEvent(SceneName, OnUnload.Invoke);
+        }
+
+        public void UnregisterEvent()
+        {
+            SceneCallback.UnregisterLoadEvent(SceneName, OnLoad.Invoke);
+            SceneCallback.UnregisterUnloadEvent(SceneName, OnUnload.Invoke);
+        }
     }
     
     [Serializable]
     public class SceneCallback
     {
-        public static bool Initiated;
+        public static bool Initiated { get; private set; }
 
         public static Dictionary<string, Action> OnLoadCallBackDict = new Dictionary<string, Action>();
         public static Dictionary<string, Action> OnUnloadCallBackDict = new Dictionary<string, Action>();
@@ -111,18 +123,61 @@ namespace dkstlzu.Utility
             return new SceneCallback(sceneNames);
         }
 
+        public static void RegisterLoadEvent(string sceneName, Action action)
+        {
+            OnLoadCallBackDict.TryAdd(sceneName, delegate { });
+
+            OnLoadCallBackDict[sceneName] += action;
+        }
+
+        public static void UnregisterLoadEvent(string sceneName, Action action)
+        {
+            // Dictionary.TryGetValue() 함수 썼다가 TValue : Action 의 값복사가 일어나서 제대로 구독해제가 안되는 경우가 있었음
+            if (OnLoadCallBackDict.ContainsKey(sceneName))
+            {
+                OnLoadCallBackDict[sceneName] -= action;
+                if (OnLoadCallBackDict[sceneName].GetInvocationList().Length == 0)
+                {
+                    OnLoadCallBackDict.Remove(sceneName);
+                }
+            }
+        }
+        
+        public static void RegisterUnloadEvent(string sceneName, Action action)
+        {
+            OnUnloadCallBackDict.TryAdd(sceneName, delegate { });
+
+            OnUnloadCallBackDict[sceneName] += action;
+        }
+
+        public static void UnregisterUnloadEvent(string sceneName, Action action)
+        {
+            if (OnUnloadCallBackDict.ContainsKey(sceneName))
+            {
+                OnUnloadCallBackDict[sceneName] -= action;
+                if (OnUnloadCallBackDict[sceneName].GetInvocationList().Length == 0)
+                {
+                    OnUnloadCallBackDict.Remove(sceneName);
+                }
+            }
+        }
+
         public void RegisterEvents()
         {
             foreach (SceneCallbackEventHandler handler in Callbacks)
             {
-                OnLoadCallBackDict.TryAdd(handler.SceneName, delegate{});
-                OnUnloadCallBackDict.TryAdd(handler.SceneName, delegate{});
-
-                OnLoadCallBackDict[handler.SceneName] += handler.OnLoad.Invoke;
-                OnUnloadCallBackDict[handler.SceneName] += handler.OnUnload.Invoke;
+                handler.RegisterEvent();
             }
             
             Init();
+        }
+
+        public void UnregisterEvents()
+        {
+            foreach (SceneCallbackEventHandler handler in Callbacks)
+            {
+                handler.UnregisterEvent();
+            }
         }
     }
 }
