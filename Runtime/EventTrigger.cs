@@ -82,7 +82,7 @@ namespace dkstlzu.Utility
             if (NoOneEntered)
             {
                 OnTriggerEnterEvent?.Invoke();
-                OnTriggerExitGOEvent?.Invoke(other.gameObject);
+                OnTriggerEnterGOEvent?.Invoke(other.gameObject);
                 _enteredOnce = true;
             }
 
