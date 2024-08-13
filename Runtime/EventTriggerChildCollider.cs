@@ -1,59 +1,33 @@
+using System;
 using UnityEngine;
+using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 namespace dkstlzu.Utility
 {
-    [ExecuteInEditMode]
     public class EventTriggerChildCollider : MonoBehaviour
     {
-        public EventTrigger Parent;
-        public Collider Collider;
-        public Collider2D Collider2D;
-        public Object ValidCollider
-        {
-            get 
-            {
-                if (Use2D) return Collider2D;
-                else return Collider;
-            }
-        }
+        public EventTrigger Parent { get; private set; }
+        public bool Use2D => _collider.GetType().IsAssignableFrom(typeof(Collider2D));
+
+        [SerializeField]
+        private bool _isReady;
+        public bool IsReady => (Parent?.IsReady ?? false) && _isReady;
+        
+        [SerializeField]
+        private Object _collider;
+        
         internal EventTrigger.EventTriggerState State;
 
-        public bool Use2D => Parent.Use2D;
-
-        void Reset()
+        private void Awake()
         {
             Parent = GetComponentInParent<EventTrigger>();
-            if (!Parent)
+            if (Parent)
             {
-                var headertext = "Warning";
-                var maintext = "Could not Find EventTrigger among parents";
-                var ops1 = "Ok";
-
-#if UNITY_EDITOR
-                if (EditorUtility.DisplayDialog(headertext, maintext, ops1)) {
-                    Debug.LogWarning("Check if EventTrigger exist.");
-                } 
-#endif
-
-                Debug.LogWarning("Check if EventTrigger exist.");
-                DestroyImmediate(this);
-                return;
+                Parent.Children.Add(this);
             }
-
-            if (Use2D)
-            {
-                Collider2D = gameObject.AddComponent(Parent.Collider2D.GetType()) as Collider2D;
-                Collider2D!.isTrigger = true;
-            } else
-            {
-                Collider = gameObject.AddComponent(Parent.Collider.GetType()) as Collider;
-                Collider!.isTrigger = true;
-            }
-            
-            Parent.Children.Add(this);
         }
 
         void OnTriggerEnter(Collider other)
@@ -92,6 +66,7 @@ namespace dkstlzu.Utility
 
         void OnDestroy()
         {
+            Destroy(_collider);
             Parent.Children.Remove(this);
         }
     }

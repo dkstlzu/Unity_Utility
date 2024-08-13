@@ -1,9 +1,12 @@
 #if UNITY_EDITOR
 using UnityEditor.Events;
 #endif
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using Object = UnityEngine.Object;
 
 namespace dkstlzu.Utility
 {
@@ -15,8 +18,10 @@ namespace dkstlzu.Utility
             Staying,
         }
 
-        public bool Use2D;
+        public Object Rigidbody;
+        public bool Use2D => _collider.GetType().IsAssignableFrom(typeof(Collider2D));
         public bool IsReady;
+        public string[] TargetTags;
         public LayerMask TargetLayerMask;
         public bool PlayOnlyFirst;
         private bool _enteredOnce;
@@ -35,12 +40,8 @@ namespace dkstlzu.Utility
         public GameObjectUnityEvent OnTriggerStayGOEvent = new GameObjectUnityEvent();
         public GameObjectUnityEvent OnTriggerExitGOEvent = new GameObjectUnityEvent();
 #endif
-        public Collider Collider;
-        public Collider2D Collider2D;
-        public Object ValidCollider
-        {
-            get {if (Use2D) return Collider2D; else return Collider;}
-        }
+        [SerializeField]
+        private Object _collider;
 
         internal EventTriggerState State;
         public List<EventTriggerChildCollider> Children = new List<EventTriggerChildCollider>();
@@ -74,7 +75,8 @@ namespace dkstlzu.Utility
 
         internal void OnTriggerEnter(Collider other)
         {
-            if ((_enteredOnce && PlayOnlyFirst) || Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0)
+            if ((_enteredOnce && PlayOnlyFirst) || Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0
+                && !TargetTags.Contains(other.tag))
             {
                 return;
             }
@@ -91,7 +93,8 @@ namespace dkstlzu.Utility
 
         internal void OnTriggerStay(Collider other)
         {
-            if (Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0)
+            if (Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0
+                && !TargetTags.Contains(other.tag))
             {
                 return;
             }
@@ -107,7 +110,8 @@ namespace dkstlzu.Utility
 
         internal void OnTriggerExit(Collider other)
         {
-            if ((_exitedOnce && PlayOnlyFirst) || Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0)
+            if ((_exitedOnce && PlayOnlyFirst) || Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0
+                && !TargetTags.Contains(other.tag))
             {
                 return;
             }
@@ -124,7 +128,8 @@ namespace dkstlzu.Utility
 
         internal void OnTriggerEnter2D(Collider2D other)
         {
-            if ((_enteredOnce && PlayOnlyFirst) || !Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0)
+            if ((_enteredOnce && PlayOnlyFirst) || !Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0
+                && !TargetTags.Contains(other.tag))
             {
                 return;
             }
@@ -141,7 +146,8 @@ namespace dkstlzu.Utility
 
         internal void OnTriggerStay2D(Collider2D other)
         {
-            if (!Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0)
+            if (!Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0
+                && !TargetTags.Contains(other.tag))
             {
                 return;
             }
@@ -157,7 +163,8 @@ namespace dkstlzu.Utility
 
         internal void OnTriggerExit2D(Collider2D other)
         {
-            if ((_exitedOnce && PlayOnlyFirst) || !Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0)
+            if ((_exitedOnce && PlayOnlyFirst) || !Use2D || ((1 << other.gameObject.layer) & TargetLayerMask.value) == 0
+                && !TargetTags.Contains(other.tag))
             {
                 return;
             }
@@ -176,6 +183,20 @@ namespace dkstlzu.Utility
         {
             _enteredOnce = false;
             _exitedOnce = false;
+        }
+
+        private void OnDestroy()
+        {
+            if (IsReady)
+            {
+                Destroy(Rigidbody);
+                Destroy(_collider);
+            }
+
+            foreach (var child in Children)
+            {
+                Destroy(child);
+            }
         }
 
 #if UNITY_EDITOR
