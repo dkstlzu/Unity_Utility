@@ -4,19 +4,57 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace dkstlzu.Utility
 {
     [DefaultExecutionOrder(-100)]
     [AddComponentMenu("UpdateManager")]
-    public class UpdateManagerMonoBehaviour : MonoBehaviour
+    public class UpdateManager : Singleton<UpdateManager>
     {
-        public Dictionary<UpdateManager.Type, List<IUpdateManager>> ManagerDict = new Dictionary<UpdateManager.Type, List<IUpdateManager>>();
-        
-        private Dictionary<UpdateManager.Type, List<IUpdateManager>> _addList = new Dictionary<UpdateManager.Type, List<IUpdateManager>>();
-        private Dictionary<UpdateManager.Type, List<IUpdateManager>> _removeList = new Dictionary<UpdateManager.Type, List<IUpdateManager>>();
+        public enum Type
+        {
+            MANUAL,
+            FRAME,
+            FIXED,
+            LATE,
+        }
 
-        public bool EnableLog;
+        public static bool EnableLog;
+
+#if UNITY_EDITOR
+        [MenuItem("Dev/UpdateManager/Enable Log")]
+        public static void LogEnable()
+        {
+            EnableLog = true;
+        }
         
+        [MenuItem("Dev/UpdateManager/Enable Log", true)]
+        public static bool LogEnable_Validation()
+        {
+            return !EnableLog;
+        }
+        
+        [MenuItem("Dev/UpdateManager/Disable Log")]
+        public static void LogDisable()
+        {
+            EnableLog = false;
+        }
+        
+        [MenuItem("Dev/UpdateManager/Disable Log", true)]
+        public static bool LogDisable_Validation()
+        {
+            return EnableLog;
+        }
+#endif
+        
+        public Dictionary<Type, List<IUpdateManager>> ManagerDict = new Dictionary<Type, List<IUpdateManager>>();
+        
+        private Dictionary<Type, List<IUpdateManager>> _addList = new Dictionary<Type, List<IUpdateManager>>();
+        private Dictionary<Type, List<IUpdateManager>> _removeList = new Dictionary<Type, List<IUpdateManager>>();
+
 #if UNITY_EDITOR
         public int ManualUpdatableNumber;
         public int FrameUpdatableNumber;
@@ -26,25 +64,27 @@ namespace dkstlzu.Utility
 
         private void Awake()
         {
-            InitManager(UpdateManager.Type.MANUAL);
-            InitManager(UpdateManager.Type.FRAME);
-            InitManager(UpdateManager.Type.FIXED);
-            InitManager(UpdateManager.Type.LATE);
+            InitManager(Type.MANUAL);
+            InitManager(Type.FRAME);
+            InitManager(Type.FIXED);
+            InitManager(Type.LATE);
             
-            ManagerDict[UpdateManager.Type.MANUAL].Add(new ManualUpdateManager());
-            ManagerDict[UpdateManager.Type.FRAME].Add(new DefaultFrameUpdateManager());
-            ManagerDict[UpdateManager.Type.FIXED].Add(new DefaultFixedUpdateManager());
-            ManagerDict[UpdateManager.Type.LATE].Add(new DefaultLateUpdateManager());
+            ManagerDict[Type.MANUAL].Add(new ManualUpdateManager());
+            ManagerDict[Type.FRAME].Add(new DefaultFrameUpdateManager());
+            ManagerDict[Type.FIXED].Add(new DefaultFixedUpdateManager());
+            ManagerDict[Type.LATE].Add(new DefaultLateUpdateManager());
+
+            EnableLog = UpdateManager.EnableLog;
         }
 
-        void InitManager(UpdateManager.Type updateType)
+        void InitManager(Type updateType)
         {
             ManagerDict.Add(updateType, new List<IUpdateManager>());
             _addList.Add(updateType, new List<IUpdateManager>());
             _removeList.Add(updateType, new List<IUpdateManager>());
         }
 
-        public void AddManager(UpdateManager.Type updateType, IUpdateManager manager)
+        public void AddManager(Type updateType, IUpdateManager manager)
         {
             if (!_addList.ContainsKey(updateType))
             {
@@ -54,7 +94,7 @@ namespace dkstlzu.Utility
             _addList[updateType].Add(manager);
         }
 
-        public void RemoveManager(UpdateManager.Type updateType, IUpdateManager manager)
+        public void RemoveManager(Type updateType, IUpdateManager manager)
         {
             Assert.IsTrue(_removeList.ContainsKey(updateType));
             
@@ -62,7 +102,7 @@ namespace dkstlzu.Utility
         }
 
         [CanBeNull]
-        public IUpdateManager GetManager(UpdateManager.Type updateType, string managerName)
+        public IUpdateManager GetManager(Type updateType, string managerName)
         {
             if (!ManagerDict.ContainsKey(updateType))
             {
@@ -135,33 +175,33 @@ namespace dkstlzu.Utility
         public void ManualUpdate()
         {
 #if UNITY_EDITOR
-            SetCounter(out ManualUpdatableNumber, ManagerDict[UpdateManager.Type.MANUAL]);
+            SetCounter(out ManualUpdatableNumber, ManagerDict[Type.MANUAL]);
 #endif
-            UpdateWithDelta(UpdateManager.Type.MANUAL);
+            UpdateWithDelta(Type.MANUAL);
         }
 
-        private void Update()
+        public void Update()
         {
 #if UNITY_EDITOR
-            SetCounter(out FrameUpdatableNumber, ManagerDict[UpdateManager.Type.FRAME]);
+            SetCounter(out FrameUpdatableNumber, ManagerDict[Type.FRAME]);
 #endif
-            UpdateWithDelta(UpdateManager.Type.FRAME);
+            UpdateWithDelta(Type.FRAME);
         }
 
-        private void FixedUpdate()
+        public void FixedUpdate()
         {
 #if UNITY_EDITOR
-            SetCounter(out FixedUpdatableNumber, ManagerDict[UpdateManager.Type.FIXED]);
+            SetCounter(out FixedUpdatableNumber, ManagerDict[Type.FIXED]);
 #endif
-            UpdateWithDelta(UpdateManager.Type.FIXED);
+            UpdateWithDelta(Type.FIXED);
         }
         
-        private void LateUpdate()
+        public void LateUpdate()
         {
 #if UNITY_EDITOR
-            SetCounter(out LateUpdatableNumber, ManagerDict[UpdateManager.Type.LATE]);
+            SetCounter(out LateUpdatableNumber, ManagerDict[Type.LATE]);
 #endif
-            UpdateWithDelta(UpdateManager.Type.LATE);
+            UpdateWithDelta(Type.LATE);
         }
 
 #if UNITY_EDITOR
@@ -176,7 +216,7 @@ namespace dkstlzu.Utility
         }
 #endif
 
-        void UpdateWithDelta(UpdateManager.Type updateType)
+        void UpdateWithDelta(Type updateType)
         {
             var managerList = ManagerDict[updateType];
             

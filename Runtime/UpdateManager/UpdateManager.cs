@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -19,24 +20,6 @@ namespace dkstlzu.Utility
         public delegate void Updater(IUpdatableBase<T> updatable);
     }
     
-    public abstract class UpdateManager : Singleton<UpdateManagerMonoBehaviour>
-    {
-        public enum Type
-        {
-            MANUAL,
-            FRAME,
-            FIXED,
-            LATE,
-        }
-
-        private static bool _enableLog;
-        public static bool EnableLog
-        {
-            get => GetOrNull?.EnableLog ?? _enableLog;
-            set => _enableLog = value;
-        }
-    }
-
     public abstract class UpdateManager<T, TUpdatable> : IUpdateManager where TUpdatable : IUpdatableBase<T>
     {
         protected class HashComparer : IComparer<TUpdatable>
