@@ -37,11 +37,11 @@ namespace dkstlzu.Utility
         #region RayCast
 
         public static ReadOnlySpan<RaycastHit> RayCast(Vector3 origin, Vector3 direction, RaycastHit[] results, float distance = Mathf.Infinity,
-            int layerMask = Physics.DefaultRaycastLayers)
+            int layerMask = Physics.DefaultRaycastLayers, QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.UseGlobal)
         {
             distance = direction == default ? 0 : distance;
             direction = direction == default ? Vector3.forward : direction.normalized;
-            int foundNum = Physics.RaycastNonAlloc(origin, direction, results, distance, layerMask);
+            int foundNum = Physics.RaycastNonAlloc(origin, direction, results, distance, layerMask, triggerInteraction);
 
 #if UNITY_EDITOR
             if (DrawGizmo) DrawRayCastGizmo(origin, direction, foundNum > 0, distance, foundNum > 0 ? results[0] : default);
@@ -63,11 +63,11 @@ namespace dkstlzu.Utility
         #region BoxCast
 
         public static ReadOnlySpan<RaycastHit> BoxCast(Vector3 origin, Vector3 size, Vector3 direction, RaycastHit[] results, 
-            Quaternion orientation = default, float distance = Mathf.Infinity, int layerMask = Physics.DefaultRaycastLayers)
+            Quaternion orientation = default, float distance = Mathf.Infinity, int layerMask = Physics.DefaultRaycastLayers, QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.UseGlobal)
         {
             distance = direction == default ? 0 : distance;
             direction = direction == default ? Vector3.forward : direction.normalized;
-            int foundNum = Physics.BoxCastNonAlloc(origin, size, direction, results, orientation, distance, layerMask);
+            int foundNum = Physics.BoxCastNonAlloc(origin, size, direction, results, orientation, distance, layerMask, triggerInteraction);
 
 #if UNITY_EDITOR
             if (DrawGizmo) DrawBoxCastGizmo(origin, size, direction, orientation, foundNum > 0, distance);
@@ -153,11 +153,11 @@ namespace dkstlzu.Utility
         #region Sphere
 
         public static ReadOnlySpan<RaycastHit> SphereCast(Vector3 origin, float radius, Vector3 direction,
-            RaycastHit[] results, float distance = Mathf.Infinity, int layerMask = Physics.DefaultRaycastLayers)
+            RaycastHit[] results, float distance = Mathf.Infinity, int layerMask = Physics.DefaultRaycastLayers, QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.UseGlobal)
         {
             distance = direction == default ? 0 : distance;
             direction = direction == default ? Vector3.forward : direction.normalized;
-            int foundNum = Physics.SphereCastNonAlloc(origin, radius, direction, results, distance, layerMask);
+            int foundNum = Physics.SphereCastNonAlloc(origin, radius, direction, results, distance, layerMask, triggerInteraction);
 
 #if UNITY_EDITOR
             if (DrawGizmo) DrawSphereCastGizmo(origin, radius, direction, foundNum > 0, distance);
