@@ -6,17 +6,16 @@ using UnityEngine.Assertions;
 
 namespace dkstlzu.Utility
 {
-    static class Singleton
+    public static class Singleton
     {
         private static Dictionary<Type, object> _dict = new Dictionary<Type, object>();
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void RuntimeInit()
         {
             _dict.Clear();
         }
         
-        [CanBeNull]
         public static T Get<T>(bool withOutNullNotify = false) where T : class
         {
             Type targetType = typeof(T);
@@ -35,7 +34,6 @@ namespace dkstlzu.Utility
             }
         }
 
-        [CanBeNull]
         public static object Get(Type type)
         {
             if (_dict.TryGetValue(type, out object result))
@@ -117,7 +115,7 @@ namespace dkstlzu.Utility
 
         public static T GetOrCreateDontDestroyOnLoad()
         {
-            if (_instance == null)
+            if (!_instance)
             {
                 var go = new GameObject($"{typeof(T)} Singleton");
                 DontDestroyOnLoad(go);
