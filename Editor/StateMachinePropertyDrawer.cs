@@ -2,40 +2,56 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace dkstlzu.Utility
 {
-    [CustomPropertyDrawer(typeof(StateMachine<>))]
+    [CustomPropertyDrawer(typeof(StateMachine))]
     public class StateMachinePropertyDrawer : PropertyDrawer
     {
-        private object _obj;
+        public override VisualElement CreatePropertyGUI(SerializedProperty property)
+        {
+            var propertyField = new PropertyField(property.FindPropertyRelative("_currentState"), "StateMachine");
+            propertyField.SetEnabled(false);
+
+            return propertyField;
+        }
+    }
+    
+    [CustomPropertyDrawer(typeof(StateMachine<>))]
+    public class EnumStateMachinePropertyDrawer : PropertyDrawer
+    {
+        private StateMachine _sm;
         private MethodInfo _method;
-        private Type _enumType;
-        private SerializedProperty _stateProperty;
-        private DropdownField _field;
+        private DropdownField _dropdownField;
         
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            _stateProperty = property.FindPropertyRelative("_currentState");
-
             Type parentType = property.serializedObject.targetObject.GetType();
             var fi = parentType.GetField(property.propertyPath);
-            _obj = fi.GetValue(property.serializedObject.targetObject);
-            _method = fi.FieldType.GetMethod("ChangeTo");
-            _enumType = fi.FieldType.GenericTypeArguments[0];
+            _sm = (StateMachine)fi.GetValue(property.serializedObject.targetObject);
+            var enumType = fi.FieldType.GenericTypeArguments[0];
+            _method = fi.FieldType.GetMethod("ChangeTo", new Type[]{typeof(string), typeof(bool)});
             
-            _field = new DropdownField(_enumType.Name + " StateMachine", new List<string>(_stateProperty.enumNames), _stateProperty.enumValueIndex);
+            _dropdownField = new DropdownField(enumType.Name + " StateMachine", 
+                new List<string>(Enum.GetNames(enumType)), property.FindPropertyRelative("_currentState").stringValue);
 
-            _field.RegisterValueChangedCallback(OnValueChanged);
+            _sm.OnStateChanged += OnStateChanged;
+            _dropdownField.RegisterValueChangedCallback(OnInspectorValueChanged);
             
-            return _field;
+            return _dropdownField;
         }
 
-        private void OnValueChanged(ChangeEvent<string> evt)
+        private void OnStateChanged(string newState)
         {
-            _stateProperty.enumValueIndex = _field.index;
-            _method.Invoke(_obj, new object[] {Enum.ToObject(_enumType, _field.index), false });
+            _dropdownField.value = newState;
+        }
+        
+        private void OnInspectorValueChanged(ChangeEvent<string> evt)
+        {
+            _method.Invoke(_sm, new object[] {evt.newValue, false});
         }
     }
 }
