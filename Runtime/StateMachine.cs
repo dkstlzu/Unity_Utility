@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
 namespace dkstlzu.Utility
 {
     [Serializable]
-    public class StateMachine : IFrameUpdatable
+    public class StateMachine : IFrameUpdatable, ISerializationCallbackReceiver
     {
         public enum EventType
         {
@@ -22,17 +23,41 @@ namespace dkstlzu.Utility
 
         public Action OnUpdate;
         public Action<string> OnStateChanged;
+        
+        [SerializeField]
+        protected string[] _keys;
+        
         protected Dictionary<EventType, Dictionary<string, Action>> _eventDict;
+
+        public Dictionary<string, Action>.KeyCollection StateNames => _eventDict[EventType.Enter].Keys;
 
         public StateMachine(IEnumerable<string> keys)
         {
+            Init(keys);
+        }
+
+        public void Init(IEnumerable<string> keys)
+        {
+            Reset();
+            
+            _keys = keys.ToArray();
+            
             InitDict(keys);
+
+            var en = keys.GetEnumerator();
+
+            if (en.MoveNext())
+            {
+                _currentState = en.Current;
+            }
+            
+            en.Dispose();
         }
 
         public void InitDict(IEnumerable<string> keys)
         {
             _eventDict = new Dictionary<EventType, Dictionary<string, Action>>();
-            
+                
             foreach (EventType eventType in Enum.GetValues(typeof(EventType)))
             {
                 _eventDict.Add(eventType, new Dictionary<string, Action>());
@@ -42,6 +67,26 @@ namespace dkstlzu.Utility
                     AddState(key);
                 }
             }
+        }
+
+        public void Reset()
+        {
+            _currentState = String.Empty;
+            _keys = Array.Empty<string>();
+
+            if (_eventDict != null)
+            {
+                _eventDict.Clear();
+            }
+        }
+        
+        public void OnBeforeSerialize()
+        {
+        }
+
+        public void OnAfterDeserialize()
+        {
+            InitDict(_keys);
         }
         
         public void FrameUpdate(float delta)

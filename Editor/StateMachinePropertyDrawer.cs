@@ -8,20 +8,8 @@ using UnityEngine.UIElements;
 
 namespace dkstlzu.Utility
 {
-    [CustomPropertyDrawer(typeof(StateMachine))]
+    [CustomPropertyDrawer(typeof(StateMachine), true)]
     public class StateMachinePropertyDrawer : PropertyDrawer
-    {
-        public override VisualElement CreatePropertyGUI(SerializedProperty property)
-        {
-            var propertyField = new PropertyField(property.FindPropertyRelative("_currentState"), "StateMachine");
-            propertyField.SetEnabled(false);
-
-            return propertyField;
-        }
-    }
-    
-    [CustomPropertyDrawer(typeof(StateMachine<>))]
-    public class EnumStateMachinePropertyDrawer : PropertyDrawer
     {
         private StateMachine _sm;
         private MethodInfo _method;
@@ -29,19 +17,31 @@ namespace dkstlzu.Utility
         
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            Type parentType = property.serializedObject.targetObject.GetType();
-            var fi = parentType.GetField(property.propertyPath);
-            _sm = (StateMachine)fi.GetValue(property.serializedObject.targetObject);
-            var enumType = fi.FieldType.GenericTypeArguments[0];
-            _method = fi.FieldType.GetMethod("ChangeTo", new Type[]{typeof(string), typeof(bool)});
-            
-            _dropdownField = new DropdownField(enumType.Name + " StateMachine", 
-                new List<string>(Enum.GetNames(enumType)), property.FindPropertyRelative("_currentState").stringValue);
+            var currentState = property.FindPropertyRelative("_currentState").stringValue;
 
-            _sm.OnStateChanged += OnStateChanged;
-            _dropdownField.RegisterValueChangedCallback(OnInspectorValueChanged);
-            
-            return _dropdownField;
+            if (currentState != string.Empty)
+            {
+                Type parentType = property.serializedObject.targetObject.GetType();
+                var fi = parentType.GetField(property.propertyPath);
+                _sm = (StateMachine)fi.GetValue(property.serializedObject.targetObject);
+                _method = fi.FieldType.GetMethod("ChangeTo", new Type[]{typeof(string), typeof(bool)});
+                
+                _dropdownField = new DropdownField(property.name,new List<string>(_sm.StateNames),currentState);
+                
+                _sm.OnStateChanged += OnStateChanged;
+                _dropdownField.RegisterValueChangedCallback(OnInspectorValueChanged);
+
+                if (_sm.GetType().IsAssignableFrom(typeof(StateMachine<>)))
+                {
+                    _dropdownField.RegisterCallback<ContextClickEvent>(OnContextClick);
+                }
+
+                return _dropdownField;
+            }
+            else
+            {
+                return new Label($"{property.name} is not constructed yet");
+            }
         }
 
         private void OnStateChanged(string newState)
@@ -52,6 +52,13 @@ namespace dkstlzu.Utility
         private void OnInspectorValueChanged(ChangeEvent<string> evt)
         {
             _method.Invoke(_sm, new object[] {evt.newValue, false});
+        }
+        
+        private void OnContextClick(ContextClickEvent evt)
+        {
+            GenericMenu contextMenu = new GenericMenu();
+            contextMenu.AddItem(new GUIContent("Reset"), false, () => _sm.Reset());
+            contextMenu.ShowAsContext();
         }
     }
 }
