@@ -45,7 +45,6 @@ namespace dkstlzu.Utility
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private static StringBuilder S_stringBuilder;
-        private const int _ONE_LINE_LENGTH_LIMIT = 40;
 
         static Printer()
         {
@@ -66,11 +65,6 @@ namespace dkstlzu.Utility
             S_stringBuilder.Append(BracketTag(customTag));
 
             string msg = message.ToString();
-
-            if (msg.Length > _ONE_LINE_LENGTH_LIMIT)
-            {
-                S_stringBuilder.AppendLine();
-            }
 
             S_stringBuilder.Append(msg);
             S_stringBuilder.AppendLine();
