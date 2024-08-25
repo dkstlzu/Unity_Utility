@@ -21,16 +21,26 @@ namespace dkstlzu.Utility
         public string Current => _currentState;
         public Action CurrentAction => _eventDict[EventType.Stay][_currentState];
 
+        [NonSerialized]
         public Action OnUpdate;
-        public Action<string> OnStateChanged;
+        [NonSerialized]
+        public Action<string, string> OnStateChanged;
         
         [SerializeField]
         protected string[] _keys;
+
+        public List<string> Keys => _keys == null ? new List<string>() : new List<string>(_keys);
         
         protected Dictionary<EventType, Dictionary<string, Action>> _eventDict;
+        protected Dictionary<string, bool> _transferableDict;
 
-        public Dictionary<string, Action>.KeyCollection StateNames => _eventDict[EventType.Enter].Keys;
-
+        public bool EnableLog;
+        
+        public StateMachine()
+        {
+            _keys = Array.Empty<string>();
+        }
+        
         public StateMachine(IEnumerable<string> keys)
         {
             Init(keys);
@@ -39,37 +49,67 @@ namespace dkstlzu.Utility
         public void Init(IEnumerable<string> keys)
         {
             Reset();
-            
-            _keys = keys.ToArray();
-            
+
+            InitKeys(keys);
             InitDict(keys);
+        }
 
-            var en = keys.GetEnumerator();
+        public void InitKeys(IEnumerable<string> keys)
+        {
+            _keys = keys.ToArray();
 
-            if (en.MoveNext())
+            if (_keys.Length > 0)
             {
-                _currentState = en.Current;
+                _currentState = _keys[0];
             }
-            
-            en.Dispose();
+            else
+            {
+                _currentState = String.Empty;
+            }
         }
 
         public void InitDict(IEnumerable<string> keys)
         {
-            _eventDict = new Dictionary<EventType, Dictionary<string, Action>>();
+            if (_eventDict == null)
+            {
+                _eventDict = new Dictionary<EventType, Dictionary<string, Action>>();
+            }
+            else
+            {
+                _eventDict.Clear();
+            }
                 
             foreach (EventType eventType in Enum.GetValues(typeof(EventType)))
             {
                 _eventDict.Add(eventType, new Dictionary<string, Action>());
+            }
+            
+            if (_transferableDict == null)
+            {
+                _transferableDict = new Dictionary<string, bool>();
+            }
+            else
+            {
+                _transferableDict.Clear();
+            }
 
-                foreach (var key in keys)
+            var keyList = new List<string>(keys);
+            
+            for (int i = 0; i < keyList.Count; i++)
+            {
+                for (int j = 0; j < keyList.Count; j++)
                 {
-                    AddState(key);
+                    if (i == j)
+                    {
+                        continue;
+                    }
+                    
+                    _transferableDict.Add(GetTransferableKey(keyList[i], keyList[j]), true);
                 }
             }
         }
-
-        public void Reset()
+        
+        public virtual void Reset()
         {
             _currentState = String.Empty;
             _keys = Array.Empty<string>();
@@ -78,15 +118,24 @@ namespace dkstlzu.Utility
             {
                 _eventDict.Clear();
             }
+
+            OnStateChanged = null;
         }
         
-        public void OnBeforeSerialize()
+        public virtual void OnBeforeSerialize()
         {
         }
 
-        public void OnAfterDeserialize()
+        public virtual void OnAfterDeserialize()
         {
-            InitDict(_keys);
+            if (!_keys.Contains(_currentState))
+            {
+                Init(_keys);
+            }
+            else
+            {
+                InitDict(_keys);
+            }
         }
         
         public void FrameUpdate(float delta)
@@ -98,9 +147,14 @@ namespace dkstlzu.Utility
             OnUpdate?.Invoke();
         }
         
-        public void AddEnterEvent(string key, Action action)
+        public void AddEnterEvent(string key, Action action, bool invokeIfAlready = false)
         {
             AddEvent(_eventDict[EventType.Enter], key, action);
+
+            if (invokeIfAlready && _currentState == key)
+            {
+                action?.Invoke();
+            }
         }
 
         public void RemoveEnterEvent(string key, Action action)
@@ -117,9 +171,14 @@ namespace dkstlzu.Utility
             RemoveEvent(_eventDict[EventType.Stay], key, action);
         }        
         
-        public void AddExitEvent(string key, Action action)
+        public void AddExitEvent(string key, Action action, bool invokeIfAlready = false)
         {
             AddEvent(_eventDict[EventType.Exit], key, action);
+
+            if (invokeIfAlready && _currentState != key)
+            {
+                action?.Invoke();
+            }
         }
 
         public void RemoveExitEvent(string key, Action action)
@@ -127,25 +186,16 @@ namespace dkstlzu.Utility
             RemoveEvent(_eventDict[EventType.Exit], key, action);
         }
 
-        private void AddState(string key)
-        {
-            foreach (var eventTypePair in _eventDict)
-            {
-                if (!eventTypePair.Value.ContainsKey(key))
-                {
-                    eventTypePair.Value.Add(key, delegate { });
-                }
-            }
-        }
-        
         protected void AddEvent(Dictionary<string, Action> dict, string key, Action action)
         {
             if (!dict.ContainsKey(key))
             {
-                dict.Add(key, delegate { });
+                dict.Add(key, action);
             }
-
-            dict[key] += action;
+            else
+            {
+                dict[key] += action;
+            }
         }
         
         protected void RemoveEvent(Dictionary<string, Action> dict, string key, Action action)
@@ -161,23 +211,80 @@ namespace dkstlzu.Utility
             }
         }
 
-        public void ChangeTo(string key, bool ignoreEvents)
+        public void ClearEvent(string key)
         {
-            if (key == _currentState) return;
-
-            if (!ignoreEvents)
+            foreach (var pair in _eventDict)
             {
-                _eventDict[EventType.Exit]?[_currentState]?.Invoke();
+                pair.Value.Remove(key);
             }
+        }
 
-            _currentState = key;
+        public void ClearDict()
+        {
+            InitDict(_keys);
+        }
 
-            if (!ignoreEvents)
+        public void SetTransferable(string from, string to, bool movable)
+        {
+            _transferableDict[GetTransferableKey(from, to)] = movable;
+        }
+
+        protected string GetTransferableKey(string from, string to) => $"{from}.{to}";
+
+        public void ChangeTo(string key, bool ignoreEvents = false)
+        {
+            if (!_keys.Contains(key))
             {
-                _eventDict[EventType.Enter]?[_currentState]?.Invoke();
+                Printer.Print($"{key} is not valid state of StateMachine", logLevel:LogLevel.Error, priority:1);
+                return;
             }
             
-            OnStateChanged?.Invoke(_currentState);
+            if (key == _currentState) return;
+            if (!_transferableDict[GetTransferableKey(_currentState, key)])
+            {
+                Printer.Print($"from {_currentState} to {key} transition is impossible because of Transferable Setting", logLevel:LogLevel.Warning);
+                return;
+            }
+
+            if (!ignoreEvents)
+            {
+                if (_eventDict[EventType.Exit].ContainsKey(_currentState))
+                {
+                    if (EnableLog)
+                    {
+                        foreach (var call in _eventDict[EventType.Exit]?[_currentState]?.GetInvocationList())
+                        {
+                            Printer.Print($"Exit {_currentState} Call {call.Target}.{call.Method.Name}", priority:-1);
+                        }
+                    }
+
+                    _eventDict[EventType.Exit]?[_currentState]?.Invoke();
+                }
+            }
+
+            if (EnableLog)
+            {
+                Printer.Print($"Change State from {_currentState} to {key}");
+            }
+            var previous = _currentState;
+            _currentState = key;
+            OnStateChanged?.Invoke(previous, key);
+
+            if (!ignoreEvents)
+            {
+                if (_eventDict[EventType.Enter].ContainsKey(_currentState))
+                {
+                    if (EnableLog)
+                    {
+                        foreach (var call in _eventDict[EventType.Enter]?[_currentState]?.GetInvocationList())
+                        {
+                            Printer.Print($"Enter {_currentState} Call {call.Target}.{call.Method.Name}", priority:-1);
+                        }
+                    }
+
+                    _eventDict[EventType.Enter]?[_currentState]?.Invoke();
+                }
+            }
         }
 
         public void SimulateChange(string from, string to)
@@ -215,17 +322,82 @@ namespace dkstlzu.Utility
             protected set => _currentState = value.ToString();
         }
 
-        public Action<T> OnEnumStateChanged;
+        [NonSerialized]
+        public Action<T, T> OnEnumStateChanged;
 
         public StateMachine() : base(Enum.GetNames(typeof(T)))
         {
-            OnEnumStateChanged += e => OnStateChanged?.Invoke(e.ToString());
+            OnStateChanged += (from, to) => OnEnumStateChanged?.Invoke(Enum.Parse<T>(from), Enum.Parse<T>(to));
             _currentState = Enum.ToObject(typeof(T), 0).ToString();
         }
 
-        public void AddEnterEvent(T state, Action action)
+        public void Init()
         {
-            AddEnterEvent(state.ToString(), action);
+            InitKeys(Enum.GetNames(typeof(T)));
+            InitDict(_keys);
+        }
+        
+        public void Init(T startState)
+        {
+            Init();
+            CurrentEnum = startState;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+
+            OnEnumStateChanged = null;
+
+            var keys = Enum.GetNames(typeof(T));
+            InitKeys(keys);
+            InitDict(keys);
+        }
+
+        public override void OnBeforeSerialize()
+        {
+            if (!IsValid())
+            {
+                Init();
+            }
+        }
+
+        public override void OnAfterDeserialize()
+        {
+            if (!IsValid())
+            {
+                Init();
+            }
+        }
+
+        public bool IsValid()
+        {
+            var validNames = Enum.GetNames(typeof(T));
+
+            if (validNames.Length != _keys.Length)
+            {
+                return false;
+            }
+
+            foreach (var key in _keys)
+            {
+                if (!validNames.Contains(key))
+                {
+                    return false;
+                }
+            }
+            
+            if (!validNames.Contains(_currentState))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        
+        public void AddEnterEvent(T state, Action action, bool invokeIfAlready = false)
+        {
+            AddEnterEvent(state.ToString(), action, invokeIfAlready);
         }
 
         public void RemoveEnterEvent(T state, Action action)
@@ -242,9 +414,9 @@ namespace dkstlzu.Utility
             RemoveStayEvent(state.ToString(), action);
 
         }        
-        public void AddExitEvent(T state, Action action)
+        public void AddExitEvent(T state, Action action, bool invokeIfAlready = false)
         {
-            AddExitEvent(state.ToString(), action);
+            AddExitEvent(state.ToString(), action, invokeIfAlready);
         }
 
         public void RemoveExitEvent(T state, Action action)
@@ -252,13 +424,21 @@ namespace dkstlzu.Utility
             RemoveExitEvent(state.ToString(), action);
         }
 
-        public void ChangeTo(T to, bool ignoreEvents)
+        public void ClearEvent(T state)
+        {
+            ClearEvent(state.ToString());
+        }
+        
+        public void SetTransferable(T from, T to, bool movable)
+        {
+            SetTransferable(from.ToString(), to.ToString(), movable);
+        }
+        
+        public void ChangeTo(T to, bool ignoreEvents = false)
         {
             if (isSameState(CurrentEnum, to)) return;
             
             ChangeTo(to.ToString(), ignoreEvents);
-            
-            OnEnumStateChanged?.Invoke(CurrentEnum);
         }
 
         public void SimulateChange(T from, T to)

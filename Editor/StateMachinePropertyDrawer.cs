@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -19,45 +20,42 @@ namespace dkstlzu.Utility
         {
             var currentState = property.FindPropertyRelative("_currentState").stringValue;
 
-            if (currentState != string.Empty)
+            _sm = (StateMachine)EditorHelper.GetTargetObjectOfProperty(property);
+
+            if (_sm.Keys.Contains(currentState))
             {
-                Type parentType = property.serializedObject.targetObject.GetType();
-                var fi = parentType.GetField(property.propertyPath);
-                _sm = (StateMachine)fi.GetValue(property.serializedObject.targetObject);
-                _method = fi.FieldType.GetMethod("ChangeTo", new Type[]{typeof(string), typeof(bool)});
+                _method = typeof(StateMachine).GetMethod("ChangeTo", new Type[]{typeof(string), typeof(bool)});
                 
-                _dropdownField = new DropdownField(property.name,new List<string>(_sm.StateNames),currentState);
+                _dropdownField = new DropdownField(property.displayName,new List<string>(_sm.Keys),currentState);
                 
                 _sm.OnStateChanged += OnStateChanged;
                 _dropdownField.RegisterValueChangedCallback(OnInspectorValueChanged);
 
-                if (_sm.GetType().IsAssignableFrom(typeof(StateMachine<>)))
-                {
-                    _dropdownField.RegisterCallback<ContextClickEvent>(OnContextClick);
-                }
+                _dropdownField.RegisterCallback<ContextClickEvent>(OnContextClick);
 
                 return _dropdownField;
             }
             else
             {
-                return new Label($"{property.name} is not constructed yet");
+                return new Label($"{property.displayName} is not constructed yet");
             }
         }
 
-        private void OnStateChanged(string newState)
+        private void OnStateChanged(string previousState, string newState)
         {
             _dropdownField.value = newState;
         }
         
         private void OnInspectorValueChanged(ChangeEvent<string> evt)
         {
-            _method.Invoke(_sm, new object[] {evt.newValue, false});
+            _sm.ChangeTo(evt.newValue, true);
         }
         
         private void OnContextClick(ContextClickEvent evt)
         {
             GenericMenu contextMenu = new GenericMenu();
             contextMenu.AddItem(new GUIContent("Reset"), false, () => _sm.Reset());
+            contextMenu.AddItem(new GUIContent("EnableLog"), _sm.EnableLog, () => _sm.EnableLog = !_sm.EnableLog);
             contextMenu.ShowAsContext();
         }
     }
