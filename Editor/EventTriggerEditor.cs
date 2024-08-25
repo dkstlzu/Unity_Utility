@@ -229,14 +229,32 @@ namespace dkstlzu.Utility
         protected override void Set3DColliderSettings()
         {
             base.Set3DColliderSettings();
-            Rigidbody.objectReferenceValue = _et.gameObject.AddComponent<Rigidbody>();
+            Rigidbody.objectReferenceValue = _et.gameObject.GetComponent<Rigidbody>();
+
+            if (!Rigidbody.objectReferenceValue)
+            {
+                var rb = _et.gameObject.AddComponent<Rigidbody>();
+                rb.isKinematic = true;
+                rb.useGravity = false;
+                Rigidbody.objectReferenceValue = rb;
+            }
+
             UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(Rigidbody.objectReferenceValue, false);
         }
         
         protected override void Set2DColliderSettings()
         {
             base.Set2DColliderSettings();
-            Rigidbody.objectReferenceValue = _et.gameObject.AddComponent<Rigidbody2D>();
+            Rigidbody.objectReferenceValue = _et.gameObject.GetComponent<Rigidbody>();
+
+            if (!Rigidbody.objectReferenceValue)
+            {
+                var rb = _et.gameObject.AddComponent<Rigidbody2D>();
+                rb.isKinematic = true;
+                rb.gravityScale = 0;
+                Rigidbody.objectReferenceValue = rb;
+            }
+
             UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(Rigidbody.objectReferenceValue, false);
         }
     }
