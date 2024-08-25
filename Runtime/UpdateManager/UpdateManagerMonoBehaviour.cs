@@ -12,6 +12,9 @@ namespace dkstlzu.Utility
 {
     [DefaultExecutionOrder(-100)]
     [AddComponentMenu("UpdateManager")]
+#if UNITY_EDITOR
+    [InitializeOnLoad]
+#endif
     public class UpdateManager : Singleton<UpdateManager>
     {
         public enum Type
@@ -25,26 +28,34 @@ namespace dkstlzu.Utility
         public static bool EnableLog;
 
 #if UNITY_EDITOR
+        private const string UPDATEMANAGER_ENABLELOG_PREFKEY = "UpdateManagerEnableLogPrefKey";
+        static UpdateManager()
+        {
+            EnableLog = EditorPrefs.GetBool(UPDATEMANAGER_ENABLELOG_PREFKEY, false);
+        }
+        
         [MenuItem("Dev/UpdateManager/Enable Log")]
-        public static void LogEnable()
+        public static void UpdateLogEnable()
         {
             EnableLog = true;
+            EditorPrefs.SetBool(UPDATEMANAGER_ENABLELOG_PREFKEY, EnableLog);
         }
         
         [MenuItem("Dev/UpdateManager/Enable Log", true)]
-        public static bool LogEnable_Validation()
+        static bool LogEnable_Validation()
         {
             return !EnableLog;
         }
         
         [MenuItem("Dev/UpdateManager/Disable Log")]
-        public static void LogDisable()
+        public static void UpdateLogDisable()
         {
             EnableLog = false;
+            EditorPrefs.SetBool(UPDATEMANAGER_ENABLELOG_PREFKEY, EnableLog);
         }
         
         [MenuItem("Dev/UpdateManager/Disable Log", true)]
-        public static bool LogDisable_Validation()
+        static bool LogDisable_Validation()
         {
             return EnableLog;
         }
@@ -60,9 +71,10 @@ namespace dkstlzu.Utility
         public int FrameUpdatableNumber;
         public int FixedUpdatableNumber;
         public int LateUpdatableNumber;
+        public bool _EnableLog;
 #endif
 
-        private void Awake()
+        protected virtual void Awake()
         {
             InitManager(Type.MANUAL);
             InitManager(Type.FRAME);
@@ -73,8 +85,6 @@ namespace dkstlzu.Utility
             ManagerDict[Type.FRAME].Add(new DefaultFrameUpdateManager());
             ManagerDict[Type.FIXED].Add(new DefaultFixedUpdateManager());
             ManagerDict[Type.LATE].Add(new DefaultLateUpdateManager());
-
-            EnableLog = UpdateManager.EnableLog;
         }
 
         void InitManager(Type updateType)
@@ -151,24 +161,35 @@ namespace dkstlzu.Utility
         
         public void RemoveUpdatable(IUpdatableBase updatableBase)
         {
+            bool success = false;
+
             if (updatableBase is IFrameUpdatable updatable)
             {
                 DefaultFrameUpdateManager.Instance.Unregister(updatable);
+                success = true;
             }
 
             if (updatableBase is IFixedUpdatable fixedUpdatable)
             {
                 DefaultFixedUpdateManager.Instance.Unregister(fixedUpdatable);
+                success = true;
             }
             
             if (updatableBase is ILateUpdatable lateUpdatable)
             {
                 DefaultLateUpdateManager.Instance.Unregister(lateUpdatable);
+                success = true;
             }
             
             if (updatableBase is IManualUpdatable manualUpdatable)
             {
                 ManualUpdateManager.Instance.Unregister(manualUpdatable);
+                success = true;
+            }
+            
+            if (!success)
+            {
+                Assert.IsTrue(false, $"updatable은 IUpdatableBase 혹은 IUpdatableBase<T>을 직접 구현해서는 안됩니다.");
             }
         }
 
@@ -183,6 +204,7 @@ namespace dkstlzu.Utility
         public void Update()
         {
 #if UNITY_EDITOR
+            _EnableLog = EnableLog;
             SetCounter(out FrameUpdatableNumber, ManagerDict[Type.FRAME]);
 #endif
             UpdateWithDelta(Type.FRAME);

@@ -30,7 +30,7 @@ namespace dkstlzu.Utility
             }
         }
 
-        protected SortedList<int, SortedDictionary<TUpdatable, TUpdatable>> _updatableList = new SortedList<int, SortedDictionary<TUpdatable, TUpdatable>>();
+        protected SortedList<int, SortedDictionary<TUpdatable, int>> _updatableList = new SortedList<int, SortedDictionary<TUpdatable, int>>();
 
         protected List<(int, TUpdatable)> _addList = new List<(int, TUpdatable)>();
         protected List<(int, TUpdatable)> _removeList = new List<(int, TUpdatable)>();
@@ -88,11 +88,14 @@ namespace dkstlzu.Utility
         public void ManagerUpdate(float delta)
         {
             AddUpdatables();
+            
+            RemoveUpdatables();
 
             SetDelta(delta);
 
             UpdateElements();
 
+            // Remove error list
             RemoveUpdatables();
         }
 
@@ -106,7 +109,10 @@ namespace dkstlzu.Utility
                     _updatableList.Add(updatable.Item1, dict);
                 }
 
-                dict.Add(updatable.Item2, updatable.Item2);
+                if (!dict.TryAdd(updatable.Item2, 1))
+                {
+                    dict[updatable.Item2]++;
+                }
             }
 
             _addList.Clear();
@@ -118,10 +124,13 @@ namespace dkstlzu.Utility
             {
                 if (_updatableList.TryGetValue(updatable.Item1, out var dict))
                 {
-                    dict.Remove(updatable.Item2);
-                    if (dict.Count == 0)
+                    if (dict.ContainsKey(updatable.Item2))
                     {
-                        _updatableList.Remove(updatable.Item1);
+                        dict[updatable.Item2]--;
+                        if (dict[updatable.Item2] <= 0)
+                        {
+                            dict.Remove(updatable.Item2);
+                        }
                     }
                 }
             }
@@ -137,7 +146,10 @@ namespace dkstlzu.Utility
                 {
                     try
                     {
-                        _updater.Invoke(updatable.Value);
+                        for (int i = 0; i < updatable.Value; i++)
+                        {
+                            _updater.Invoke(updatable.Key);
+                        }
                     }
                     catch (Exception e)
                     {
@@ -145,7 +157,7 @@ namespace dkstlzu.Utility
                         {
                             Printer.Print(_exceptionMsg + "\n" + e, logLevel: LogLevel.Error, customTag: "UpdateManager", priority: 1);
                         }
-                        _removeList.Add((orderListPair.Key, updatable.Value));
+                        _removeList.Add((orderListPair.Key, updatable.Key));
                     }
                 }
             }
