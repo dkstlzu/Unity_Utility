@@ -8,6 +8,20 @@ namespace dkstlzu.Utility
 {
     public static class Singleton
     {
+        private static GameObject _singletonGameObject;
+        public static GameObject SingletonGameObject
+        {
+            get
+            {
+                if (!_singletonGameObject)
+                {
+                    _singletonGameObject = new GameObject("Singleton GameObject");
+                }
+
+                return _singletonGameObject;
+            }
+        }
+
         private static Dictionary<Type, object> _dict = new Dictionary<Type, object>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -71,8 +85,6 @@ namespace dkstlzu.Utility
     
     public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
-        public static GameObject singletonGameObject;
-
         private static T _instance;
 
         public static T GetOrNull
@@ -100,14 +112,9 @@ namespace dkstlzu.Utility
                 return _instance;
             }
             
-            if (!singletonGameObject)
-            {
-                singletonGameObject = new GameObject("Singleton GameObject");
-            }
-            
             if (!_instance)
             {
-                _instance = singletonGameObject.AddComponent<T>();
+                _instance = Singleton.SingletonGameObject.AddComponent<T>();
             }
 
             return _instance;
