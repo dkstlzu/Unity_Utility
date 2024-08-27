@@ -41,6 +41,8 @@ namespace dkstlzu.Utility
             OnPoolAdded = delegate { };
         }
 
+        protected ObjectPool(){}
+        
         public static bool ContainsPool(string key) => ContainsPool(key.GetHashCode());
         public static bool ContainsPool(int key) => PoolDict.ContainsKey(key);
         
@@ -93,6 +95,10 @@ namespace dkstlzu.Utility
         protected abstract void instantiate(int number);
         protected abstract void destroy(int number);
     }
+    
+    public class UnityObjectPool : Singleton<UnityObjectPool>
+    {
+    }
 
     /// <summary>
     /// Interface 로 강제되는 ObjectPool입니다.
@@ -126,7 +132,7 @@ namespace dkstlzu.Utility
         
             return newPool;
         }
-        
+
         public string Key => typeof(T).Name;
         public int HashKey => Key.GetHashCode();
 
@@ -193,10 +199,6 @@ namespace dkstlzu.Utility
             Q.Enqueue(t);
         }
     }
-
-    public class UnityObjectPool : Singleton<UnityObjectPool>
-    {
-    }
     
     /// <summary>
     /// unity의 MonoBehaviour에 대한 ObjectPool입니다.
@@ -238,7 +240,7 @@ namespace dkstlzu.Utility
         /// <summary>
         /// Serializable을 활용한 사용례에서 호출되어야만 하는 함수입니다.
         /// </summary>
-        public void Init()
+        public void Init(Action<T>? initWith = null)
         {
             if (_initialized)
             {
@@ -248,6 +250,13 @@ namespace dkstlzu.Utility
             _initialized = true;
             Q = new Queue<T>();
             instantiate(_initialCapacity);
+            if (initWith != null)
+            {
+                foreach (var t in Q)
+                {
+                    initWith(t);
+                }
+            }
         }
 
         protected override void instantiate(int number)
@@ -426,6 +435,110 @@ namespace dkstlzu.Utility
         public override void Return(PooledObject t)
         {
             t.gameObject.SetActive(false);
+            
+            Q.Enqueue(t);
+        }
+    }
+    
+    /// <summary>
+    /// unity의 특정 컴포넌트를 GameObject와 함께 쓰고 싶을때 사용합니다.
+    /// </summary>
+    [Serializable]
+    public class GameObjectPool<T> : ObjectPool<T> where T : Behaviour
+    {
+        public static GameObjectPool<T> GetOrCreate(Transform parent, int initialSize = -1)
+        {
+            if (PoolDict.TryGetValue((typeof(T).FullName + "Pool" + parent.GetHashCode()).GetHashCode(), out ObjectPool pool))
+            {
+                return (GameObjectPool<T>)pool;
+            }
+            
+            var newPool = new GameObjectPool<T>(ObjectPoolMonoBehaviour.GameObject.transform);
+            newPool._initialCapacity = initialSize < 0 ? DEFAULT_CAPACITY : initialSize;
+            TryAddPool(newPool.HashKey, newPool);
+            newPool.initialize(newPool._initialCapacity);
+            
+            return newPool;
+        }
+        
+        public string Key => typeof(T).FullName + "Pool" + Parent.GetHashCode();
+        public int HashKey => Key.GetHashCode();
+
+        [SerializeField]
+        private int _initialCapacity;
+        
+        [field:SerializeField]
+        public Transform Parent { get; private set; }
+
+        private GameObjectPool (Transform parentGameObject)
+        {
+            Parent = parentGameObject;
+        }
+
+        public void Init(Action<T>? initWith = null)
+        {
+            if (_initialized)
+            {
+                return;
+            }
+
+            _initialized = true;
+            Q = new Queue<T>();
+            instantiate(_initialCapacity);
+            if (initWith != null)
+            {
+                foreach (var t in Q)
+                {
+                    initWith(t);
+                }
+            }
+        }
+
+        protected override void instantiate(int number)
+        {
+            if (Parent == null)
+            {
+                Parent = UnityObjectPool.GetOrCreate().gameObject.transform;
+            }
+
+            for (int i = 0; i < number; i++, Capacity++)
+            {
+                GameObject gameObject = new GameObject($"{typeof(T)}_PooledObject");
+                gameObject.transform.SetParent(Parent);
+                var t = gameObject.AddComponent<T>();
+                
+                t.enabled = false;
+                
+                Q.Enqueue(t);
+            }
+        }
+
+        protected override void destroy(int number)
+        {
+            for (int i = 0; i < number && PoolingCount > 0; i++, Capacity--)
+            {
+                var t = Q.Dequeue();
+                        
+                Object.Destroy(t);
+            }
+        }
+        
+        public override T? Get()
+        {
+            if (PoolingCount == 0)
+            {
+                return null;
+            }
+
+            T t = Q.Dequeue();
+            t.enabled = true;
+            
+            return t;
+        }
+        
+        public override void Return(T t)
+        {
+            t.enabled = false;
             
             Q.Enqueue(t);
         }
