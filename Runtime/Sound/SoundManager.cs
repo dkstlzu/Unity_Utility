@@ -2,6 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.SceneManagement;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace dkstlzu.Utility
 {
@@ -17,18 +23,18 @@ namespace dkstlzu.Utility
         [SerializeField]
         private BehaviourObjectPool<AudioSource> _audioSourcePool;
 
-        public AudioSource BackGroundAudioSource;
-        [SerializeField] private AudioClip backGroundMusicClip;
-        public AudioClip BackGroundMusicClip
+        [Serializable]
+        public class BGMInfo
         {
-            get => backGroundMusicClip;
-            set
-            {
-                backGroundMusicClip = value;
-                BackGroundAudioSource.clip = value;
-                BackGroundAudioSource.Play();
-            }
+#if UNITY_EDITOR
+            public SceneAsset Scene;
+#endif
+            public string SceneName;
+            public AudioClip BGMClip;
         }
+        
+        public AudioSource BackGroundAudioSource;
+        public List<BGMInfo> BGMInfoList;
 
         public bool Use3DSoundSetting;
         public bool IsPaused;
@@ -55,6 +61,11 @@ namespace dkstlzu.Utility
             _audioSourcePool.Init();
         }
 
+        private void OnDestroy()
+        {
+            SceneManager.sceneLoaded -= BGMSetOnSceneLoaded;
+        }
+
         void BackGroundAudioSourceSetting()
         {
             if (BackGroundAudioSource == null)
@@ -62,16 +73,25 @@ namespace dkstlzu.Utility
                 BackGroundAudioSource = gameObject.AddComponent<AudioSource>();
             }
             
-            BackGroundAudioSource.clip = backGroundMusicClip;
             BackGroundAudioSource.loop = true;
-            BackGroundAudioSource.Play();
             
-            // Fold Audiosource Components
-#if UNITY_EDITOR
-            UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(BackGroundAudioSource, false);
-#endif
+            SceneManager.sceneLoaded += BGMSetOnSceneLoaded;
         }
 
+        private void BGMSetOnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            foreach (var bgmInfo in BGMInfoList)
+            {
+                if (bgmInfo.SceneName == scene.name)
+                {
+                    BackGroundAudioSource.clip = bgmInfo.BGMClip;
+                    BackGroundAudioSource.Play();
+                    return;
+                }
+            }
+        }
+
+        
         void SetPreloadedClips()
         {
             foreach (ClipInfo clipInfo in PreloadedClipList)
