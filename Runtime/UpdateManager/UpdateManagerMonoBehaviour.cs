@@ -29,7 +29,9 @@ namespace dkstlzu.Utility
 
 #if UNITY_EDITOR
         private const string UPDATEMANAGER_ENABLELOG_PREFKEY = "UpdateManagerEnableLogPrefKey";
-        static UpdateManager()
+        
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void LoadEnableLog()
         {
             EnableLog = EditorPrefs.GetBool(UPDATEMANAGER_ENABLELOG_PREFKEY, false);
         }
