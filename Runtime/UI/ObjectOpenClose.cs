@@ -27,7 +27,7 @@ namespace dkstlzu.Utility.UI
         {
             if (UIHelper.ScaleOpen(Target, Duration))
             {
-                ESCManager.GetOrNull.AddItem(ESCManagerItemKey, Close, 0);
+                ESCManager.GetOrNull.AddItem(Close, 0);
                 OnOpen?.Invoke();
                 CoroutineHelper.Delay(AfterOpen, Duration + 0.1f);
                 IsOpened = true;
@@ -42,13 +42,12 @@ namespace dkstlzu.Utility.UI
         {
             if (UIHelper.ScaleClose(Target, Duration))
             {
-                ESCManager.GetOrNull.RemoveItem(ESCManagerItemKey);
                 OnClose?.Invoke();
                 CoroutineHelper.Delay(AfterClose, Duration + 0.1f);
                 IsOpened = false;
             } else
             {
-                ESCManager.GetOrNull.AddItem(ESCManagerItemKey, Close, 0);
+                ESCManager.GetOrNull.AddItem(Close, 0);
             }
         }
     }

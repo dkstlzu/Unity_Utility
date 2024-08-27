@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 #if ENABLE_INPUT_SYSTEM
@@ -44,37 +45,54 @@ namespace dkstlzu.Utility.UI
         }
 #endif
 
-        class ActionListBasedPriorityQueue : ListBasedPriorityQueue<Action> 
+        /// <summary>
+        /// Comparer for comparing two keys, handling equality as beeing greater
+        /// Use this Comparer e.g. with SortedLists or SortedDictionaries, that don't allow duplicate keys
+        /// </summary>
+        /// <typeparam name="TKey"></typeparam>
+        public class DuplicateKeyComparer<TKey>
+            :
+                IComparer<TKey> where TKey : IComparable
         {
-            public override void AddItem(string name, Item item)
+            #region IComparer<TKey> Members
+
+            public int Compare(TKey x, TKey y)
             {
-                if (!ItemDict.ContainsKey(name))
+                int result = x.CompareTo(y);
+
+                if (result == 0)
+                    return 1; // Handle equality as being greater. Note: this will break Remove(key) or
+                else          // IndexOfKey(key) since the comparer never returns 0 to signal key equality
+                    return result;
+            }
+
+            #endregion
+        }
+        
+        private SortedList<int, Action> _pq = new SortedList<int, Action>(new DuplicateKeyComparer<int>());
+
+        public void ESC()
+        {
+            var keys = _pq.Keys;
+
+            for (int i = 0; i < keys.Count; i++)
+            {
+                try
                 {
-                    ItemDict.Add(name, item);
-                } else
+                    _pq[keys[i]]?.Invoke();
+                    _pq.Remove(keys[i]);
+                    return;
+                }
+                catch (Exception )
                 {
-                    ItemDict[name].Element += item.Element;
+                    _pq.Remove(keys[i]);
                 }
             }
         }
 
-        private ActionListBasedPriorityQueue PQ = new ActionListBasedPriorityQueue();
-
-
-        public void ESC()
+        public void AddItem(Action action, int priority)
         {
-            ListBasedPriorityQueue<Action>.Item item = PQ.Peek();
-            if (item != null) item.Element();
-        }
-
-        public void AddItem(string name, Action action, int priority)
-        {
-            PQ.AddItem(name, action, priority);
-        }
-
-        public ListBasedPriorityQueue<Action>.Item RemoveItem(string name)
-        {
-            return PQ.RemoveItem(name);
+            _pq.TryAdd(priority, action);
         }
     }
 }
