@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class Trigger
+public struct Trigger
 {
     [SerializeField]
     private bool _value;
@@ -15,6 +15,7 @@ public class Trigger
     {
         _value = set;
         _onlyFirst = onlyFirst;
+        _usedAlready = false;
     }
 
     public Trigger Set()
