@@ -1,11 +1,15 @@
 using UnityEngine;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 namespace dkstlzu.Utility
 {
     public static class GizmoHelper
     {
         public static void DrawString(string text, Vector3 worldPos, Color? colour = null) {
+#if UNITY_EDITOR
             Handles.BeginGUI();
 
             var restoreColor = GUI.color;
@@ -25,6 +29,7 @@ namespace dkstlzu.Utility
             GUI.Label(new Rect(screenPos.x - (size.x / 2), -screenPos.y + view.position.height + 4, size.x, size.y), text);
             GUI.color = restoreColor;
             Handles.EndGUI();
+#endif
          }
     }
 }
