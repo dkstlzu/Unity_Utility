@@ -12,7 +12,7 @@ using UnityEditor;
 namespace dkstlzu.Utility
 {
     [Serializable]
-    public struct SceneCallbackEventHandler
+    public class SceneCallbackEventHandler
     {
 #if UNITY_EDITOR
         public SceneAsset Scene;

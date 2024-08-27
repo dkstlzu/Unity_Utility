@@ -11,45 +11,55 @@ namespace dkstlzu.Utility
     [CustomPropertyDrawer(typeof(SceneCallbackEventHandler))]
     public class SceneCallbackHandlerPropertyDrawer : PropertyDrawer
     {
-        private SerializedProperty _property;
-        private SerializedProperty _sceneNameProperty;
-        private Foldout _foldout;
-        private UnityEvent _loadEvent;
-        private UnityEvent _unloadEvent;
-        
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            _property = property;
+            var foldout = new Foldout();
+            foldout.text = "Handler";
             
-            VisualElement root = new VisualElement();
-
-            _foldout = new Foldout();
-            _foldout.text = "Handler";
-            root.Add(_foldout);
             PropertyField sceneAssetField = new PropertyField(property.FindPropertyRelative(nameof(SceneCallbackEventHandler.Scene)));
-            sceneAssetField.RegisterValueChangeCallback(OnSceneAssetChange);
-            _foldout.Add(sceneAssetField);
-            _foldout.Add(new PropertyField(property.FindPropertyRelative(nameof(SceneCallbackEventHandler.OnLoad))));
-            _foldout.Add(new PropertyField(property.FindPropertyRelative(nameof(SceneCallbackEventHandler.OnUnload))));
+            SceneCallbackEventHandler handler = (SceneCallbackEventHandler)EditorHelper.GetTargetObjectOfProperty(property);
 
-            var targetObject = property.serializedObject.targetObject;
-            var targetObjectClassType = targetObject.GetType();
-            var field = targetObjectClassType.GetField(property.propertyPath);
-            if (field != null)
+            sceneAssetField.RegisterValueChangeCallback(OnSceneAssetChange);
+            
+            foldout.RegisterCallback<ContextClickEvent>(OnContextClick);
+            foldout.Add(sceneAssetField);
+            foldout.Add(new PropertyField(property.FindPropertyRelative(nameof(SceneCallbackEventHandler.OnLoad))));
+            foldout.Add(new PropertyField(property.FindPropertyRelative(nameof(SceneCallbackEventHandler.OnUnload))));
+            return foldout;
+        
+            void OnContextClick(ContextClickEvent evt)
             {
-                object value = field.GetValue(targetObject);
-                if (value is SceneCallbackEventHandler handler)
-                {
-                    _loadEvent = handler.OnLoad;
-                    _unloadEvent = handler.OnUnload;
-            
-                    root.RegisterCallback<ContextClickEvent>(OnContextClick);
-                }
+                GenericMenu contextMenu = new GenericMenu();
+
+                EventArg arg = new EventArg();
+                arg.SceneName = handler.SceneName;
+
+                arg.Action = handler.OnLoad.Invoke;
+                contextMenu.AddItem(new GUIContent("RegisterLoad"), false, 
+                    (obj) => SceneCallback.RegisterLoadEvent(((EventArg)obj).SceneName, ((EventArg)obj).Action)
+                    , arg);
+                arg.Action = handler.OnUnload.Invoke;
+                contextMenu.AddItem(new GUIContent("RegisterUnload"), false, 
+                    (obj) => SceneCallback.RegisterUnloadEvent(((EventArg)obj).SceneName, ((EventArg)obj).Action)
+                    , arg);
+                arg.Action = handler.OnLoad.Invoke;
+                contextMenu.AddItem(new GUIContent("UnregisterLoad"), false, 
+                    (obj) => SceneCallback.UnregisterLoadEvent(((EventArg)obj).SceneName, ((EventArg)obj).Action)
+                    , arg);
+                arg.Action = handler.OnUnload.Invoke;
+                contextMenu.AddItem(new GUIContent("UnregisterUnload"), false, 
+                    (obj) => SceneCallback.UnregisterUnloadEvent(((EventArg)obj).SceneName, ((EventArg)obj).Action)
+                    , arg);
+
+                contextMenu.ShowAsContext();
             }
-            
-            _sceneNameProperty = property.FindPropertyRelative("_sceneName");
-            
-            return root;
+
+            void OnSceneAssetChange(SerializedPropertyChangeEvent evt)
+            {
+                SceneAsset newAsset = evt.changedProperty.objectReferenceValue as SceneAsset;
+                handler.SceneName = newAsset?.name ?? "";
+                foldout.text = newAsset?.name ?? "Handler";
+            }
         }
 
         struct EventArg
@@ -62,44 +72,6 @@ namespace dkstlzu.Utility
                 SceneName = sceneName;
                 Action = action;
             }
-        }
-        
-        private void OnContextClick(ContextClickEvent evt)
-        {
-            GenericMenu contextMenu = new GenericMenu();
-
-            EventArg arg = new EventArg();
-            arg.SceneName = _sceneNameProperty.stringValue;
-
-            arg.Action = _loadEvent.Invoke;
-            contextMenu.AddItem(new GUIContent("RegisterLoad"), false, 
-                (obj) => SceneCallback.RegisterLoadEvent(((EventArg)obj).SceneName, ((EventArg)obj).Action)
-                , arg);
-            arg.Action = _unloadEvent.Invoke;
-            contextMenu.AddItem(new GUIContent("RegisterUnload"), false, 
-                (obj) => SceneCallback.RegisterUnloadEvent(((EventArg)obj).SceneName, ((EventArg)obj).Action)
-                , arg);
-            arg.Action = _loadEvent.Invoke;
-            contextMenu.AddItem(new GUIContent("UnregisterLoad"), false, 
-                (obj) => SceneCallback.UnregisterLoadEvent(((EventArg)obj).SceneName, ((EventArg)obj).Action)
-                , arg);
-            arg.Action = _unloadEvent.Invoke;
-            contextMenu.AddItem(new GUIContent("UnregisterUnload"), false, 
-                (obj) => SceneCallback.UnregisterUnloadEvent(((EventArg)obj).SceneName, ((EventArg)obj).Action)
-                , arg);
-
-            contextMenu.ShowAsContext();
-        }
-
-        private void OnSceneAssetChange(SerializedPropertyChangeEvent evt)
-        {
-            _property.serializedObject.Update();
-            
-            SceneAsset newAsset = evt.changedProperty.objectReferenceValue as SceneAsset;
-            _sceneNameProperty.stringValue = newAsset?.name ?? "";
-            _foldout.text = newAsset?.name ?? "Handler";
-            
-            _property.serializedObject.ApplyModifiedProperties();
         }
     }
 }
