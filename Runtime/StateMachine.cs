@@ -142,6 +142,13 @@ namespace dkstlzu.Utility
         {
             if (_eventDict[EventType.Stay].TryGetValue(_currentState, out Action action))
             {
+                if (EnableLog)
+                {
+                    foreach (var call in _eventDict[EventType.Stay]?[_currentState]?.GetInvocationList())
+                    {
+                        Printer.Print($"Stay {_currentState} Call {call.Target}.{call.Method.Name}", priority:-2);
+                    }
+                }
                 action?.Invoke();                
             }
             OnUpdate?.Invoke();
