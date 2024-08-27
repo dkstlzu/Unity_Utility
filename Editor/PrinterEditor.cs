@@ -20,7 +20,7 @@ namespace dkstlzu.Utility
 
         static void Notify()
         {
-            Printer.Print($"Printer priority update {Printer.CurrentPriority}", customTag:"WF Dev", priority:Printer.CurrentPriority);
+            Printer.Print($"Printer priority update {Printer.CurrentPriority}", customTag:"Dev", priority:Printer.CurrentPriority);
         }
     }
 }
