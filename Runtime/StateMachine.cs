@@ -154,90 +154,6 @@ namespace dkstlzu.Utility
             OnUpdate?.Invoke();
         }
         
-        public void AddEnterEvent(string key, Action action, bool invokeIfAlready = false)
-        {
-            AddEvent(_eventDict[EventType.Enter], key, action);
-
-            if (invokeIfAlready && _currentState == key)
-            {
-                action?.Invoke();
-            }
-        }
-
-        public void RemoveEnterEvent(string key, Action action)
-        {
-            RemoveEvent(_eventDict[EventType.Enter], key, action);
-        }        
-        public void AddStayEvent(string key, Action action)
-        {
-            AddEvent(_eventDict[EventType.Stay], key, action);
-        }
-
-        public void RemoveStayEvent(string key, Action action)
-        {
-            RemoveEvent(_eventDict[EventType.Stay], key, action);
-        }        
-        
-        public void AddExitEvent(string key, Action action, bool invokeIfAlready = false)
-        {
-            AddEvent(_eventDict[EventType.Exit], key, action);
-
-            if (invokeIfAlready && _currentState != key)
-            {
-                action?.Invoke();
-            }
-        }
-
-        public void RemoveExitEvent(string key, Action action)
-        {
-            RemoveEvent(_eventDict[EventType.Exit], key, action);
-        }
-
-        protected void AddEvent(Dictionary<string, Action> dict, string key, Action action)
-        {
-            if (!dict.ContainsKey(key))
-            {
-                dict.Add(key, action);
-            }
-            else
-            {
-                dict[key] += action;
-            }
-        }
-        
-        protected void RemoveEvent(Dictionary<string, Action> dict, string key, Action action)
-        {
-            if (dict.ContainsKey(key))
-            {
-                dict[key] -= action;
-            }
-
-            if (dict[key].GetInvocationList().Length == 0)
-            {
-                dict.Remove(key);
-            }
-        }
-
-        public void ClearEvent(string key)
-        {
-            foreach (var pair in _eventDict)
-            {
-                pair.Value.Remove(key);
-            }
-        }
-
-        public void ClearDict()
-        {
-            InitDict(_keys);
-        }
-
-        public void SetTransferable(string from, string to, bool movable)
-        {
-            _transferableDict[GetTransferableKey(from, to)] = movable;
-        }
-
-        protected string GetTransferableKey(string from, string to) => $"{from}.{to}";
-
         public void ChangeTo(string key, bool ignoreEvents = false)
         {
             if (!_keys.Contains(key))
@@ -301,6 +217,90 @@ namespace dkstlzu.Utility
             _eventDict[EventType.Exit]?[from]?.Invoke();
             _eventDict[EventType.Enter]?[to]?.Invoke();
         }
+        
+        public void AddEnterEvent(string key, Action action, bool invokeIfAlready = false)
+        {
+            AddEvent(_eventDict[EventType.Enter], key, action);
+
+            if (invokeIfAlready && _currentState == key)
+            {
+                action?.Invoke();
+            }
+        }
+
+        public void RemoveEnterEvent(string key, Action action)
+        {
+            RemoveEvent(_eventDict[EventType.Enter], key, action);
+        }        
+        public void AddStayEvent(string key, Action action)
+        {
+            AddEvent(_eventDict[EventType.Stay], key, action);
+        }
+
+        public void RemoveStayEvent(string key, Action action)
+        {
+            RemoveEvent(_eventDict[EventType.Stay], key, action);
+        }        
+        
+        public void AddExitEvent(string key, Action action, bool invokeIfAlready = false)
+        {
+            AddEvent(_eventDict[EventType.Exit], key, action);
+
+            if (invokeIfAlready && _currentState != key)
+            {
+                action?.Invoke();
+            }
+        }
+
+        public void RemoveExitEvent(string key, Action action)
+        {
+            RemoveEvent(_eventDict[EventType.Exit], key, action);
+        }
+
+        protected void AddEvent(Dictionary<string, Action> dict, string key, Action action)
+        {
+            if (!dict.ContainsKey(key))
+            {
+                dict.Add(key, action);
+            }
+            else
+            {
+                dict[key] += action;
+            }
+        }
+        
+        protected void RemoveEvent(Dictionary<string, Action> dict, string key, Action action)
+        {
+            if (dict.ContainsKey(key))
+            {
+                dict[key] -= action;
+                
+                if (dict[key] == null)
+                {
+                    dict.Remove(key);
+                }
+            }
+        }
+
+        public void ClearEvent(string key)
+        {
+            foreach (var pair in _eventDict)
+            {
+                pair.Value.Remove(key);
+            }
+        }
+
+        public void ClearDict()
+        {
+            InitDict(_keys);
+        }
+
+        public void SetTransferable(string from, string to, bool movable)
+        {
+            _transferableDict[GetTransferableKey(from, to)] = movable;
+        }
+
+        protected string GetTransferableKey(string from, string to) => $"{from}.{to}";
         
         public void PrintInfo()
         {
@@ -402,6 +402,20 @@ namespace dkstlzu.Utility
             return true;
         }
         
+        public void ChangeTo(T to, bool ignoreEvents = false)
+        {
+            if (isSameState(CurrentEnum, to)) return;
+            
+            ChangeTo(to.ToString(), ignoreEvents);
+        }
+
+        public void SimulateChange(T from, T to)
+        {
+            if (isSameState(from, to)) return;
+
+            SimulateChange(from.ToString(), to.ToString());
+        }
+        
         public void AddEnterEvent(T state, Action action, bool invokeIfAlready = false)
         {
             AddEnterEvent(state.ToString(), action, invokeIfAlready);
@@ -439,20 +453,6 @@ namespace dkstlzu.Utility
         public void SetTransferable(T from, T to, bool movable)
         {
             SetTransferable(from.ToString(), to.ToString(), movable);
-        }
-        
-        public void ChangeTo(T to, bool ignoreEvents = false)
-        {
-            if (isSameState(CurrentEnum, to)) return;
-            
-            ChangeTo(to.ToString(), ignoreEvents);
-        }
-
-        public void SimulateChange(T from, T to)
-        {
-            if (isSameState(from, to)) return;
-
-            SimulateChange(from.ToString(), to.ToString());
         }
 
         bool isSameState(T t1, T t2)
