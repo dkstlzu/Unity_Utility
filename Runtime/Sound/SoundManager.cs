@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using Random = UnityEngine.Random;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -12,17 +12,30 @@ using UnityEditor;
 namespace dkstlzu.Utility
 {
     [Serializable]
-    public class ClipArg
+    public class RandomAudioClip
     {
-        public AudioClip Clip;
-        public SoundArgs Arg;
+        public AudioClip[] Clips;
+
+        public AudioClip Get()
+        {
+            if (Clips == null || Clips.Length == 0)
+            {
+                return null;
+            }
+
+            return Clips[Random.Range(0, Clips.Length)];
+        }
     }
 
     public class SoundManager : Singleton<SoundManager>
     {
         [SerializeField]
         private BehaviourObjectPool<AudioSource> _audioSourcePool;
+        [SerializeField]
+        private GameObjectPool<AudioSource> _movableAudioSourcePool;
 
+        public AnimationCurve AudioSourceSpatialCurve;
+        
         [Serializable]
         public class BGMInfo
         {
@@ -36,7 +49,6 @@ namespace dkstlzu.Utility
         public AudioSource BackGroundAudioSource;
         public List<BGMInfo> BGMInfoList;
 
-        public bool Use3DSoundSetting;
         public bool IsPaused;
         public bool IsMuted;
 
@@ -58,7 +70,23 @@ namespace dkstlzu.Utility
         {
             BackGroundAudioSourceSetting();
             SetPreloadedClips();
-            _audioSourcePool.Init();
+            _audioSourcePool.Init((audioSource) =>
+            {
+                audioSource.playOnAwake = false;
+                audioSource.loop = false;
+                audioSource.spatialBlend = 0;
+            });
+
+            _movableAudioSourcePool.Init((audioSource) =>
+            {
+                audioSource.playOnAwake = false;
+                audioSource.loop = false;
+                audioSource.spatialBlend = 1;
+                audioSource.rolloffMode = AudioRolloffMode.Custom;
+                audioSource.minDistance = 10;
+                audioSource.maxDistance = 100;
+                audioSource.SetCustomCurve(AudioSourceCurveType.CustomRolloff, AudioSourceSpatialCurve);
+            });
         }
 
         private void OnDestroy()
@@ -105,9 +133,21 @@ namespace dkstlzu.Utility
             }
         }
 
+        /// <summary>
+        /// Play Preloaded Clip with name
+        /// </summary>
         public void Play(string clipName) => Play(clipName, 1, false);
+        /// <summary>
+        /// Play Preloaded Clip with name
+        /// </summary>
         public void Play(string clipName, bool loop) => Play(clipName, 1, loop);
+        /// <summary>
+        /// Play Preloaded Clip with name
+        /// </summary>
         public void Play(string clipName, float volume) => Play(clipName, volume, false);
+        /// <summary>
+        /// Play Preloaded Clip with name
+        /// </summary>
         public void Play(string clipName, float volume, bool loop)
         {
             if (!ClipDict.ContainsKey(clipName))
@@ -115,7 +155,7 @@ namespace dkstlzu.Utility
                 return;
             }
             
-            PlayOnWorld(ClipDict[clipName], volume, loop, true);
+            PlayOnWorld(ClipDict[clipName], volume, loop);
         }
 
         public void Play(string audioSourceName, AudioClip clip, float volume, bool loop)
@@ -144,62 +184,59 @@ namespace dkstlzu.Utility
             AudioSourceDict.Remove(audioSourceName);
         }
 
-        /// <summary>
-        /// Play Clip with SoundArgs
-        /// </summary>
-        public void Play(AudioClip clip, SoundArgs args, float volume = 1)
+        public void PlayAt(AudioClip clip, Vector3 position, bool loop = false)
         {
-            switch(args.PlayMode)
-            {
-                case SoundArgs.SoundPlayMode.At :
-                    Vector3 position = args.Transform == null ? args.RelativePosition : args.Transform.position + args.RelativePosition;
-                    PlayAt(clip, position, args.LoopOnWorld);
-                break;
-                case SoundArgs.SoundPlayMode.OnTransform :
-                    PlayOnTransform(clip, args.Transform, args.RelativePosition, args.AutoReturn);
-                break;
-                default:
-                case SoundArgs.SoundPlayMode.OnWorld :
-                    PlayOnWorld(clip, volume, args.LoopOnWorld, args.AutoReturn);
-                break;
-            }
-        }
+            AudioSource source = _movableAudioSourcePool.Get();
 
-        public void PlayAt(AudioClip clip, Vector3 position, bool loop)
-        {
-            var go = new GameObject("Temporary Audio");
-            go.transform.SetParent(transform);
-            go.transform.position = position;
+            if (source == null)
+            {
+                Printer.Print("All Movable Audio Source is being used");
+                return;
+            }
             
-            var source = go.AddComponent<AudioSource>();
+            source.transform.position = position;
             source.clip = clip;
             source.loop = loop;
             source.Play();
+            
+            PlayingAudioSourceList.Add(source);
+
+            StartCoroutine(ReturnMovableSound(source));
+            
+            if (!loop)
+            {
+                StartCoroutine(ReturnMovableSound(source));
+            }
         }
 
         /// <summary>
         /// Play sound at relative position
         /// </summary>
-        public void PlayOnTransform(AudioClip clip, Transform obj, Vector3 relativePos, bool autoDestroy)
+        public void PlayOnTransform(AudioClip clip, Transform on, bool loop = false, Vector3 relativePos = default)
         {
-            GameObject audioObj = new GameObject("AudioObject");
-            audioObj.transform.SetParent(obj);
-            audioObj.transform.localPosition = relativePos;
+            AudioSource source = _movableAudioSourcePool.Get();
             
-            AudioSource source = audioObj.AddComponent<AudioSource>();
+            if (source == null)
+            {
+                Printer.Print("All Movable Audio Source is being used");
+                return;
+            }
+            
+            source.transform.SetParent(on);
+            source.transform.localPosition = relativePos;
+            source.loop = loop;
             source.clip = clip;
-            source.spatialBlend = Use3DSoundSetting ? 1 : 0;
             source.Play();
 
             PlayingAudioSourceList.Add(source);
 
-            if (autoDestroy)
+            if (!loop)
             {
-                StartCoroutine(DestroySound(source));
+                StartCoroutine(ReturnMovableSound(source));
             }
         }
 
-        public void PlayOnWorld(AudioClip clip, float volume, bool loop, bool autoReturn)
+        public void PlayOnWorld(AudioClip clip, float volume = 1, bool loop = false)
         {
             AudioSource source = _audioSourcePool.Get();
 
@@ -220,7 +257,7 @@ namespace dkstlzu.Utility
             
             PlayingAudioSourceList.Add(source);
 
-            if (autoReturn)
+            if (!loop)
             {
                 StartCoroutine(ReturnSound(source));
             }
@@ -268,7 +305,7 @@ namespace dkstlzu.Utility
 
         private IEnumerator DestroySound(AudioSource source)
         {
-            yield return new WaitWhile(() => source.isPlaying);
+            yield return new WaitForSeconds(source.clip.length);
             
             PlayingAudioSourceList.Remove(source);
             Destroy(source.gameObject);
@@ -276,10 +313,23 @@ namespace dkstlzu.Utility
         
         private IEnumerator ReturnSound(AudioSource source)
         {
-            yield return new WaitWhile(() => source.isPlaying);
+            yield return new WaitForSeconds(source.clip.length);
 
             PlayingAudioSourceList.Remove(source);
             _audioSourcePool.Return(source);
+        }
+        
+        private IEnumerator ReturnMovableSound(AudioSource source)
+        {
+            yield return new WaitForSeconds(source.clip.length);
+
+            if (source != null)
+            {
+                source.transform.SetParent(transform);
+                _movableAudioSourcePool.Return(source);
+            }
+            
+            PlayingAudioSourceList.Remove(source);
         }
     }
 }
