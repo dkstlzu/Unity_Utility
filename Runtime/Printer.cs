@@ -51,10 +51,28 @@ namespace dkstlzu.Utility
             public void Add(object message, string customTag = null, LogLevel level = LogLevel.Default)
             {
                 _addedThisFrame = true;
-                
+
+                switch (level)
+                {
+                    case LogLevel.Warning:
+                        _builder.Append("<color=yellow>");
+                        break;
+                    case LogLevel.Error: 
+                        _builder.Append("<color=red>");
+                        break;
+                }
                 _builder.Append(BracketTag(customTag));
 
                 _builder.Append(message);
+                
+                switch (level)
+                {
+                    case LogLevel.Warning:
+                    case LogLevel.Error: 
+                        _builder.Append("</color>");
+                        break;
+                }
+                
                 _builder.AppendLine();
 
                 MaximumLogLevel = (LogLevel)Mathf.Max((int)MaximumLogLevel, (int)level);
@@ -92,6 +110,7 @@ namespace dkstlzu.Utility
                 {
                     _addedThisFrame = false;
                     _builder.Clear();
+                    _builder.AppendLine($"FramePrint {Time.frameCount}");
                     MaximumLogLevel = LogLevel.Default;
                 }
             }
