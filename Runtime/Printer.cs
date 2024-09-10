@@ -22,13 +22,103 @@ namespace dkstlzu.Utility
         Warning,
         Error,
     }
+
+    public enum LogInterval
+    {
+        Default,
+        Individual,
+        Frame,
+        // Group,
+    }
     
 #if UNITY_EDITOR
     [InitializeOnLoad]
 #endif
     public static class Printer
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        class FramePrinter : ILateUpdatable
+        {
+            private StringBuilder _builder;
+            public LogLevel MaximumLogLevel = LogLevel.Default;
+            private bool _addedThisFrame = false;
+            
+            public FramePrinter()
+            {
+                _builder = new StringBuilder();
+            }
+
+            public void Add(object message, string customTag = null, LogLevel level = LogLevel.Default)
+            {
+                _addedThisFrame = true;
+                
+                _builder.Append(BracketTag(customTag));
+
+                _builder.Append(message);
+                _builder.AppendLine();
+
+                MaximumLogLevel = (LogLevel)Mathf.Max((int)MaximumLogLevel, (int)level);
+            }
+            
+            public void ManualLateUpdate(float delta)
+            {
+                if (!_addedThisFrame || _builder.Length == 0)
+                {
+                    return;
+                }
+                
+                try
+                {
+                    switch (MaximumLogLevel)
+                    {
+                        default:
+                        case LogLevel.Default:
+                            Debug.Log(_builder);
+                            break;
+                        case LogLevel.Warning:
+                            Debug.LogWarning(_builder);
+                            break;
+                        case LogLevel.Error:
+                            Debug.LogError(_builder);
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    _addedThisFrame = false;
+                    _builder.Clear();
+                    MaximumLogLevel = LogLevel.Default;
+                }
+            }
+        }
+
+        private static FramePrinter _framePrinter;
+#endif
+
         public static string DefaultTag = Application.productName;
+        private static LogInterval _defaultLogInterval = LogInterval.Individual;
+
+        public static LogInterval DefaultLogInterval
+        {
+            get => _defaultLogInterval;
+            set
+            {
+                if (value == default)
+                {
+                    return;
+                }
+
+                _defaultLogInterval = value;
+#if UNITY_EDITOR
+                EditorPrefs.SetInt("PrinterLogInterval", (int)_defaultLogInterval);
+#endif
+            }
+        }
 
         private static int _currentPriority;
         public static int CurrentPriority
@@ -51,24 +141,55 @@ namespace dkstlzu.Utility
             S_stringBuilder = new StringBuilder();
 #if UNITY_EDITOR
             _currentPriority = EditorPrefs.GetInt("PrinterPriority", 0);
+            _defaultLogInterval = (LogInterval)EditorPrefs.GetInt("PrinterLogInterval", 0);
 #endif
         }
 #endif
 
         [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
-        public static void Print(object message, string customTag = null, LogLevel logLevel = LogLevel.Default, int priority = 0)
+        public static void Print(object message, string customTag = null, LogLevel logLevel = LogLevel.Default, int priority = 0, LogInterval logInterval = LogInterval.Default)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (priority < CurrentPriority) return;
 
+            LogInterval per = logInterval;
+            if (logInterval == LogInterval.Default)
+            {
+                per = DefaultLogInterval;                
+            }
+            
+            if (per == LogInterval.Individual)
+            {
+                print(message, customTag, logLevel);
+            }
+            else if (per == LogInterval.Frame)
+            {
+                if (!EditorApplication.isPlaying)
+                {
+                    Debug.LogError($"Printer.Print() with ConsolePer.Frame only supports Play Mode.");
+                    print(message, customTag, logLevel);
+                    return;
+                }
+                
+                if (_framePrinter == null)
+                {
+                    _framePrinter = new FramePrinter();
+                    UpdateManager.GetOrCreate().AddUpdatable(_framePrinter);
+                }
+                
+                _framePrinter.Add(message, customTag, logLevel);
+            }
+#endif
+        }
+
+        private static void print(object message, string customTag = null, LogLevel logLevel = LogLevel.Default)
+        {
             S_stringBuilder.Clear();
             S_stringBuilder.Append(BracketTag(customTag));
 
-            string msg = message.ToString();
-
-            S_stringBuilder.Append(msg);
+            S_stringBuilder.Append(message);
             S_stringBuilder.AppendLine();
-
+            
             try
             {
                 switch (logLevel)
@@ -90,8 +211,6 @@ namespace dkstlzu.Utility
                 Console.WriteLine(e);
                 throw;
             }
-
-#endif
         }
 
         public static string BracketTag(string customTag = null)
