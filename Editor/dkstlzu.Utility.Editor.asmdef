@@ -2,7 +2,8 @@
     "name": "dkstlzu.Utility.Editor",
     "rootNamespace": "dkstlzu.Utility",
     "references": [
-        "GUID:0e8db18548185d94daf72bf1ae076258"
+        "GUID:0e8db18548185d94daf72bf1ae076258",
+        "GUID:478a2357cc57436488a56e564b08d223"
     ],
     "includePlatforms": [
         "Editor"
