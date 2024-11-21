@@ -85,14 +85,14 @@ namespace dkstlzu.Utility
 
         private FrameAnimationInfoScriptable _targetAsset;
         private int _currentSpriteIndex;
-        private int m_currentFrame;
-        private int _currentFrame
+        private int m_currentFrameNumber;
+        private int _currentFrameNumber
         {
-            get => m_currentFrame;
+            get => m_currentFrameNumber;
             set
             {
-                m_currentFrame = value;
-                EditorPrefs.SetInt(_TARGET_FRAME_PREF_KEY, m_currentFrame);
+                m_currentFrameNumber = value;
+                EditorPrefs.SetInt(_TARGET_FRAME_PREF_KEY, m_currentFrameNumber);
             }
         }
         public int AnimationFPS => Setting.AnimationFPS;
@@ -114,15 +114,15 @@ namespace dkstlzu.Utility
         private static bool _isFocused => focusedWindow is FrameAnimatorEditorWindow;
 
         private List<FrameData> _frameDatas = new List<FrameData>();
-        private FrameData _currentFrameData => FrameDataIsValid ? _frameDatas[_currentFrame] : null;
-        private FrameData _previousFrameData => FrameDataIsValid && _currentFrame > 0 ? _frameDatas[_currentFrame-1] : null;
-        private FrameData _nextFrameData => FrameDataIsValid && _currentFrame < _maxFrameNumber ? _frameDatas[_currentFrame+1] : null;
+        private FrameData _currentFrameData => FrameDataIsValid ? _frameDatas[_currentFrameNumber] : null;
+        private FrameData _previousFrameData => FrameDataIsValid && _currentFrameNumber > 0 ? _frameDatas[_currentFrameNumber-1] : null;
+        private FrameData _nextFrameData => FrameDataIsValid && _currentFrameNumber < _maxFrameNumber ? _frameDatas[_currentFrameNumber+1] : null;
 
         private const int _INVALID_INDEX_NUM = -1;
         private int _maxFrameNumber => FrameDataIsValid ? _frameDatas.Count-1 : _INVALID_INDEX_NUM;
         private int _maxSpriteIndex => FrameDataIsValid ? _frameDatas[^1].SpriteIndex : _INVALID_INDEX_NUM;
         private bool FrameDataIsValid => _frameDatas.Count > 0 && _frameDatas[0].SpriteIndex != _INVALID_INDEX_NUM;
-        private bool CurrentFrameIsValid => _currentFrame >= 0 && _currentFrame <= _maxFrameNumber;
+        private bool CurrentFrameNumberIsValid => _currentFrameNumber >= 0 && _currentFrameNumber <= _maxFrameNumber;
 
         private const string _FRAME_DEV_TOOL_TAG = "FrameDevTool";
         private const string _EDIT_BOX_PREF_KEY = "FrameDevToolEditingBoxType";
@@ -142,10 +142,7 @@ namespace dkstlzu.Utility
         {
             Asset.CloneTree(rootVisualElement);
 
-            if (Setting == null)
-            {
-                Setting = GetDefaultConfig();
-            }
+            Setting = FrameAnimatorEditorWindowConfigScriptable.GetOrCreate();
 
             SetShortCutManager();
 
@@ -179,35 +176,6 @@ namespace dkstlzu.Utility
                 rootVisualElement.Q<ObjectField>("AssetReferenceField").value = previousTarget;
             }
         } 
-
-        FrameAnimatorEditorWindowConfigScriptable GetDefaultConfig()
-        {
-            FrameAnimatorEditorWindowConfigScriptable defaultConfig;
-            
-            if (!EditorPrefs.HasKey(_DEFAULT_CONFIG_PATH_PREF_KEY))
-            {
-                defaultConfig = CreateInstance<FrameAnimatorEditorWindowConfigScriptable>();
-
-                string settingDirectoryPath = Path.Combine(Application.dataPath, "Settings");
-                if (!Directory.Exists(settingDirectoryPath))
-                {
-                    Directory.CreateDirectory(settingDirectoryPath);
-                }
-
-                string defaultConfigPath = "Assets/Settings/DefaultFrameDevToolConfig.asset";
-                AssetDatabase.CreateAsset(defaultConfig, defaultConfigPath);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                
-                EditorPrefs.SetString(_DEFAULT_CONFIG_PATH_PREF_KEY, defaultConfigPath);
-            }
-            else
-            {
-                defaultConfig = AssetDatabase.LoadAssetAtPath<FrameAnimatorEditorWindowConfigScriptable>(EditorPrefs.GetString(_DEFAULT_CONFIG_PATH_PREF_KEY));
-            }
-
-            return defaultConfig;
-        }
 
         void SetShortCutManager()
         {
@@ -275,6 +243,7 @@ namespace dkstlzu.Utility
             rootVisualElement.Q<Button>("ColorSelectorButton").RegisterCallback<ClickEvent>(OnColorSelectorClicked);
             rootVisualElement.Q<Toggle>("AutoSaveToggle").RegisterValueChangedCallback(OnAutoSaveToggle);
             rootVisualElement.Q<Button>("SaveAssetButton").RegisterCallback<ClickEvent>(OnSaveButtonClicked);
+            rootVisualElement.Q<Button>("CreateAssetButton").RegisterCallback<ClickEvent>(OnCreateAssetButtonClicked);
             rootVisualElement.Q<ObjectField>("AssetReferenceField").RegisterValueChangedCallback(OnAssetSelected);
             rootVisualElement.Q<ObjectField>("SpriteField").RegisterValueChangedCallback(OnSpriteSelected);
             
@@ -304,7 +273,7 @@ namespace dkstlzu.Utility
         
         private void Update()
         {
-            _currentFrameNumberLabel.text = _currentFrame.ToString();
+            _currentFrameNumberLabel.text = _currentFrameNumber.ToString();
             _currentSpriteNumberLabel.text = _currentSpriteIndex.ToString();
             spriteImage.SetImageFitableVisualElement();
             if (spriteImage.sprite != null)
@@ -375,44 +344,50 @@ namespace dkstlzu.Utility
         {
             if (_targetAsset == null) return;
 
-            FrameAnimationSprites spritesAsset = _targetAsset.Sprites;
-            FrameAnimationFrames framesAsset = _targetAsset.Frames;
-            RectsScriptable bodyRectsAsset = _targetAsset.BodyBoxRects;
-            RectsScriptable hitRectsAsset = _targetAsset.HitBoxRects;
-            RectsScriptable attackRectsAsset = _targetAsset.AttackBoxRects;
+            SaveAsset(_targetAsset);
+        }
 
-            string targetAssetDirectory = Path.GetDirectoryName(AssetDatabase.GetAssetPath(_targetAsset));
+        private void SaveAsset(FrameAnimationInfoScriptable asset)
+        {
+            FrameAnimationSprites spritesAsset = asset.Sprites;
+            FrameAnimationFrames framesAsset = asset.Frames;
+            RectsScriptable bodyRectsAsset = asset.BodyBoxRects;
+            RectsScriptable hitRectsAsset = asset.HitBoxRects;
+            RectsScriptable attackRectsAsset = asset.AttackBoxRects;
+
+            string targetAssetDirectory = Path.GetDirectoryName(AssetDatabase.GetAssetPath(asset));
             
             Debug.Assert(targetAssetDirectory != null);
             
             if (spritesAsset == null)
             {
                 spritesAsset = CreateInstance<FrameAnimationSprites>();
-                AssetDatabase.CreateAsset(spritesAsset, Path.Combine(targetAssetDirectory, $"{_targetAsset.name}_Sprites.asset"));
+                AssetDatabase.CreateAsset(spritesAsset, Path.Combine(targetAssetDirectory, $"{asset.name}_Sprites.asset"));
             }
 
             if (framesAsset == null)
             {
                 framesAsset = CreateInstance<FrameAnimationFrames>();
-                AssetDatabase.CreateAsset(framesAsset, Path.Combine(targetAssetDirectory, $"{_targetAsset.name}_Frames.asset"));
+                framesAsset.Sequences = Array.Empty<int>();
+                AssetDatabase.CreateAsset(framesAsset, Path.Combine(targetAssetDirectory, $"{asset.name}_Frames.asset"));
             }
             
             if (bodyRectsAsset == null)
             {
                 bodyRectsAsset = CreateInstance<RectsScriptable>();
-                AssetDatabase.CreateAsset(bodyRectsAsset, Path.Combine(targetAssetDirectory, $"{_targetAsset.name}_BodyBoxes.asset"));
+                AssetDatabase.CreateAsset(bodyRectsAsset, Path.Combine(targetAssetDirectory, $"{asset.name}_BodyBoxes.asset"));
             }
 
             if (hitRectsAsset == null)
             {
                 hitRectsAsset = CreateInstance<RectsScriptable>();
-                AssetDatabase.CreateAsset(hitRectsAsset, Path.Combine(targetAssetDirectory, $"{_targetAsset.name}_HitBoxes.asset"));
+                AssetDatabase.CreateAsset(hitRectsAsset, Path.Combine(targetAssetDirectory, $"{asset.name}_HitBoxes.asset"));
             }
             
             if (attackRectsAsset == null)
             {
                 attackRectsAsset = CreateInstance<RectsScriptable>();
-                AssetDatabase.CreateAsset(attackRectsAsset, Path.Combine(targetAssetDirectory, $"{_targetAsset.name}_AttackBoxes.asset"));
+                AssetDatabase.CreateAsset(attackRectsAsset, Path.Combine(targetAssetDirectory, $"{asset.name}_AttackBoxes.asset"));
             }
             
             Assert.IsNotNull(spritesAsset);
@@ -424,11 +399,11 @@ namespace dkstlzu.Utility
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            _targetAsset.Sprites = spritesAsset;
-            _targetAsset.Frames = framesAsset;
-            _targetAsset.BodyBoxRects = bodyRectsAsset;
-            _targetAsset.HitBoxRects = hitRectsAsset;
-            _targetAsset.AttackBoxRects = attackRectsAsset;
+            asset.Sprites = spritesAsset;
+            asset.Frames = framesAsset;
+            asset.BodyBoxRects = bodyRectsAsset;
+            asset.HitBoxRects = hitRectsAsset;
+            asset.AttackBoxRects = attackRectsAsset;
 
             bodyRectsAsset.Sequences.Clear();
             hitRectsAsset.Sequences.Clear();
@@ -480,9 +455,12 @@ namespace dkstlzu.Utility
                     previousSprite = _frameDatas[i].Sprite;
                 }
             }
-            
-            spriteList.Add(_frameDatas[_maxFrameNumber].Sprite);
-            frameList.Add(lastSpriteFrame);
+
+            if (FrameDataIsValid && lastSpriteFrame > 0)
+            {
+                spriteList.Add(_frameDatas[_maxFrameNumber].Sprite);
+                frameList.Add(lastSpriteFrame);
+            }
             
             spritesAsset.Sequences = spriteList.ToArray();
             framesAsset.Sequences = frameList.ToArray();
@@ -499,10 +477,60 @@ namespace dkstlzu.Utility
             AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(hitRectsAsset));
             AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(attackRectsAsset));
         }
+
+        private void OnCreateAssetButtonClicked(ClickEvent evt)
+        {
+            if (_targetAsset != null)
+            {
+                if (EditorUtility.DisplayDialog("저장하시겠습니까?", "수정중이던 에셋을 저장합니까?", "저장", "무시"))
+                {
+                    OnSaveButtonClicked(evt);
+                    CreateNewAsset();
+                }
+                else
+                {
+                    CreateNewAsset();
+                }
+            }
+            else
+            {
+                CreateNewAsset();
+            }
+        }
+
+        private void CreateNewAsset()
+        {
+            Assets.CheckDirectory("Assets/Resources/FrameAnimationInfos");
+
+            var newAsset = CreateInstance<FrameAnimationInfoScriptable>();
+            newAsset.name = "NewFrameAnimationInfo";
+            int index = 0;
+
+            FrameAnimationInfoScriptable asset = null;
+
+            do
+            {
+                asset = AssetDatabase.LoadAssetAtPath<FrameAnimationInfoScriptable>($"Assets/Resources/FrameAnimationInfos/{newAsset.name}{index}");
+                index++;
+            } while (asset != null);
+            
+            AssetDatabase.CreateAsset(newAsset, $"Assets/Resources/FrameAnimationInfos/{newAsset.name}{index}.asset");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            
+            SaveAsset(newAsset);
+            
+            rootVisualElement.Q<ObjectField>("AssetReferenceField").value = newAsset;
+        }
         
         private void OnAssetSelected(ChangeEvent<Object> evt)
         {
-            _targetAsset = evt.newValue as FrameAnimationInfoScriptable;
+            ChangeAsset(evt.newValue as FrameAnimationInfoScriptable);
+        }
+
+        public void ChangeAsset(FrameAnimationInfoScriptable newAsset)
+        {
+            _targetAsset = newAsset;
             _frameDatas.Clear();
 
             if (_targetAsset == null)
@@ -566,23 +594,23 @@ namespace dkstlzu.Utility
         {
             Sprite newSprite = evt.newValue as Sprite;
 
-            if (_currentFrame == 0)
+            if (_currentFrameNumber == 0)
             {
                 Printer.Print($"FrameAnimation Editor에서 0번째 sprite를 수정하는것은 불가능합니다.", logLevel:LogLevel.Warning);
                 _spriteField.SetValueWithoutNotify(evt.previousValue);
                 return;
             }
             
-            if (_currentFrame <= _maxFrameNumber)
+            if (_currentFrameNumber <= _maxFrameNumber)
             {
                 // 이미 존재하는 FrameData를 수정
                 
                 _currentFrameData.Sprite = newSprite;
 
-                if (_currentFrame > 0)
+                if (_currentFrameNumber > 0)
                 {
                     // 이전 프레임이 있을경우
-                    if (_currentFrame == 1)
+                    if (_currentFrameNumber == 1)
                     {
                         _frameDatas[0].Sprite = newSprite;
                     }
@@ -597,7 +625,7 @@ namespace dkstlzu.Utility
                     }
                 }
                 
-                if (_currentFrame < _maxFrameNumber)
+                if (_currentFrameNumber < _maxFrameNumber)
                 {
                     // 다음 프레임이 있을경우 다음 프레임부터 마지막 프레임까지 SpriteIndex 증가
                     int indexDelta = 0;
@@ -611,11 +639,11 @@ namespace dkstlzu.Utility
                         indexDelta = _currentFrameData.SpriteIndex - _nextFrameData.SpriteIndex + 1;
                     }
 
-                    for (int i = _currentFrame+1; i <= _maxFrameNumber; i++)
+                    for (int i = _currentFrameNumber+1; i <= _maxFrameNumber; i++)
                     {
                         _frameDatas[i].SpriteIndex += indexDelta;
                     }
-                } else if (_currentFrame == _maxFrameNumber)
+                } else if (_currentFrameNumber == _maxFrameNumber)
                 {
                     for (int i = _frameDatas.Count-1; i > 0; i--)
                     {
@@ -641,7 +669,7 @@ namespace dkstlzu.Utility
                 {
                     int previousMaxSpriteIndex = _maxSpriteIndex;
                 
-                    for (int i = _maxFrameNumber+1; i < _currentFrame; i++)
+                    for (int i = _maxFrameNumber+1; i < _currentFrameNumber; i++)
                     {
                         _frameDatas.Add(new FrameData(previousMaxSpriteIndex+1, NoSpriteIndicator));
                     }
@@ -659,14 +687,14 @@ namespace dkstlzu.Utility
                 {
                     _frameDatas[0].SpriteIndex = 0;
 
-                    if (_currentFrame == 1)
+                    if (_currentFrameNumber == 1)
                     {
                         _frameDatas[0].Sprite = newSprite;
                         _frameDatas.Add(new FrameData(0, newSprite));
                     }
                     else
                     {
-                        for (int i = 1; i < _currentFrame; i++)
+                        for (int i = 1; i < _currentFrameNumber; i++)
                         {
                             _frameDatas.Add(new FrameData(0, NoSpriteIndicator));
                         }
@@ -676,7 +704,7 @@ namespace dkstlzu.Utility
                 }
             }
             
-            SetFrame(_currentFrame);
+            SetFrame(_currentFrameNumber);
         }
         
         private void OnSpriteImageChanged(ChangeEvent<Sprite> evt)
@@ -698,10 +726,10 @@ namespace dkstlzu.Utility
 
         private void OnPreviousCopyButtonClicked(ClickEvent evt)
         {
-            if (!CurrentFrameIsValid) return;
+            if (!CurrentFrameNumberIsValid) return;
             
-            _frameDatas.Insert(_currentFrame, new FrameData(_currentFrameData));
-            SetFrame(_currentFrame);
+            _frameDatas.Insert(_currentFrameNumber, new FrameData(_currentFrameData));
+            SetFrame(_currentFrameNumber);
         }
         
         private void OnPreviousImageButtonClicked(ClickEvent evt)
@@ -712,7 +740,7 @@ namespace dkstlzu.Utility
         
         private void OnPreviousFrameButtonClicked(ClickEvent evt)
         {
-            SetFrame(_currentFrame - 1);
+            SetFrame(_currentFrameNumber - 1);
             OnPauseButtonClicked(evt);
         }
         
@@ -738,13 +766,14 @@ namespace dkstlzu.Utility
                 while (true)
                 {
                     yield return waitFixedTime;
-                    if (_currentFrame >= _targetAsset.TotalFrameNum)
+
+                    if (_currentFrameNumber >= _frameDatas.Count)
                     {
                         SetFrame(0);
                     }
                     else
                     {
-                        SetFrame(++_currentFrame);
+                        SetFrame(++_currentFrameNumber);
                     }
                 }
             }
@@ -775,15 +804,15 @@ namespace dkstlzu.Utility
 
         private void OnRemoveButtonClicked(ClickEvent evt)
         {
-            if (!CurrentFrameIsValid) return;
+            if (!CurrentFrameNumberIsValid) return;
 
-            _frameDatas.RemoveAt(_currentFrame);
-            SetFrame(_currentFrame);
+            _frameDatas.RemoveAt(_currentFrameNumber);
+            SetFrame(_currentFrameNumber);
         }
 
         private void OnNextFrameButtonClicked(ClickEvent evt)
         {
-            SetFrame(_currentFrame + 1);
+            SetFrame(_currentFrameNumber + 1);
             OnPauseButtonClicked(evt);
         }
 
@@ -795,10 +824,10 @@ namespace dkstlzu.Utility
 
         private void OnNextCopyButtonClicked(ClickEvent evt)
         {
-            if (!CurrentFrameIsValid) return;
+            if (!CurrentFrameNumberIsValid) return;
 
-            _frameDatas.Insert(_currentFrame, new FrameData(_currentFrameData));
-            SetFrame(_currentFrame+1);
+            _frameDatas.Insert(_currentFrameNumber, new FrameData(_currentFrameData));
+            SetFrame(_currentFrameNumber+1);
         }
         
         private void OnBoxRectDrag(DragUpdatedEvent evt)
@@ -835,12 +864,12 @@ namespace dkstlzu.Utility
         {
             if (frame < 0) return;
             
-            _currentFrame = frame;
-            if (_currentFrame == 0 && !FrameDataIsValid)
+            _currentFrameNumber = frame;
+            if (_currentFrameNumber == 0 && !FrameDataIsValid)
             {
                 _currentSpriteIndex = 0;
                 SetSpriteImageWithNoSpriteIndicator();
-            } else if (_currentFrame <= _maxFrameNumber)
+            } else if (_currentFrameNumber <= _maxFrameNumber)
             {
                 _currentSpriteIndex = _currentFrameData.SpriteIndex;
                 SetSpriteImageWithCurrentFrameData();
@@ -860,13 +889,13 @@ namespace dkstlzu.Utility
             if (!FrameDataIsValid)
             {
                 _currentSpriteIndex = 0;
-                _currentFrame = 1;
+                _currentFrameNumber = 1;
                 
                 SetSpriteImageWithNoSpriteIndicator();
             } else if (index == 0)
             {
                 _currentSpriteIndex = 0;
-                _currentFrame = 1;
+                _currentFrameNumber = 1;
 
                 SetSpriteImageWithCurrentFrameData();
             } else if (index <= _maxSpriteIndex)
@@ -876,7 +905,7 @@ namespace dkstlzu.Utility
                 {
                     if (_frameDatas[i].SpriteIndex == index)
                     {
-                        _currentFrame = i;
+                        _currentFrameNumber = i;
                         break;
                     }
                 }
@@ -886,7 +915,7 @@ namespace dkstlzu.Utility
             else
             {
                 _currentSpriteIndex = _maxSpriteIndex + 1;
-                _currentFrame = _maxFrameNumber + 1;
+                _currentFrameNumber = _maxFrameNumber + 1;
                 
                 SetSpriteImageWithNoSpriteIndicator();
             }
@@ -1005,9 +1034,9 @@ namespace dkstlzu.Utility
         {
             (List<Rect>, List<RectElement>, Color) boxData = _currentEditBox switch
             {
-                EditBoxType.Body => (_frameDatas[_currentFrame].BodyBox, _bodyBoxElementList, BodyBoxColor),
-                EditBoxType.Hit => (_frameDatas[_currentFrame].HitBox, _hitBoxElementList, HitBoxColor),
-                EditBoxType.Attack => (_frameDatas[_currentFrame].AttackBox, _attackBoxElementList, AttackBoxColor),
+                EditBoxType.Body => (_frameDatas[_currentFrameNumber].BodyBox, _bodyBoxElementList, BodyBoxColor),
+                EditBoxType.Hit => (_frameDatas[_currentFrameNumber].HitBox, _hitBoxElementList, HitBoxColor),
+                EditBoxType.Attack => (_frameDatas[_currentFrameNumber].AttackBox, _attackBoxElementList, AttackBoxColor),
                 _ => throw new ArgumentOutOfRangeException()
             };
             
@@ -1034,9 +1063,9 @@ namespace dkstlzu.Utility
         {
             (List<Rect>, List<RectElement>) boxData = _currentEditBox switch
             {
-                EditBoxType.Body => (_frameDatas[_currentFrame].BodyBox, _bodyBoxElementList),
-                EditBoxType.Hit => (_frameDatas[_currentFrame].HitBox, _hitBoxElementList),
-                EditBoxType.Attack => (_frameDatas[_currentFrame].AttackBox, _attackBoxElementList),
+                EditBoxType.Body => (_frameDatas[_currentFrameNumber].BodyBox, _bodyBoxElementList),
+                EditBoxType.Hit => (_frameDatas[_currentFrameNumber].HitBox, _hitBoxElementList),
+                EditBoxType.Attack => (_frameDatas[_currentFrameNumber].AttackBox, _attackBoxElementList),
                 _ => throw new ArgumentOutOfRangeException()
             };
             

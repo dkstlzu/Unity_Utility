@@ -3,7 +3,7 @@ using UnityEngine;
 namespace dkstlzu.Utility
 {
     [CreateAssetMenu(fileName = "FrameDevToolConfig", menuName = "FrameAnimation/Dev Tool Setting", order = 10)]
-    public class FrameAnimatorEditorWindowConfigScriptable : ScriptableObject
+    public class FrameAnimatorEditorWindowConfigScriptable : ScriptableSingleton<FrameAnimatorEditorWindowConfigScriptable>
     {
         public Sprite NoSpriteIndicator;
         
