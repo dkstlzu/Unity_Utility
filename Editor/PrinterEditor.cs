@@ -1,3 +1,7 @@
+#if DEBUG
+#define LOG_ON
+#endif
+
 using UnityEditor;
 
 namespace dkstlzu.Utility
@@ -17,21 +21,33 @@ namespace dkstlzu.Utility
             Printer.CurrentPriority--;
             Notify();
         }
-        
+    
         [MenuItem("Dev/Printer/Print individual %#PGUP", false, 3)]
-        public static void DefulatIntervalAsIndividual()
+        public static void DefaultIntervalAsIndividual()
         {
             Printer.DefaultLogInterval = LogInterval.Individual;
             Notify();
         }
+    
+        [MenuItem("Dev/Printer/Print individual %#PGUP", true, 3)]
+        public static bool DefaultIntervalAsIndividual_Validation()
+        {
+            return Printer.DefaultLogInterval != LogInterval.Individual;
+        }
 
         [MenuItem("Dev/Printer/Print frame %#PGDN", false, 4)]
-        public static void DefulatIntervalAsFrame()
+        public static void DefaultIntervalAsFrame()
         {
             Printer.DefaultLogInterval = LogInterval.Frame;
             Notify();
         }
 
+        [MenuItem("Dev/Printer/Print frame %#PGDN", true, 4)]
+        public static bool DefaultIntervalAsFrame_Validation()
+        {
+            return Printer.DefaultLogInterval != LogInterval.Frame;
+        }
+    
         static void Notify()
         {
             Printer.Print($"Printer update. Priority : {Printer.CurrentPriority}, Interval : {Printer.DefaultLogInterval}", customTag:"Dev", priority:Printer.CurrentPriority, logInterval:LogInterval.Individual);
