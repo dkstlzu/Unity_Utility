@@ -1,0 +1,4 @@
+.center {
+    flex: 100%;
+    align-self: center;
+}

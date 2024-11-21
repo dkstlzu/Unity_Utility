@@ -1,0 +1,88 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Script/FrameAnimator/Editor/FrameAnimatorEditorWindow.uss?fileID=7433441132597879392&amp;guid=f78b078b2ef82fe40a17c9907397c677&amp;type=3#FrameAnimatorEditorWindow" />
+    <ui:VisualElement name="Root" style="flex-grow: initial; justify-content: space-between; flex-basis: 100%; flex-shrink: initial;">
+        <ui:VisualElement name="Toolbar" style="flex-grow: initial; flex-direction: row; height: 20px; flex-basis: 20px; flex-shrink: initial; width: 100%;">
+            <ui:VisualElement name="BodyToggle" tooltip="이동시 사용되는 충돌박스를 조정합니다" style="flex-grow: 1; align-items: stretch; justify-content: center;">
+                <ui:Button text="Body" parse-escape-sequences="true" display-tooltip-when-elided="true" name="BodyToggleButton" style="flex-direction: row-reverse;">
+                    <ui:VisualElement name="BodyBoxSelectionIndicator" style="flex-grow: 0; background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_CurrentBox.png?fileID=2800000&amp;guid=3f4cd3bf6891a4941929805068d753fe&amp;type=3#Icon_CurrentBox&apos;); flex-shrink: 0; width: 10px; height: 10px; display: flex; visibility: hidden;" />
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:VisualElement name="HitToggle" tooltip="피격 충돌박스를 조정합니다" style="flex-grow: 1; justify-content: center;">
+                <ui:Button text="Hit" parse-escape-sequences="true" display-tooltip-when-elided="true" name="HitToggleButton" style="flex-direction: row-reverse;">
+                    <ui:VisualElement name="HitBoxSelectionIndicator" style="flex-grow: 0; background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_CurrentBox.png?fileID=2800000&amp;guid=3f4cd3bf6891a4941929805068d753fe&amp;type=3#Icon_CurrentBox&apos;); flex-shrink: 0; width: 10px; height: 10px; visibility: hidden;" />
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:VisualElement name="AttackToggle" tooltip="공격판정의 충돌박스를 조정합니다" style="flex-grow: 1; justify-content: center;">
+                <ui:Button text="Attack" parse-escape-sequences="true" display-tooltip-when-elided="true" name="AttackToggleButton" style="flex-direction: row-reverse;">
+                    <ui:VisualElement name="AttackBoxSelectionIndicator" style="flex-grow: 0; background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_CurrentBox.png?fileID=2800000&amp;guid=3f4cd3bf6891a4941929805068d753fe&amp;type=3#Icon_CurrentBox&apos;); flex-shrink: 0; width: 10px; height: 10px; visibility: hidden;" />
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:VisualElement name="ColorSelector" tooltip="사용되는 색상을 설정합니다" style="flex-grow: 1; justify-content: center;">
+                <ui:Button text="Color" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ColorSelectorButton" />
+            </ui:VisualElement>
+            <ui:VisualElement name="AutoSave" tooltip="30초마다 자동저장합니다" class="unity-button" style="flex-grow: 1; flex-shrink: 2; padding-right: 0; padding-left: 0; padding-top: 0; padding-bottom: 0;">
+                <ui:Toggle label="AutoSave" name="AutoSaveToggle" style="flex-direction: row;">
+                    <ui:VisualElement name="AutoSaveIndicator" style="flex-grow: 1; background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_Save.png?fileID=2800000&amp;guid=eed1a4fd91e16c94da64faebe23b9c24&amp;type=3#Icon_Save&apos;); flex-shrink: 1; display: flex; visibility: hidden;" />
+                </ui:Toggle>
+            </ui:VisualElement>
+            <ui:VisualElement name="SaveAsset" tooltip="수동 저장" style="flex-grow: 2; justify-content: center; flex-shrink: initial;">
+                <ui:Button text="Save Asset" parse-escape-sequences="true" display-tooltip-when-elided="true" name="SaveAssetButton" />
+            </ui:VisualElement>
+            <ui:VisualElement name="AssetReference" style="flex-grow: 2; justify-content: center; flex-shrink: 1; max-width: 20%; min-width: 10px;">
+                <uie:ObjectField name="AssetReferenceField" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="Main" style="flex-grow: 1;">
+            <ui:VisualElement name="Rendering" style="flex-grow: initial; flex-basis: 100%; flex-shrink: initial; align-items: center; justify-content: center;">
+                <ui:Label tabindex="-1" text="할당된 이미지가 없습니다." parse-escape-sequences="true" display-tooltip-when-elided="true" name="NoSpriteIndicator" style="position: absolute; -unity-font-style: bold; font-size: 50px; left: 50%; top: 50%; right: 50%; bottom: 50%; -unity-text-align: middle-center;" />
+                <ui:VisualElement name="PivotElement" style="position: absolute; display: none; width: 10px; height: 10px;">
+                    <ui:VisualElement name="Pivot" style="background-color: rgb(255, 81, 81); border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; left: -5px; display: flex; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); top: -5px; position: relative;">
+                        <ui:Label tabindex="-1" text="P" parse-escape-sequences="true" display-tooltip-when-elided="true" name="PivotLabel" style="-unity-text-align: middle-center; color: rgb(0, 0, 0); font-size: 8px; -unity-font-style: bold; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="FrameMoveBar" style="flex-grow: initial; flex-basis: 40px; flex-shrink: initial; height: 20px; flex-direction: row; align-items: center; justify-content: center; align-self: auto;">
+            <ui:VisualElement name="BottomLeftBox" style="flex-grow: 1; flex-shrink: 1; max-width: 200px;" />
+            <ui:VisualElement name="FrameController" style="position: relative; flex-grow: 1;">
+                <ui:VisualElement name="CurrentFrame" style="flex-grow: initial; flex-direction: row; align-items: center; justify-content: center; flex-basis: 20px; flex-shrink: initial;">
+                    <ui:Label tabindex="-1" text="현재 프레임 : " parse-escape-sequences="true" display-tooltip-when-elided="true" name="CurrentFrameLabel" style="align-items: stretch; align-self: center; -unity-text-align: middle-center;" />
+                    <ui:Label tabindex="-1" text="0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CurrentFrameNumber" style="align-items: stretch; align-self: center; -unity-text-align: middle-center;" />
+                    <ui:Label tabindex="-1" text="현재 이미지 번호 : " parse-escape-sequences="true" display-tooltip-when-elided="true" name="CurrentSpriteLabel" style="align-items: stretch; align-self: center; -unity-text-align: middle-center;" />
+                    <ui:Label tabindex="-1" text="0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CurrentSpriteNumber" style="align-items: stretch; align-self: center; -unity-text-align: middle-center;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="FrameButtons" style="flex-grow: initial; flex-direction: row; justify-content: center; align-items: center; flex-basis: 20px; flex-shrink: initial;">
+                    <ui:VisualElement name="PreviousCopy" style="flex-grow: initial; flex-shrink: initial; align-items: center; justify-content: center;">
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="PreviousCopyButton" tooltip="이전 프레임으로 복사 및 삽입" style="background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_Add.png?fileID=2800000&amp;guid=049ed52f961d9284e81544b2c55b9415&amp;type=3#Icon_Add&apos;); width: 20px; height: 20px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="PreviousImage" style="flex-grow: initial; flex-shrink: initial; align-items: center; justify-content: center;">
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="PreviousImageButton" tooltip="이전 이미지" style="background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_PreviousImage.png?fileID=2800000&amp;guid=82693280d7cc9c941bb2c745c2f14200&amp;type=3#Icon_PreviousImage&apos;); width: 20px; height: 20px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="PreviousFrame" style="flex-grow: initial; flex-shrink: initial; align-items: center; justify-content: center;">
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="PreviousFrameButton" tooltip="이전 프레임" style="background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_PreviousFrame.png?fileID=2800000&amp;guid=5672885af3b99c94bbec101e12ef6749&amp;type=3#Icon_PreviousFrame&apos;); width: 20px; height: 20px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="PlayPause" style="flex-grow: initial; flex-shrink: initial; align-items: center; justify-content: center;">
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="PlayButton" tooltip="애니메이션 실행" style="background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_Play.png?fileID=2800000&amp;guid=56a95ae3e55db9748a6e2a3e49552d5d&amp;type=3#Icon_Play&apos;); width: 20px; height: 20px;" />
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="PauseButton" tooltip="애니메이션 일시정지" style="background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_Pause.png?fileID=2800000&amp;guid=6ac8b6c3a52dd6a46b910eb223a67162&amp;type=3#Icon_Pause&apos;); width: 20px; height: 20px; display: none; visibility: visible;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="RemoveStop" style="flex-grow: initial; flex-shrink: initial; align-items: center; justify-content: center;">
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="RemoveButton" tooltip="현재 프레임을 삭제합니다" style="background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_Remove.png?fileID=2800000&amp;guid=c58692f1baf19ab439047c10dfc07bac&amp;type=3#Icon_Remove&apos;); width: 20px; height: 20px; display: flex;" />
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="StopButton" tooltip="애니메이션을 정지합니다" style="background-image: url(&apos;project://database/Assets/Sprites/Primitives/Square.png?fileID=2800000&amp;guid=2c850d5b262773141b8e0526ccce63e2&amp;type=3#Square&apos;); width: 20px; height: 20px; -unity-background-image-tint-color: rgb(243, 40, 40); background-color: rgb(188, 188, 188); display: none;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextFrame" style="flex-grow: initial; flex-shrink: initial; align-items: center; justify-content: center;">
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="NextFrameButton" tooltip="다음 프레임" style="background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_NextFrame.png?fileID=2800000&amp;guid=5fbd0205d9e3cdd47aca5205c75420b2&amp;type=3#Icon_NextFrame&apos;); width: 20px; height: 20px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextImage" style="flex-grow: initial; flex-shrink: initial; align-items: center; justify-content: center;">
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="NextImageButton" tooltip="다음 이미지" style="background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_NextImage.png?fileID=2800000&amp;guid=0456ca6a63537594fa24d53528e05b50&amp;type=3#Icon_NextImage&apos;); width: 20px; height: 20px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextCopy" style="flex-grow: initial; flex-shrink: initial; align-items: center; justify-content: center;">
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="NextCopyButton" tooltip="다음 프레임으로 복사 및 삽입" style="background-image: url(&apos;project://database/Assets/Script/FrameAnimator/Editor/Icon_Add.png?fileID=2800000&amp;guid=049ed52f961d9284e81544b2c55b9415&amp;type=3#Icon_Add&apos;); width: 20px; height: 20px;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="SpriteSelector" style="flex-grow: 1; position: relative; right: 0; max-width: 200px; flex-direction: row; justify-content: flex-end;">
+                <uie:ObjectField type="UnityEngine.Sprite, UnityEngine.CoreModule" name="SpriteField" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

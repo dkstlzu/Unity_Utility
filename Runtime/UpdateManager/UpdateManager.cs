@@ -360,4 +360,35 @@ namespace dkstlzu.Utility
             _updater = updater => ((ILateUpdatable)updater).ManualLateUpdate(_updateDelta);
         }
     }
+    
+    public class FrameUpdateManager<TUpdatable> : UpdateManager<int, TUpdatable> where TUpdatable : IUpdatableBase<int>
+    {
+        public int FrameMultiplier;
+        
+        public FrameUpdateManager(string managerName, IUpdatableBase<int>.Updater updater, int frameMultiplier = 1) : base(managerName, updater)
+        {
+            FrameMultiplier = frameMultiplier;
+        }
+
+        protected override void SetDelta(float delta)
+        {
+            _updateDelta = (int)(delta * FrameMultiplier);
+        }
+    }
+    
+    public interface IFrameCountUpdatable : IUpdatableBase<int>
+    {
+        void FrameCountUpdate(int frameCount);
+    }
+    
+    public class DefaultFrameCountUpdateManager : FrameUpdateManager<IFrameCountUpdatable>
+    {
+        public static DefaultFrameCountUpdateManager Instance;
+
+        public DefaultFrameCountUpdateManager() : base("DefaultCount", null)
+        {
+            Instance = this;
+            _updater = updater => ((IFrameCountUpdatable)updater).FrameCountUpdate(_updateDelta);
+        }
+    }
 }

@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a8ae79ab8d444e5b33c6d388dcfbe4a, type: 3}
+  m_Name: Attack2Animation
+  m_EditorClassIdentifier: 
+  <Sprites>k__BackingField: {fileID: 11400000, guid: 9675e0b64789c9d46a698ab696c87985, type: 2}
+  <Frames>k__BackingField: {fileID: 11400000, guid: 9d821af0f5150c9458daef9d620d5ebd, type: 2}

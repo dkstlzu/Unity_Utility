@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1d22fcecce44c1497d99de1ed5e7cf3, type: 3}
+  m_Name: WalkAnimationSprites
+  m_EditorClassIdentifier: 
+  <Sequences>k__BackingField:
+  - {fileID: 21300016, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
+  - {fileID: 21300018, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
+  - {fileID: 21300020, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
+  - {fileID: 21300022, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
+  - {fileID: 21300024, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
+  - {fileID: 21300026, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
+  - {fileID: 21300028, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
+  - {fileID: 21300030, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
+  - {fileID: 21300032, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
+  - {fileID: 21300034, guid: ae297123f091bbf4e8f1835eb98fb293, type: 3}
