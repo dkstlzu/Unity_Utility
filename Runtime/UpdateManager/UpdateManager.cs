@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Enumerable = System.Linq.Enumerable;
@@ -32,11 +33,12 @@ namespace dkstlzu.Utility
 
         public bool Enabled = true;
         
-        protected SortedList<int, Dictionary<int, TUpdatable>> _updatableList = new SortedList<int, Dictionary<int, TUpdatable>>();
-        protected SortedList<int, Dictionary<int, int>> _updatableCounts = new SortedList<int, Dictionary<int, int>>();
-        protected SortedList<int, List<int>> _keyDict = new SortedList<int, List<int>>();
+        protected Dictionary<int, Dictionary<int, TUpdatable>> _updatableList = new Dictionary<int, Dictionary<int, TUpdatable>>();
+        protected Dictionary<int, Dictionary<int, int>> _updatableCounts = new Dictionary<int, Dictionary<int, int>>();
+        protected Dictionary<int, List<int>> _keyDict = new Dictionary<int, List<int>>();
         protected HashSet<int> _orderSet = new HashSet<int>();
         protected int[] _orders;
+        protected Dictionary<int, HashSet<int>> _unregistered =  new Dictionary<int, HashSet<int>>();
 
         public string Name { get; protected set; }
         public int Count
@@ -72,7 +74,7 @@ namespace dkstlzu.Utility
         {
             if (_orderSet.Add(order))
             {
-                _orders = Enumerable.ToArray(_orderSet);
+                _orders = _orderSet.OrderBy(order => order).ToArray();
             }
             
             if (!_updatableList.TryGetValue(order, out var updatableDict))
@@ -127,9 +129,16 @@ namespace dkstlzu.Utility
                 if (countDict.Count == 0)
                 {
                     _orderSet.Remove(order);
-                    _orders = Enumerable.ToArray(_orderSet);
+                    _orders = _orderSet.OrderBy(order => order).ToArray();
                 }
             }
+
+            if (!_unregistered.ContainsKey(order))
+            {
+                _unregistered.Add(order, new HashSet<int>());
+            }
+            
+            _unregistered[order].Add(hashCode);
         }
 
         public void Clear()
@@ -177,11 +186,20 @@ namespace dkstlzu.Utility
 
                 for (int j = 0; j < hashCodes.Count; j++)
                 {
+                    int hashCode = hashCodes[j];
+                    
                     try
                     {
-                        for (int k = 0; k < countDict[hashCodes[j]]; k++)
+                        int count = countDict[hashCode];
+                        
+                        for (int k = 0; k < count; k++)
                         {
-                            _updater.Invoke(updatableDict[hashCodes[j]]);
+                            if (!countDict.ContainsKey(hashCode))
+                            {
+                                --j;
+                                break;
+                            }
+                            _updater.Invoke(updatableDict[hashCode]);
                         }
                     }
                     catch (Exception ex)
@@ -191,7 +209,7 @@ namespace dkstlzu.Utility
                             Printer.Print(_exceptionMsg + "\n" + ex, logLevel: LogLevel.Error, customTag: "UpdateManager", priority: 1);
                         }
                         
-                        Unregister(updatableDict[hashCodes[j]], order);
+                        Unregister(updatableDict[hashCode], order);
                         --j;
                     }
                 }
