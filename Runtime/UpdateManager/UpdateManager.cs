@@ -30,7 +30,7 @@ namespace dkstlzu.Utility
             }
         }
 
-        public bool Enabled = false;
+        public bool Enabled = true;
         
         protected SortedList<int, Dictionary<int, TUpdatable>> _updatableList = new SortedList<int, Dictionary<int, TUpdatable>>();
         protected SortedList<int, Dictionary<int, int>> _updatableCounts = new SortedList<int, Dictionary<int, int>>();
