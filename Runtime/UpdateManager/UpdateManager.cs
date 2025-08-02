@@ -185,6 +185,7 @@ namespace dkstlzu.Utility
                         }
                         
                         Unregister(updatableDict[hashCodes[j]], order);
+                        --j;
                     }
                 }
             }

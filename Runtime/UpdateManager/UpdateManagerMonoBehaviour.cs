@@ -67,6 +67,7 @@ namespace dkstlzu.Utility
         
         private Dictionary<Type, List<IUpdateManager>> _addList = new Dictionary<Type, List<IUpdateManager>>();
         private Dictionary<Type, List<IUpdateManager>> _removeList = new Dictionary<Type, List<IUpdateManager>>();
+        private int _typeCount;
 
 #if UNITY_EDITOR
         public int ManualUpdatableNumber;
@@ -78,6 +79,8 @@ namespace dkstlzu.Utility
 
         protected virtual void Awake()
         {
+            _typeCount = Enum.GetNames(typeof(Type)).Length;
+            
             InitManager(Type.MANUAL);
             InitManager(Type.FRAME);
             InitManager(Type.FIXED);
@@ -243,35 +246,34 @@ namespace dkstlzu.Utility
         void UpdateWithDelta(Type updateType)
         {
             var managerList = ManagerDict[updateType];
-            
-            foreach (var add in _addList[updateType])
+
+            for (int i = 0; i < _addList[updateType].Count; i++)
             {
-                managerList.Add(add);
+                managerList.Add(_addList[updateType][i]);
             }
             _addList[updateType].Clear();
             
             float delta = Time.deltaTime;
-            
-            foreach (IUpdateManager manager in managerList)
+
+            for (int i = 0; i < managerList.Count; i++)
             {
                 try
                 {
-                    manager.ManagerUpdate(delta);
+                    managerList[i].ManagerUpdate(delta);
                 }
                 catch (Exception e)
                 {
                     if (EnableLog)
                     {
-                        Printer.Print($"{updateType} {manager.Name} UpdateManager.Update() 중에 문제가 발생했습니다." + "\n" + e, logLevel:LogLevel.Error, customTag:"UpdateManager", priority:1);
+                        Printer.Print($"{updateType} {managerList[i].Name} UpdateManager.Update() 중에 문제가 발생했습니다." + "\n" + e, logLevel:LogLevel.Error, customTag:"UpdateManager", priority:1);
                     }
-                    _removeList[updateType].Add(manager);
-                    throw;
+                    _removeList[updateType].Add(managerList[i]);
                 }
             }
             
-            foreach (var remove in _removeList[updateType])
+            for (int i = 0; i < _removeList[updateType].Count; i++)
             {
-                managerList.Remove(remove);
+                managerList.Remove(_removeList[updateType][i]);
             }
             _removeList[updateType].Clear();
         }
