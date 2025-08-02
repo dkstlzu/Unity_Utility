@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Enumerable = System.Linq.Enumerable;
 
 namespace dkstlzu.Utility
 {
@@ -30,10 +30,11 @@ namespace dkstlzu.Utility
             }
         }
 
-        protected SortedList<int, SortedDictionary<TUpdatable, int>> _updatableList = new SortedList<int, SortedDictionary<TUpdatable, int>>();
-
-        protected List<(int, TUpdatable)> _addList = new List<(int, TUpdatable)>();
-        protected List<(int, TUpdatable)> _removeList = new List<(int, TUpdatable)>();
+        protected SortedList<int, Dictionary<int, TUpdatable>> _updatableList = new SortedList<int, Dictionary<int, TUpdatable>>();
+        protected SortedList<int, Dictionary<int, int>> _updatableCounts = new SortedList<int, Dictionary<int, int>>();
+        protected SortedList<int, List<int>> _keyDict = new SortedList<int, List<int>>();
+        protected HashSet<int> _orderSet = new HashSet<int>();
+        protected int[] _orders;
 
         public string Name { get; protected set; }
         public int Count
@@ -42,7 +43,7 @@ namespace dkstlzu.Utility
             {
                 int count = 0;
 
-                foreach (var pair in _updatableList)
+                foreach (var pair in _updatableCounts)
                 {
                     count += pair.Value.Count;
                 }
@@ -67,12 +68,66 @@ namespace dkstlzu.Utility
         /// </summary>
         public void Register(TUpdatable updatable, int order = 0)
         {
-            _addList.Add((order, updatable));
+            if (_orderSet.Add(order))
+            {
+                _orders = Enumerable.ToArray(_orderSet);
+            }
+            
+            if (!_updatableList.TryGetValue(order, out var updatableDict))
+            {
+                updatableDict = new Dictionary<int, TUpdatable>();
+                _updatableList.Add(order, updatableDict);
+            }
+
+            if (!_updatableCounts.TryGetValue(order, out var countDict))
+            {
+                countDict = new Dictionary<int, int>();
+                _updatableCounts.Add(order, countDict);
+            }
+
+            if (!_keyDict.TryGetValue(order, out var keyList))
+            {
+                keyList = new List<int>();
+                _keyDict.Add(order, keyList);
+            }
+            
+            int hashCode = updatable.GetHashCode();
+
+            updatableDict.TryAdd(hashCode, updatable);
+            if (!countDict.TryAdd(hashCode, 1))
+            {
+                countDict[hashCode]++;
+            }
+            keyList.Add(hashCode);
         }
 
         public void Unregister(TUpdatable updatable, int order = 0)
         {
-            _removeList.Add((order, updatable));
+            int hashCode = updatable.GetHashCode();
+            
+            if (_updatableCounts.TryGetValue(order, out var countDict) && countDict.ContainsKey(hashCode))
+            {
+                countDict[hashCode]--;
+                if (countDict[hashCode] <= 0)
+                {
+                    countDict.Remove(hashCode);
+                    if (_updatableList.TryGetValue(order, out var updatableList))
+                    {
+                        updatableList.Remove(hashCode);
+                    }
+
+                    if (_keyDict.TryGetValue(order, out var keyList))
+                    {
+                        keyList.Remove(hashCode);
+                    }
+                }
+
+                if (countDict.Count == 0)
+                {
+                    _orderSet.Remove(order);
+                    _orders = Enumerable.ToArray(_orderSet);
+                }
+            }
         }
 
         public void Clear()
@@ -81,83 +136,38 @@ namespace dkstlzu.Utility
             {
                 pair.Value.Clear();
             }
+            
+            foreach (var pair in _updatableCounts)
+            {
+                pair.Value.Clear();
+            }
 
             _updatableList.Clear();
+            _updatableCounts.Clear();
         }
 
         public void ManagerUpdate(float delta)
         {
-            AddUpdatables();
-            
-            RemoveUpdatables();
-
             SetDelta(delta);
 
             UpdateElements();
-
-            // Remove error list
-            RemoveUpdatables();
         }
 
-        private void AddUpdatables()
-        {
-            foreach (var updatable in _addList)
-            {
-                if (!_updatableList.TryGetValue(updatable.Item1, out var dict))
-                {
-                    dict = new(new HashComparer());
-                    _updatableList.Add(updatable.Item1, dict);
-                }
-
-                if (!dict.TryAdd(updatable.Item2, 1))
-                {
-                    dict[updatable.Item2]++;
-                }
-            }
-
-            _addList.Clear();
-        }
-
-        private void RemoveUpdatables()
-        {
-            foreach (var updatable in _removeList)
-            {
-                if (_updatableList.TryGetValue(updatable.Item1, out var dict))
-                {
-                    if (dict.ContainsKey(updatable.Item2))
-                    {
-                        dict[updatable.Item2]--;
-                        if (dict[updatable.Item2] <= 0)
-                        {
-                            dict.Remove(updatable.Item2);
-                        }
-                    }
-                }
-            }
-
-            _removeList.Clear();
-        }
-        
         private void UpdateElements()
         {
-            foreach (var orderListPair in _updatableList)
+            for (int i = 0; i < _orders.Length; i++)
             {
-                foreach (var updatable in orderListPair.Value)
+                int order = _orders[i];
+
+                Dictionary<int, TUpdatable> updatableDict = _updatableList[order];
+                Dictionary<int, int> countDict = _updatableCounts[order];
+                List<int> hashCodes = _keyDict[order];
+
+                for (int j = 0; j < hashCodes.Count; j++)
                 {
-                    try
+                    for (int k = 0; k < countDict[hashCodes[j]]; k++)
                     {
-                        for (int i = 0; i < updatable.Value; i++)
-                        {
-                            _updater.Invoke(updatable.Key);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        if (UpdateManager.EnableLog)
-                        {
-                            Printer.Print(_exceptionMsg + "\n" + e, logLevel: LogLevel.Error, customTag: "UpdateManager", priority: 1);
-                        }
-                        _removeList.Add((orderListPair.Key, updatable.Key));
+                        _updater.Invoke(updatableDict[hashCodes[j]]);
                     }
                 }
             }
