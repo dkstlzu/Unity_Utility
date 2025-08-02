@@ -64,7 +64,6 @@ namespace dkstlzu.Utility
 #endif
         
         public Dictionary<Type, List<IUpdateManager>> ManagerDict = new Dictionary<Type, List<IUpdateManager>>();
-        
         private Dictionary<Type, List<IUpdateManager>> _addList = new Dictionary<Type, List<IUpdateManager>>();
         private Dictionary<Type, List<IUpdateManager>> _removeList = new Dictionary<Type, List<IUpdateManager>>();
         private int _typeCount;

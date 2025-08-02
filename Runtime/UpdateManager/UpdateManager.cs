@@ -30,6 +30,8 @@ namespace dkstlzu.Utility
             }
         }
 
+        public bool Enabled = false;
+        
         protected SortedList<int, Dictionary<int, TUpdatable>> _updatableList = new SortedList<int, Dictionary<int, TUpdatable>>();
         protected SortedList<int, Dictionary<int, int>> _updatableCounts = new SortedList<int, Dictionary<int, int>>();
         protected SortedList<int, List<int>> _keyDict = new SortedList<int, List<int>>();
@@ -148,6 +150,11 @@ namespace dkstlzu.Utility
 
         public void ManagerUpdate(float delta)
         {
+            if (!Enabled)
+            {
+                return;
+            }
+            
             SetDelta(delta);
 
             UpdateElements();
