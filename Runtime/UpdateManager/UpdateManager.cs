@@ -155,6 +155,11 @@ namespace dkstlzu.Utility
 
         private void UpdateElements()
         {
+            if (_orders == null)
+            {
+                return;
+            }
+            
             for (int i = 0; i < _orders.Length; i++)
             {
                 int order = _orders[i];
@@ -165,9 +170,21 @@ namespace dkstlzu.Utility
 
                 for (int j = 0; j < hashCodes.Count; j++)
                 {
-                    for (int k = 0; k < countDict[hashCodes[j]]; k++)
+                    try
                     {
-                        _updater.Invoke(updatableDict[hashCodes[j]]);
+                        for (int k = 0; k < countDict[hashCodes[j]]; k++)
+                        {
+                            _updater.Invoke(updatableDict[hashCodes[j]]);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (UpdateManager.EnableLog)
+                        {
+                            Printer.Print(_exceptionMsg + "\n" + ex, logLevel: LogLevel.Error, customTag: "UpdateManager", priority: 1);
+                        }
+                        
+                        Unregister(updatableDict[hashCodes[j]], order);
                     }
                 }
             }
