@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Object = System.Object;
 
+[CreateAssetMenu(fileName = "DefaultDevGameStart", menuName = "ScriptableObjects/게임시작 툴")]
 public class DevGameStartData : ScriptableObject
 {
     public const string DEFAULT_SETTING_FILE = "DefaultDevGameStart.asset";
@@ -101,8 +102,5 @@ public class DevGameStartData : ScriptableObject
         EditorApplication.playModeStateChanged -= OnExitPlay;
     }
     
-    
     public List<SceneAsset> SceneList;
-
-
 }

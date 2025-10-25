@@ -7,7 +7,9 @@ using UnityEditor.Toolbars;
 [Overlay(typeof(SceneView), "게임 시작", true)]
 public class DevGameStartOverlay : ToolbarOverlay
 {
-    public DevGameStartOverlay() : base(DevGameStartData.Default.SceneList.Select(s => $"{s.name}").ToArray())
+    public DevGameStartOverlay() : base((DevGameStartData.Default.SceneList == null || DevGameStartData.Default.SceneList.Count == 0)
+        ? new []{"empty"}
+        : DevGameStartData.Default.SceneList.Select(s => $"{s.name}").ToArray())
     {
     }
 }
