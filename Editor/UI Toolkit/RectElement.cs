@@ -221,6 +221,8 @@ namespace dkstlzu.Utility
 
         private void OnDrag(DragUpdatedEvent evt)
         {
+            Rect previousValue = Rect;
+            
             DotElement draggingDot = DragAndDrop.GetGenericData(DotElement.DRAGANDDROP_DATA_KEY) as DotElement;
             LineElement draggingLine = DragAndDrop.GetGenericData(LineElement.DRAGANDDROP_DATA_KEY) as LineElement;
             if (draggingDot == null && draggingLine == null) return;
@@ -276,6 +278,11 @@ namespace dkstlzu.Utility
             
             DragAndDrop.SetGenericData("PreviousMousePositionX", evt.mousePosition.x);
             DragAndDrop.SetGenericData("PreviousMousePositionY", evt.mousePosition.y);
+                        
+            // 🔔 이벤트 발행
+            ChangeEvent<Rect> valueChangeEvent = ChangeEvent<Rect>.GetPooled(previousValue, Rect);
+            valueChangeEvent.target = this;
+            SendEvent(valueChangeEvent);
         }
         
         private void OnDragEnd(DragPerformEvent evt)

@@ -44,7 +44,6 @@ namespace dkstlzu.Utility
             RegisterCallback<MouseLeaveEvent>(OnMouseExit);
             RegisterCallback<MouseDownEvent>(OnMouseDown);
             RegisterCallback<MouseUpEvent>(OnMouseUp);
-            RegisterCallback<MouseMoveEvent>(OnMouseMove);
 
             style.backgroundColor = IdleColor;
 
@@ -77,20 +76,7 @@ namespace dkstlzu.Utility
             {
                 _dragState = DragState.Ready;
                 Printer.Print($"{evt.target} MouseDown {_dragState}", priority:-1);
-            }
-        }
-        
-        private void OnMouseUp(MouseUpEvent evt)
-        {
-            style.backgroundColor = MouseHoverColor;
-            _dragState = DragState.PointerHover;
-            Printer.Print($"{evt.target} MouseUp {_dragState}", priority:-1);
-        }
-        
-        private void OnMouseMove(MouseMoveEvent evt)
-        {
-            if (_dragState == DragState.Ready)
-            {
+
                 DragAndDrop.PrepareStartDrag();
                 DragAndDrop.SetGenericData("PreviousMousePositionX", evt.mousePosition.x);
                 DragAndDrop.SetGenericData("PreviousMousePositionY", evt.mousePosition.y);
@@ -112,6 +98,13 @@ namespace dkstlzu.Utility
                 style.backgroundColor = DragColor;
                 Printer.Print($"{evt.target} MouseMove {_dragState}", priority:-1);
             }
+        }
+        
+        private void OnMouseUp(MouseUpEvent evt)
+        {
+            style.backgroundColor = MouseHoverColor;
+            _dragState = DragState.PointerHover;
+            Printer.Print($"{evt.target} MouseUp {_dragState}", priority:-1);
         }
         
         public void StopDrag()
